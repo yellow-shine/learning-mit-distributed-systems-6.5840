@@ -6,18 +6,20 @@ import "os"
 import "net/rpc"
 import "net/http"
 import "sync"
+import "time"
 
+const taskTimeout = 10 * time.Second
 
 type Coordinator struct {
-	mu         sync.Mutex
-	files      []string
-	nReduce    int
-	mapDone    []bool
-	mapBusy    []bool
-	reduceDone []bool
-	reduceBusy []bool
-	nMapDone   int
-	nRedDone   int
+	mu          sync.Mutex
+	files       []string
+	nReduce     int
+	mapDone     []bool
+	mapStart    []time.Time
+	reduceDone  []bool
+	reduceStart []time.Time
+	nMapDone    int
+	nRedDone    int
 }
 
 // Your code here -- RPC handlers for the worker to call.
@@ -31,8 +33,8 @@ func (c *Coordinator) GetTask(args *AskArgs, reply *AskReply) error {
 
 	if c.nMapDone < len(c.files) {
 		for i, done := range c.mapDone {
-			if !done && !c.mapBusy[i] {
-				c.mapBusy[i] = true
+			if !done && (c.mapStart[i].IsZero() || time.Since(c.mapStart[i]) > taskTimeout) {
+				c.mapStart[i] = time.Now()
 				reply.Kind = TaskMap
 				reply.TaskId = i
 				reply.File = c.files[i]
@@ -45,8 +47,8 @@ func (c *Coordinator) GetTask(args *AskArgs, reply *AskReply) error {
 
 	if c.nRedDone < c.nReduce {
 		for i, done := range c.reduceDone {
-			if !done && !c.reduceBusy[i] {
-				c.reduceBusy[i] = true
+			if !done && (c.reduceStart[i].IsZero() || time.Since(c.reduceStart[i]) > taskTimeout) {
+				c.reduceStart[i] = time.Now()
 				reply.Kind = TaskReduce
 				reply.TaskId = i
 				return nil
@@ -70,13 +72,11 @@ func (c *Coordinator) ReportTask(args *ReportArgs, reply *ReportReply) error {
 			c.mapDone[args.TaskId] = true
 			c.nMapDone++
 		}
-		c.mapBusy[args.TaskId] = false
 	case TaskReduce:
 		if !c.reduceDone[args.TaskId] {
 			c.reduceDone[args.TaskId] = true
 			c.nRedDone++
 		}
-		c.reduceBusy[args.TaskId] = false
 	}
 	return nil
 }
@@ -88,7 +88,6 @@ func (c *Coordinator) Example(args *ExampleArgs, reply *ExampleReply) error {
 	reply.Y = args.X + 1
 	return nil
 }
-
 
 // start a thread that listens for RPCs from worker.go
 func (c *Coordinator) server(sockname string) {
@@ -119,9 +118,9 @@ func MakeCoordinator(sockname string, files []string, nReduce int) *Coordinator 
 	c.files = files
 	c.nReduce = nReduce
 	c.mapDone = make([]bool, len(files))
-	c.mapBusy = make([]bool, len(files))
+	c.mapStart = make([]time.Time, len(files))
 	c.reduceDone = make([]bool, nReduce)
-	c.reduceBusy = make([]bool, nReduce)
+	c.reduceStart = make([]time.Time, nReduce)
 
 	c.server(sockname)
 	return &c

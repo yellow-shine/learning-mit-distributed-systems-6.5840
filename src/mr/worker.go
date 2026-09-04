@@ -10,7 +10,6 @@ import "io"
 import "sort"
 import "time"
 
-
 // Map functions return a slice of KeyValue.
 type KeyValue struct {
 	Key   string
@@ -26,7 +25,6 @@ func ihash(key string) int {
 }
 
 var coordSockName string // socket for coordinator
-
 
 // main/mrworker.go calls this function.
 func Worker(sockname string, mapf func(string, string) []KeyValue,
@@ -63,12 +61,14 @@ func doMap(taskId int, filename string, nReduce int, mapf func(string, string) [
 
 	encs := make([]*json.Encoder, nReduce)
 	files := make([]*os.File, nReduce)
+	tmpNames := make([]string, nReduce)
 	for y := 0; y < nReduce; y++ {
-		f, err := os.Create(fmt.Sprintf("mr-%d-%d", taskId, y))
+		f, err := os.CreateTemp(".", fmt.Sprintf("mr-%d-%d-", taskId, y))
 		if err != nil {
 			log.Fatalf("cannot create intermediate: %v", err)
 		}
 		files[y] = f
+		tmpNames[y] = f.Name()
 		encs[y] = json.NewEncoder(f)
 	}
 	for _, kv := range kva {
@@ -79,6 +79,11 @@ func doMap(taskId int, filename string, nReduce int, mapf func(string, string) [
 	}
 	for _, f := range files {
 		f.Close()
+	}
+	for y := 0; y < nReduce; y++ {
+		if err := os.Rename(tmpNames[y], fmt.Sprintf("mr-%d-%d", taskId, y)); err != nil {
+			log.Fatalf("rename: %v", err)
+		}
 	}
 }
 
@@ -105,7 +110,7 @@ func doReduce(taskId int, nMap int, reducef func(string, []string) string) {
 
 	sort.Slice(kva, func(i, j int) bool { return kva[i].Key < kva[j].Key })
 
-	ofile, err := os.Create(fmt.Sprintf("mr-out-%d", taskId))
+	tmp, err := os.CreateTemp(".", fmt.Sprintf("mr-out-%d-", taskId))
 	if err != nil {
 		log.Fatalf("cannot create output: %v", err)
 	}
@@ -119,10 +124,13 @@ func doReduce(taskId int, nMap int, reducef func(string, []string) string) {
 		for k := i; k < j; k++ {
 			values[k-i] = kva[k].Value
 		}
-		fmt.Fprintf(ofile, "%v %v\n", kva[i].Key, reducef(kva[i].Key, values))
+		fmt.Fprintf(tmp, "%v %v\n", kva[i].Key, reducef(kva[i].Key, values))
 		i = j
 	}
-	ofile.Close()
+	tmp.Close()
+	if err := os.Rename(tmp.Name(), fmt.Sprintf("mr-out-%d", taskId)); err != nil {
+		log.Fatalf("rename: %v", err)
+	}
 }
 
 // example function to show how to make an RPC call to the coordinator.
