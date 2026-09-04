@@ -11,15 +11,16 @@ import (
 	"6.5840/tester1"
 )
 
-const configKey = "config"
+const (
+	configKey = "config"
+	nextKey   = "next"
+)
 
 type ShardCtrler struct {
 	clnt *tester.Clnt
 	kvtest.IKVClerk
 
 	killed int32
-
-	// Your data here.
 }
 
 func MakeShardCtrler(clnt *tester.Clnt) *ShardCtrler {
@@ -30,15 +31,54 @@ func MakeShardCtrler(clnt *tester.Clnt) *ShardCtrler {
 }
 
 func (sck *ShardCtrler) InitController() {
+	next := sck.get(nextKey)
+	if next == nil {
+		return
+	}
+	curr := sck.Query()
+	if curr == nil || next.Num > curr.Num {
+		sck.apply(next)
+	}
 }
 
 func (sck *ShardCtrler) InitConfig(cfg *shardcfg.ShardConfig) {
 	sck.Put(configKey, cfg.String(), 0)
 }
 
-func (sck *ShardCtrler) ChangeConfigTo(new *shardcfg.ShardConfig) {
+func (sck *ShardCtrler) get(key string) *shardcfg.ShardConfig {
+	v, _, err := sck.Get(key)
+	if err != rpc.OK || v == "" {
+		return nil
+	}
+	return shardcfg.FromString(v)
+}
+
+func (sck *ShardCtrler) put(key string, cfg *shardcfg.ShardConfig) {
+	for {
+		_, ver, err := sck.Get(key)
+		if err == rpc.ErrNoKey {
+			if sck.Put(key, cfg.String(), 0) == rpc.OK {
+				return
+			}
+			continue
+		}
+		if err != rpc.OK {
+			time.Sleep(50 * time.Millisecond)
+			continue
+		}
+		if sck.Put(key, cfg.String(), ver) == rpc.OK {
+			return
+		}
+	}
+}
+
+func (sck *ShardCtrler) apply(new *shardcfg.ShardConfig) {
 	old := sck.Query()
 	if old == nil {
+		sck.put(configKey, new)
+		return
+	}
+	if old.Num >= new.Num {
 		return
 	}
 	for sh := shardcfg.Tshid(0); sh < shardcfg.NShards; sh++ {
@@ -60,22 +100,14 @@ func (sck *ShardCtrler) ChangeConfigTo(new *shardcfg.ShardConfig) {
 			time.Sleep(50 * time.Millisecond)
 		}
 	}
-	for {
-		_, ver, err := sck.Get(configKey)
-		if err != rpc.OK {
-			time.Sleep(50 * time.Millisecond)
-			continue
-		}
-		if sck.Put(configKey, new.String(), ver) == rpc.OK {
-			return
-		}
-	}
+	sck.put(configKey, new)
+}
+
+func (sck *ShardCtrler) ChangeConfigTo(new *shardcfg.ShardConfig) {
+	sck.put(nextKey, new)
+	sck.apply(new)
 }
 
 func (sck *ShardCtrler) Query() *shardcfg.ShardConfig {
-	v, _, err := sck.Get(configKey)
-	if err != rpc.OK {
-		return nil
-	}
-	return shardcfg.FromString(v)
+	return sck.get(configKey)
 }
