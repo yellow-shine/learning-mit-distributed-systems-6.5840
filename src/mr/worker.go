@@ -5,6 +5,10 @@ import "log"
 import "net/rpc"
 import "hash/fnv"
 import "os"
+import "encoding/json"
+import "io"
+import "sort"
+import "time"
 
 
 // Map functions return a slice of KeyValue.
@@ -30,11 +34,95 @@ func Worker(sockname string, mapf func(string, string) []KeyValue,
 
 	coordSockName = sockname
 
-	// Your worker implementation here.
+	for {
+		reply := AskReply{}
+		if !call("Coordinator.GetTask", &AskArgs{}, &reply) {
+			return
+		}
+		switch reply.Kind {
+		case TaskMap:
+			doMap(reply.TaskId, reply.File, reply.NReduce, mapf)
+			call("Coordinator.ReportTask", &ReportArgs{Kind: TaskMap, TaskId: reply.TaskId}, &ReportReply{})
+		case TaskReduce:
+			doReduce(reply.TaskId, reply.NMap, reducef)
+			call("Coordinator.ReportTask", &ReportArgs{Kind: TaskReduce, TaskId: reply.TaskId}, &ReportReply{})
+		case TaskWait:
+			time.Sleep(100 * time.Millisecond)
+		case TaskExit:
+			return
+		}
+	}
+}
 
-	// uncomment to send the Example RPC to the coordinator.
-	// CallExample()
+func doMap(taskId int, filename string, nReduce int, mapf func(string, string) []KeyValue) {
+	content, err := os.ReadFile(filename)
+	if err != nil {
+		log.Fatalf("cannot read %v: %v", filename, err)
+	}
+	kva := mapf(filename, string(content))
 
+	encs := make([]*json.Encoder, nReduce)
+	files := make([]*os.File, nReduce)
+	for y := 0; y < nReduce; y++ {
+		f, err := os.Create(fmt.Sprintf("mr-%d-%d", taskId, y))
+		if err != nil {
+			log.Fatalf("cannot create intermediate: %v", err)
+		}
+		files[y] = f
+		encs[y] = json.NewEncoder(f)
+	}
+	for _, kv := range kva {
+		y := ihash(kv.Key) % nReduce
+		if err := encs[y].Encode(&kv); err != nil {
+			log.Fatalf("cannot encode: %v", err)
+		}
+	}
+	for _, f := range files {
+		f.Close()
+	}
+}
+
+func doReduce(taskId int, nMap int, reducef func(string, []string) string) {
+	kva := []KeyValue{}
+	for x := 0; x < nMap; x++ {
+		f, err := os.Open(fmt.Sprintf("mr-%d-%d", x, taskId))
+		if err != nil {
+			log.Fatalf("cannot open intermediate: %v", err)
+		}
+		dec := json.NewDecoder(f)
+		for {
+			var kv KeyValue
+			if err := dec.Decode(&kv); err != nil {
+				if err != io.EOF {
+					log.Fatalf("decode: %v", err)
+				}
+				break
+			}
+			kva = append(kva, kv)
+		}
+		f.Close()
+	}
+
+	sort.Slice(kva, func(i, j int) bool { return kva[i].Key < kva[j].Key })
+
+	ofile, err := os.Create(fmt.Sprintf("mr-out-%d", taskId))
+	if err != nil {
+		log.Fatalf("cannot create output: %v", err)
+	}
+	i := 0
+	for i < len(kva) {
+		j := i + 1
+		for j < len(kva) && kva[j].Key == kva[i].Key {
+			j++
+		}
+		values := make([]string, j-i)
+		for k := i; k < j; k++ {
+			values[k-i] = kva[k].Value
+		}
+		fmt.Fprintf(ofile, "%v %v\n", kva[i].Key, reducef(kva[i].Key, values))
+		i = j
+	}
+	ofile.Close()
 }
 
 // example function to show how to make an RPC call to the coordinator.
