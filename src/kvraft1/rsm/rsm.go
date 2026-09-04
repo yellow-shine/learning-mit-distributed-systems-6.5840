@@ -3,6 +3,7 @@ package rsm
 import (
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"6.5840/kvsrv1/rpc"
 	"6.5840/labrpc"
@@ -127,7 +128,7 @@ func (rsm *RSM) Submit(req any) (rpc.Err, any) {
 
 	id := atomic.AddInt64(&rsm.id, 1)
 	op := Op{Me: rsm.me, Id: id, Req: req}
-	index, _, isLeader := rsm.rf.Start(op)
+	index, term, isLeader := rsm.rf.Start(op)
 	if !isLeader {
 		return rpc.ErrWrongLeader, nil
 	}
@@ -135,6 +136,18 @@ func (rsm *RSM) Submit(req any) (rpc.Err, any) {
 	rsm.mu.Lock()
 	rsm.pending[index] = submitWait{id: id, ch: ch}
 	rsm.mu.Unlock()
-	res := <-ch
-	return res.err, res.v
+	for {
+		select {
+		case res := <-ch:
+			return res.err, res.v
+		case <-time.After(100 * time.Millisecond):
+			t, isL := rsm.rf.GetState()
+			if !isL || t != term {
+				rsm.mu.Lock()
+				delete(rsm.pending, index)
+				rsm.mu.Unlock()
+				return rpc.ErrWrongLeader, nil
+			}
+		}
+	}
 }

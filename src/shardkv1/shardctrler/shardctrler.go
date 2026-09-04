@@ -1,64 +1,81 @@
 package shardctrler
 
-//
-// Shardctrler with InitConfig, Query, and ChangeConfigTo methods
-//
-
 import (
+	"time"
 
 	"6.5840/kvsrv1"
+	"6.5840/kvsrv1/rpc"
 	"6.5840/kvtest1"
 	"6.5840/shardkv1/shardcfg"
+	"6.5840/shardkv1/shardgrp"
 	"6.5840/tester1"
 )
 
+const configKey = "config"
 
-// ShardCtrler for the controller and kv clerk.
 type ShardCtrler struct {
 	clnt *tester.Clnt
 	kvtest.IKVClerk
 
-	killed int32 // set by Kill()
+	killed int32
 
 	// Your data here.
 }
 
-// Make a ShardCltler, which stores its state in a kvsrv.
 func MakeShardCtrler(clnt *tester.Clnt) *ShardCtrler {
 	sck := &ShardCtrler{clnt: clnt}
 	srv := tester.ServerName(tester.GRP0, 0)
 	sck.IKVClerk = kvsrv.MakeClerk(clnt, srv)
-	// Your code here.
 	return sck
 }
 
-// The tester calls InitController() before starting a new
-// controller. In part A, this method doesn't need to do anything. In
-// B and C, this method implements recovery.
 func (sck *ShardCtrler) InitController() {
 }
 
-// Called once by the tester to supply the first configuration.  You
-// can marshal ShardConfig into a string using shardcfg.String(), and
-// then Put it in the kvsrv for the controller at version 0.  You can
-// pick the key to name the configuration.  The initial configuration
-// lists shardgrp shardcfg.Gid1 for all shards.
 func (sck *ShardCtrler) InitConfig(cfg *shardcfg.ShardConfig) {
-	// Your code here
+	sck.Put(configKey, cfg.String(), 0)
 }
 
-// Called by the tester to ask the controller to change the
-// configuration from the current one to new.  While the controller
-// changes the configuration it may be superseded by another
-// controller.
 func (sck *ShardCtrler) ChangeConfigTo(new *shardcfg.ShardConfig) {
-	// Your code here.
+	old := sck.Query()
+	if old == nil {
+		return
+	}
+	for sh := shardcfg.Tshid(0); sh < shardcfg.NShards; sh++ {
+		og, osrv, ook := old.GidServers(sh)
+		ng, nsrv, nok := new.GidServers(sh)
+		if !ook || !nok || og == ng {
+			continue
+		}
+		ock := shardgrp.MakeClerk(sck.clnt, osrv)
+		nck := shardgrp.MakeClerk(sck.clnt, nsrv)
+		for {
+			state, err := ock.FreezeShard(sh, new.Num)
+			if err == rpc.OK {
+				if nck.InstallShard(sh, state, new.Num) == rpc.OK {
+					ock.DeleteShard(sh, new.Num)
+					break
+				}
+			}
+			time.Sleep(50 * time.Millisecond)
+		}
+	}
+	for {
+		_, ver, err := sck.Get(configKey)
+		if err != rpc.OK {
+			time.Sleep(50 * time.Millisecond)
+			continue
+		}
+		if sck.Put(configKey, new.String(), ver) == rpc.OK {
+			return
+		}
+	}
 }
 
-
-// Return the current configuration
 func (sck *ShardCtrler) Query() *shardcfg.ShardConfig {
-	// Your code here.
-	return nil
+	v, _, err := sck.Get(configKey)
+	if err != rpc.OK {
+		return nil
+	}
+	return shardcfg.FromString(v)
 }
-
