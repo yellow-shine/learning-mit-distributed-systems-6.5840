@@ -1,6 +1,8 @@
 package kvraft
 
 import (
+	"bytes"
+
 	"6.5840/kvraft1/rsm"
 	"6.5840/kvsrv1/rpc"
 	"6.5840/labgob"
@@ -47,10 +49,19 @@ func (kv *KVServer) DoOp(req any) any {
 }
 
 func (kv *KVServer) Snapshot() []byte {
-	return nil
+	w := new(bytes.Buffer)
+	e := labgob.NewEncoder(w)
+	e.Encode(kv.data)
+	return w.Bytes()
 }
 
 func (kv *KVServer) Restore(data []byte) {
+	d := labgob.NewDecoder(bytes.NewBuffer(data))
+	var m map[string]entry
+	if d.Decode(&m) != nil {
+		return
+	}
+	kv.data = m
 }
 
 func (kv *KVServer) Get(args *rpc.GetArgs, reply *rpc.GetReply) {
