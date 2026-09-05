@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<!-- saved from url=(0049)https://pdos.csail.mit.edu/6.824/labs/lab-mr.html -->
+<html data-immersive-translate-page-theme="light" imt-state="dual" imt-translation-dir="ltr" imt-trans-position="after"><head><meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<title>6.5840 Lab 1: MapReduce</title>
+<link rel="stylesheet" href="./6.5840 Lab 1_ MapReduce_files/style.css" type="text/css">
+<script src="./6.5840 Lab 1_ MapReduce_files/guidance.js"></script>
+<style data-id="immersive-translate-default-injected-css">:root {
+  --immersive-translate-theme-underline-borderColor: #72ece9;
+  --immersive-translate-theme-nativeUnderline-borderColor: #72ece9;
+  --immersive-translate-theme-nativeDashed-borderColor: #72ece9;
+  --immersive-translate-theme-nativeDotted-borderColor: #72ece9;
+  --immersive-translate-theme-highlight-backgroundColor: #ffff00;
+  --immersive-translate-theme-dashed-borderColor: #59c1bd;
+  --immersive-translate-theme-blockquote-borderColor: #cc3355;
+  --immersive-translate-theme-thinDashed-borderColor: #ff374f;
+  --immersive-translate-theme-dashedBorder-borderColor: #94a3b8;
+  --immersive-translate-theme-dashedBorder-borderRadius: 0;
+  --immersive-translate-theme-solidBorder-borderColor: #94a3b8;
+  --immersive-translate-theme-solidBorder-borderRadius: 0;
+  --immersive-translate-theme-dotted-borderColor: #94a3b8;
+  --immersive-translate-theme-wavy-borderColor: #72ece9;
+  --immersive-translate-theme-dividingLine-borderColor: #94a3b8;
+  --immersive-translate-theme-grey-textColor: #2f4f4f;
+  --immersive-translate-theme-marker-backgroundColor: #fbda41;
+  --immersive-translate-theme-marker-backgroundColor-rgb: 251, 218, 65;
+  --immersive-translate-theme-marker2-backgroundColor: #ffff00;
+  --immersive-translate-theme-background-backgroundColor: #dbafaf;
+  --immersive-translate-theme-background-backgroundColor-rgb: 219, 175, 175;
+  --immersive-translate-theme-background-backgroundOpacity: 12;
+  --immersive-translate-theme-opacity-opacity: 10;
+}
+
+[imt-state="dual"] .immersive-translate-target-translation-pre-whitespace {
+  white-space: pre-wrap !important;
+}
+
+[imt-state="dual"] .immersive-translate-pdf-target-container {
+  position: absolute;
+  background-color: #fff;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+    sans-serif;
+  top: 0;
+  width: 600px;
+  height: 100%;
+  z-index: 2;
+  line-height: 1.3;
+  font-size: 16px;
+}
+[imt-state="dual"] .immersive-translate-target-wrapper[dir="rtl"] {
+  text-align: right;
+}
+
+.immersive-translate-target-wrapper {
+  font-feature-settings: normal;
+}
+
+[imt-state="dual"]
+  .immersive-translate-pdf-target-container
+  .immersive-translate-target-wrapper {
+  color: rgb(0, 0, 0);
+  white-space: normal;
+  position: absolute;
+}
+
+[imt-state="dual"]
+  .immersive-translate-pdf-target-container
+  .immersive-translate-target-wrapper
+  font {
+  color: inherit;
+  white-space: inherit;
+  position: unset;
+}
+
+[imt-state="translation"] .immersive-translate-target-wrapper > br {
+  display: none;
+}
+
+[imt-state="translation"]
+  .immersive-translate-target-translation-block-wrapper {
+  margin: 0 !important;
+}
+
+[imt-state="dual"] .immersive-translate-target-translation-block-wrapper {
+  margin: var(--immersive-translate-translation-spacing, 8px) 0 8px !important;
+  display: inline-block;
+}
+
+.imt-mouse-hover-power-user-compare
+  .immersive-translate-target-translation-block-wrapper {
+  background-color: rgba(226, 60, 124, 0.12);
+  padding: 6px;
+}
+
+[imt-trans-position="before"]
+  .immersive-translate-target-translation-block-wrapper {
+  display: block;
+}
+
+[imt-trans-position="before"]
+  .immersive-translate-target-translation-block-wrapper {
+  margin-top: 0 !important;
+  margin-bottom: var(--immersive-translate-translation-spacing, 8px) !important;
+}
+
+[imt-state="dual"] .immersive-translate-target-translation-pdf-block-wrapper {
+  margin: 0 !important;
+  display: inline-block;
+}
+
+[imt-state="dual"] .immersive-translate-target-translation-theme-grey-inner,
+[imt-state="translation"] .immersive-translate-target-translation-theme-grey-inner,
+[imt-state="translation"]
+  [data-imt-translation-only="1"].immersive-translate-target-inner.immersive-translate-target-translation-theme-grey {
+  color: var(--immersive-translate-theme-grey-textColor);
+}
+
+[imt-state="dual"]
+  .immersive-translate-target-translation-theme-underline-inner {
+  border-bottom: 1px solid
+    var(--immersive-translate-theme-underline-borderColor) !important;
+}
+
+[imt-state="dual"]
+  .immersive-translate-target-translation-theme-nativeUnderline-inner,
+[imt-state="translation"]
+  .immersive-translate-target-translation-theme-nativeUnderline-inner,
+[imt-state="translation"]
+  [data-imt-translation-only="1"].immersive-translate-target-inner.immersive-translate-target-translation-theme-nativeUnderline {
+  text-decoration: underline !important;
+  text-decoration-color: var(
+    --immersive-translate-theme-nativeUnderline-borderColor
+  ) !important;
+}
+
+[imt-state="dual"]
+  .immersive-translate-target-translation-block-wrapper-theme-dashedBorder {
+  border: 1px dashed var(--immersive-translate-theme-dashedBorder-borderColor) !important;
+  border-radius: var(
+    --immersive-translate-theme-dashedBorder-borderRadius
+  ) !important;
+  padding: 6px;
+  margin-top: 2px;
+  display: inline-block;
+}
+
+[imt-state="dual"]
+  .immersive-translate-target-translation-inline-wrapper-theme-dashedBorder {
+  border: 1px dashed var(--immersive-translate-theme-dashedBorder-borderColor) !important;
+  border-radius: var(
+    --immersive-translate-theme-dashedBorder-borderRadius
+  ) !important;
+  padding: 2px;
+}
+
+[imt-state="dual"]
+  .immersive-translate-target-translation-block-wrapper-theme-solidBorder {
+  border: 1px solid var(--immersive-translate-theme-solidBorder-borderColor) !important;
+  border-radius: var(
+    --immersive-translate-theme-solidBorder-borderRadius
+  ) !important;
+  padding: 6px;
+  margin-top: 2px;
+  display: inline-block;
+}
+
+[imt-state="dual"]
+  .immersive-translate-target-translation-inline-wrapper-theme-solidBorder {
+  border: 1px solid var(--immersive-translate-theme-solidBorder-borderColor) !important;
+  border-radius: var(
+    --immersive-translate-theme-solidBorder-borderRadius
+  ) !important;
+  padding: 2px;
+}
+
+[imt-state="dual"]
+  .immersive-translate-target-translation-theme-nativeDashed-inner,
+[imt-state="translation"]
+  .immersive-translate-target-translation-theme-nativeDashed-inner,
+[imt-state="translation"]
+  [data-imt-translation-only="1"].immersive-translate-target-inner.immersive-translate-target-translation-theme-nativeDashed {
+  text-decoration: underline !important;
+  text-decoration-color: var(
+    --immersive-translate-theme-nativeDashed-borderColor
+  ) !important;
+  text-decoration-style: dashed !important;
+}
+
+[imt-state="dual"]
+  .immersive-translate-target-translation-theme-thinDashed-inner {
+  border-bottom: 1px dashed
+    var(--immersive-translate-theme-thinDashed-borderColor) !important;
+}
+
+[imt-state="dual"] .immersive-translate-target-translation-theme-dotted-inner {
+  background-image: linear-gradient(
+    to right,
+    var(--immersive-translate-theme-dotted-borderColor) 30%,
+    rgba(255, 255, 255, 0) 0%
+  );
+  background-position: bottom;
+  background-size: 5px 1px;
+  background-repeat: repeat-x;
+  padding-bottom: 3px;
+}
+
+[imt-state="dual"]
+  .immersive-translate-target-translation-theme-nativeDotted-inner,
+[imt-state="translation"]
+  .immersive-translate-target-translation-theme-nativeDotted-inner,
+[imt-state="translation"]
+  [data-imt-translation-only="1"].immersive-translate-target-inner.immersive-translate-target-translation-theme-nativeDotted {
+  text-decoration: underline !important;
+  text-decoration-color: var(
+    --immersive-translate-theme-nativeDotted-borderColor
+  ) !important;
+  text-decoration-style: dotted !important;
+}
+
+[imt-state="dual"] .immersive-translate-target-translation-theme-wavy-inner,
+[imt-state="translation"] .immersive-translate-target-translation-theme-wavy-inner,
+[imt-state="translation"]
+  [data-imt-translation-only="1"].immersive-translate-target-inner.immersive-translate-target-translation-theme-wavy {
+  text-decoration: underline !important;
+  text-decoration-color: var(
+    --immersive-translate-theme-wavy-borderColor
+  ) !important;
+  text-decoration-style: wavy !important;
+}
+
+[imt-state="dual"] .immersive-translate-target-translation-theme-dashed-inner {
+  background: linear-gradient(
+      to right,
+      var(--immersive-translate-theme-dashed-borderColor) 0%,
+      var(--immersive-translate-theme-dashed-borderColor) 50%,
+      transparent 50%,
+      transparent 100%
+    )
+    repeat-x left bottom;
+  background-size: 8px 2px;
+  padding-bottom: 2px;
+}
+
+[imt-state="dual"]
+  .immersive-translate-target-translation-block-wrapper-theme-dividingLine::before {
+  content: "";
+  display: block;
+  max-width: 80px;
+  width: 10%;
+  border-top: 1px dashed
+    var(--immersive-translate-theme-dividingLine-borderColor);
+  padding-top: 8px;
+}
+
+[imt-state="dual"]
+  .immersive-translate-target-translation-inline-wrapper-theme-dividingLine::before {
+  content: "";
+  border-left: 1px dashed
+    var(--immersive-translate-theme-dividingLine-borderColor);
+  max-height: 16px;
+  height: 16px;
+  padding-left: 8px;
+}
+
+[imt-state="dual"]
+  .immersive-translate-target-translation-theme-highlight-inner,
+[imt-state="translation"]
+  .immersive-translate-target-translation-theme-highlight-inner,
+[imt-state="translation"]
+  [data-imt-translation-only="1"].immersive-translate-target-inner.immersive-translate-target-translation-theme-highlight {
+  background: var(--immersive-translate-theme-highlight-backgroundColor);
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+[imt-state="dual"]
+  .immersive-translate-target-translation-block-wrapper-theme-marker {
+  line-height: 1.5em;
+}
+
+[imt-state="dual"] .immersive-translate-target-translation-theme-marker2-inner {
+  font-weight: bold;
+  text-shadow: 10px 0px 3px
+      var(--immersive-translate-theme-marker2-backgroundColor),
+    16px 3px 9px var(--immersive-translate-theme-marker2-backgroundColor),
+    2px 0px 6px var(--immersive-translate-theme-marker2-backgroundColor),
+    -12px 0px 12px var(--immersive-translate-theme-marker2-backgroundColor) !important;
+}
+
+[imt-state="dual"] .immersive-translate-target-translation-theme-marker-inner {
+  /* TODO: add more texture */
+  background: linear-gradient(
+    to right,
+    rgba(var(--immersive-translate-theme-marker-backgroundColor-rgb), 0.1),
+    rgba(var(--immersive-translate-theme-marker-backgroundColor-rgb), 0.9) 3%,
+    rgba(var(--immersive-translate-theme-marker-backgroundColor-rgb), 0.9) 35%,
+    rgba(var(--immersive-translate-theme-marker-backgroundColor-rgb), 0.9) 70%,
+    rgba(var(--immersive-translate-theme-marker-backgroundColor-rgb), 0.8) 95%,
+    rgba(var(--immersive-translate-theme-marker-backgroundColor-rgb), 0.3)
+  );
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+[imt-state="dual"] .immersive-translate-target-translation-theme-weakening,
+[imt-state="translation"] .immersive-translate-target-translation-theme-weakening,
+[imt-state="translation"]
+  [data-imt-translation-only="1"].immersive-translate-target-inner.immersive-translate-target-translation-theme-weakening {
+  opacity: 0.618 !important;
+}
+
+[imt-state="dual"] .immersive-translate-target-translation-theme-italic,
+[imt-state="translation"] .immersive-translate-target-translation-theme-italic,
+[imt-state="translation"]
+  [data-imt-translation-only="1"].immersive-translate-target-inner.immersive-translate-target-translation-theme-italic {
+  font-style: italic !important;
+}
+
+[imt-state="dual"] .immersive-translate-target-translation-theme-bold,
+[imt-state="translation"] .immersive-translate-target-translation-theme-bold,
+[imt-state="translation"]
+  [data-imt-translation-only="1"].immersive-translate-target-inner.immersive-translate-target-translation-theme-bold {
+  font-weight: bold !important;
+}
+
+[imt-state="dual"]
+  .immersive-translate-target-translation-block-wrapper-theme-paper {
+  margin: 8px 0;
+  box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+  padding: 16px 32px;
+  display: inline-block;
+}
+
+[imt-state="dual"]
+  .immersive-translate-target-translation-block-wrapper-theme-blockquote {
+  border-left: 4px solid var(--immersive-translate-theme-blockquote-borderColor) !important;
+  padding-left: 12px !important;
+  margin-top: 4px;
+  margin-bottom: 4px;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  display: inline-block;
+}
+
+[imt-state="dual"] .immersive-translate-target-translation-theme-mask-inner {
+  filter: blur(5px) !important;
+  transition: filter 0.3s ease !important;
+  border-radius: 10px;
+  display: inline-block;
+}
+
+[data-immersive-translate-root-translation-theme="none"]
+  .immersive-translate-target-translation-theme-mask-inner {
+  filter: none !important;
+}
+
+[data-immersive-translate-root-translation-theme="mask"]
+  .immersive-translate-target-inner {
+  filter: blur(5px) !important;
+  transition: filter 0.3s ease !important;
+  border-radius: 10px;
+  display: inline-block;
+}
+
+/* opacity theme start */
+
+[imt-state="dual"] .immersive-translate-target-translation-theme-opacity-inner {
+  filter: opacity(
+    calc(var(--immersive-translate-theme-opacity-opacity) * 1%)
+  ) !important;
+  transition: filter 0.3s ease !important;
+  border-radius: 10px;
+  display: inline-block;
+}
+
+[data-immersive-translate-root-translation-theme="none"]
+  .immersive-translate-target-translation-theme-opacity-inner {
+  filter: none !important;
+}
+[data-immersive-translate-root-translation-theme="opacity"]
+  .immersive-translate-target-inner,
+[imt-state="dual"]
+  .immersive-translate-target-translation-theme-opacity-inner:hover {
+  filter: opacity(
+    calc(var(--immersive-translate-theme-opacity-opacity) * 1%)
+  ) !important;
+  transition: filter 0.3s ease !important;
+  border-radius: 10px;
+  display: inline-block;
+}
+
+[imt-state="dual"]
+  .immersive-translate-target-translation-theme-opacity-inner:hover {
+  filter: none !important;
+}
+
+[imt-state="dual"]
+  .immersive-translate-target-translation-theme-mask-inner:hover {
+  filter: none !important;
+}
+[data-immersive-translate-root-translation-theme="opacity"]
+  .immersive-translate-target-inner:hover {
+  filter: none !important;
+}
+
+[data-immersive-translate-root-translation-theme="mask"]
+  .immersive-translate-target-inner:hover {
+  filter: none !important;
+}
+
+/* opacity theme end */
+
+/* background theme start */
+[imt-state="dual"]
+  .immersive-translate-target-translation-block-wrapper-theme-background {
+  margin: 8px 0;
+  background: rgba(
+    var(--immersive-translate-theme-background-backgroundColor-rgb),
+    calc(var(--immersive-translate-theme-background-backgroundOpacity) * 1%)
+  );
+  border-radius: 4px;
+  box-shadow: unset !important;
+  padding: 12px;
+  display: inline-block;
+}
+[imt-state="dual"]
+  .immersive-translate-target-translation-theme-background-inner {
+  background: rgba(
+    var(--immersive-translate-theme-background-backgroundColor-rgb),
+    calc(var(--immersive-translate-theme-background-backgroundOpacity) * 1%)
+  );
+  padding-left: 6px;
+  padding-right: 6px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+[imt-state="dual"]
+  .immersive-translate-target-translation-block-wrapper
+  .immersive-translate-target-translation-theme-background-inner {
+  background: unset;
+  padding-left: unset;
+  padding-right: unset;
+}
+/* background theme end */
+
+/* vertical css , please remain it in the last one. */
+.immersive-translate-target-translation-vertical-block-wrapper {
+  margin: 0px 8px !important;
+}
+
+.immersive-translate-text {
+  font-size: 15px !important;
+}
+
+.immersive-translate-error-toast {
+  position: fixed;
+  top: 5%;
+  z-index: 99999999;
+  left: 0;
+  right: 0;
+  margin: auto;
+  max-width: 300px;
+  padding: 16px;
+  border-radius: 12px;
+  background-color: rgba(0, 0, 0, 0.8);
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+@media all and (min-width: 750px) {
+  .immersive-translate-error-toast {
+    max-width: 400px;
+  }
+}
+
+.immersive-translate-clickable-button {
+  cursor: pointer;
+}
+
+.immersive-translate-help-button {
+  cursor: pointer;
+}
+
+.immersive-translate-loading-text:before {
+  content: "...";
+}
+
+/* dark mode for loading */
+
+@media only screen and (prefers-color-scheme: dark) {
+  .immersive-translate-loading {
+    border: 2px rgba(255, 255, 255, 0.25) solid !important;
+    border-top: 2px rgba(255, 255, 255, 1) solid !important;
+  }
+}
+
+.immersive-translate-error-wrapper {
+  position: relative;
+  display: inline-flex;
+  padding: 6px;
+  margin: 0 12px;
+  white-space: nowrap;
+  font-size: 0.9em;
+}
+[lang="zh-CN"] .immersive-translate-error-wrapper {
+  font-size: 0.75em;
+}
+[lang="zh-TW"] .immersive-translate-error-wrapper {
+  font-size: 0.75em;
+}
+
+.immersive-translate-tooltip {
+  position: relative;
+  display: inline-flex;
+  /* little indicater to indicate it's hoverable */
+}
+
+.immersive-translate-tooltip-content {
+  /* here's the magic */
+  position: absolute;
+  z-index: 100000000000;
+
+  left: 50%;
+  bottom: 0;
+  transform: translate(-50%, 110%);
+  line-height: 1;
+  /* and add a small left margin */
+
+  /* basic styles */
+  width: max-content;
+  max-width: 250px;
+  word-wrap: break-word;
+  white-space: pre-line;
+  padding: 10px;
+  border-radius: 10px;
+  background: #000c;
+  color: #fff;
+  text-align: center;
+  font-size: 14px;
+  display: none;
+  /* hide by default */
+}
+
+.immersive-translate-tooltip:hover .immersive-translate-tooltip-content {
+  display: inline-block;
+}
+
+.immersive-translate-tooltip:hover + .immersive-translate-tooltip-content {
+  display: inline-block;
+}
+
+.immersive-translate-tooltip-content-table {
+  left: unset !important;
+  bottom: unset !important;
+  transform: translate(-10%, 50%) !important;
+}
+
+.immersive-translate-tooltip:hover:before {
+  display: inline-block;
+}
+
+.immersive-translate-loading-spinner {
+  vertical-align: middle !important;
+  width: 10px !important;
+  height: 10px !important;
+  display: inline-block !important;
+  margin: 0 4px !important;
+  border: 2px rgba(221, 244, 255, 0.6) solid !important;
+  border-top: 2px rgba(0, 0, 0, 0.375) solid !important;
+  border-left: 2px rgba(0, 0, 0, 0.375) solid !important;
+  border-radius: 50% !important;
+  padding: 0 !important;
+  -webkit-animation: immersive-translate-loading-animation 0.6s infinite linear !important;
+  animation: immersive-translate-loading-animation 0.6s infinite linear !important;
+}
+
+@-webkit-keyframes immersive-translate-loading-animation {
+  from {
+    -webkit-transform: rotate(0deg);
+  }
+
+  to {
+    -webkit-transform: rotate(359deg);
+  }
+}
+
+@keyframes immersive-translate-loading-animation {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(359deg);
+  }
+}
+
+.imt-image-status {
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--bg-2, #fff);
+  font-size: 14px;
+}
+</style><style data-id="immersive-translate-user-custom-style">:root {
+
+.immersive-translate-target-inner { font-family: inherit; }
+
+
+.immersive-translate-target-inner { font-family: inherit; }
+}
+</style><style data-id="immersive-translate-dynamic-injected-css">.immersive-translate-target-wrapper[dir='rtl'] {text-align: right;display:block!important;}
+[dir='rtl'] .immersive-translate-target-wrapper:not([dir]) {text-align:left;direction:ltr;}
+[imt-translation-dir=rtl] [data-imt-translation-only] {text-align:right;}
+.immersive-translate-target-wrapper {word-break:break-word; user-select:text; font-feature-settings:normal;}
+[imt-state=dual] .immersive-translate-target-translation-block-wrapper-theme-dividingLine::before {display:block;}
+[imt-trans-position=before] .immersive-translate-target-translation-block-wrapper {display:block!important;}
+[data-imt-clamp-unlocked] {scrollbar-width: none;-ms-overflow-style: none;}
+[data-imt-clamp-unlocked]::-webkit-scrollbar {display: none;}
+table [data-imt-split-divider] {display: none !important;}
+</style></head>
+<body data-imt-p="1">
+<div align="center">
+<h2 data-imt-p="1"><a href="https://pdos.csail.mit.edu/6.824/index.html">6.5840</a> - Spring 2026<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">6.5840 - 2026 &#24180;&#26149;&#23395;</font></font></font></h2>
+<h1 data-imt-p="1">6.5840 Lab 1: MapReduce<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">6.5840 &#23454;&#39564; 1&#65306;MapReduce</font></font></font></h1>
+
+<center>
+<p data-imt-p="1">
+  <b><a href="https://pdos.csail.mit.edu/6.824/labs/collab.html">Collaboration policy</a></b> //
+  <b><a href="https://pdos.csail.mit.edu/6.824/labs/submit.html">Submit lab</a></b> //
+  <b><a href="https://pdos.csail.mit.edu/6.824/labs/go.html">Setup Go</a></b> //
+  <b><a href="https://pdos.csail.mit.edu/6.824/labs/guidance.html">Guidance</a></b> //
+  <b><a href="https://piazza.com/mit/spring2026/65840">Piazza</a></b><font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#21327;&#20316;&#25919;&#31574; // &#25552;&#20132;&#23454;&#39564; // &#23433;&#35013; Go // &#25351;&#21335; // Piazza</font></font></font>
+</p>
+</center>
+
+</div>
+<hr>
+
+<h3 data-imt-p="1">Introduction<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><font class="notranslate" data-immersive-translate-translation-element-mark="1">&nbsp;&nbsp;</font><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-inline-wrapper-theme-none immersive-translate-target-translation-inline-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#31616;&#20171;</font></font></font></h3>
+
+<p data-imt-p="1">
+In this lab you'll build a MapReduce system.
+You'll implement a worker process that calls application Map and Reduce
+functions and handles reading and writing files,
+and a coordinator process that hands out tasks to
+workers and copes with failed workers.
+You'll be building something similar to the
+<a href="http://research.google.com/archive/mapreduce-osdi04.pdf">MapReduce paper</a>.
+(Note: this lab uses "coordinator" instead of the paper's "master".)
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#22312;&#26412;&#23454;&#39564;&#20013;&#65292;&#20320;&#23558;&#26500;&#24314;&#19968;&#20010; MapReduce &#31995;&#32479;&#12290;&#20320;&#38656;&#35201;&#23454;&#29616;&#19968;&#20010;&#24037;&#20316;&#36827;&#31243;&#65292;&#23427;&#36127;&#36131;&#35843;&#29992;&#24212;&#29992;&#31243;&#24207;&#30340; Map &#21644; Reduce &#20989;&#25968;&#24182;&#22788;&#29702;&#25991;&#20214;&#30340;&#35835;&#20889;&#65307;&#36824;&#38656;&#35201;&#23454;&#29616;&#19968;&#20010;&#21327;&#35843;&#22120;&#36827;&#31243;&#65292;&#23427;&#36127;&#36131;&#21521;&#24037;&#20316;&#36827;&#31243;&#20998;&#21457;&#20219;&#21153;&#24182;&#22788;&#29702;&#24037;&#20316;&#36827;&#31243;&#30340;&#25925;&#38556;&#12290;&#20320;&#23558;&#35201;&#26500;&#24314;&#30340;&#20869;&#23481;&#19982; MapReduce &#35770;&#25991;&#20013;&#25551;&#36848;&#30340;&#31995;&#32479;&#31867;&#20284;&#12290;&#65288;&#27880;&#24847;&#65306;&#26412;&#23454;&#39564;&#20351;&#29992; "coordinator"&#65288;&#21327;&#35843;&#22120;&#65289;&#19968;&#35789;&#65292;&#32780;&#19981;&#26159;&#35770;&#25991;&#20013;&#30340; "master"&#12290;&#65289;</font></font></font></p><h3 data-imt-p="1">Getting started<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><font class="notranslate" data-immersive-translate-translation-element-mark="1">&nbsp;&nbsp;</font><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-inline-wrapper-theme-none immersive-translate-target-translation-inline-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#20934;&#22791;&#24037;&#20316;</font></font></font></h3>
+
+<p data-imt-p="1">You need to <a href="https://pdos.csail.mit.edu/6.824/labs/go.html">setup Go</a> to do the labs.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#20320;&#38656;&#35201;&#20808;&#23433;&#35013; Go &#29615;&#22659;&#25165;&#33021;&#23436;&#25104;&#36825;&#20123;&#23454;&#39564;&#12290;</font></font></font></p><p data-imt-p="1">
+Fetch the initial lab software with
+<a href="https://git-scm.com/">git</a> (a version control system).
+To learn more about git, look at the
+<a href="https://git-scm.com/book/en/v2">Pro Git book</a> or the
+<a href="http://www.kernel.org/pub/software/scm/git/docs/user-manual.html">git user's manual</a>.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#20351;&#29992; git&#65288;&#19968;&#31181;&#29256;&#26412;&#25511;&#21046;&#31995;&#32479;&#65289;&#33719;&#21462;&#23454;&#39564;&#30340;&#21021;&#22987;&#36719;&#20214;&#12290;&#24819;&#20102;&#35299;&#26356;&#22810;&#20851;&#20110; git &#30340;&#30693;&#35782;&#65292;&#35831;&#21442;&#38405;&#12298;Pro Git&#12299;&#19968;&#20070;&#25110; git &#29992;&#25143;&#25163;&#20876;&#12290;</font></font></font></p><pre data-imt-pre="1" data-imt-p="1" data-imt_insert_failed_reason="same_text">$ git clone git://g.csail.mit.edu/6.5840-golabs-2026 6.5840
+$ cd 6.5840
+$ ls
+Makefile src
+$
+</pre>
+
+<p data-imt-p="1">
+We supply you with a simple sequential mapreduce implementation in
+<tt>src/main/mrsequential.go</tt>. It runs the maps and reduces one at a
+time, in a single process. We also
+provide you with a couple of MapReduce applications: word-count
+in <tt>mrapps/wc.go</tt>, and a text indexer
+in <tt>mrapps/indexer.go</tt>. You can run
+word count sequentially as follows:
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#25105;&#20204;&#22312; <tt>src/main/mrsequential.go</tt> &#20013;&#20026;&#20320;&#25552;&#20379;&#20102;&#19968;&#20010;&#31616;&#21333;&#30340;&#39034;&#24207; MapReduce &#23454;&#29616;&#12290;&#23427;&#22312;&#21333;&#20010;&#36827;&#31243;&#20013;&#19968;&#27425;&#36816;&#34892;&#19968;&#20010; map &#21644; reduce &#20219;&#21153;&#12290;&#25105;&#20204;&#36824;&#20026;&#20320;&#25552;&#20379;&#20102;&#20960;&#20010; MapReduce &#24212;&#29992;&#31243;&#24207;&#65306; <tt>mrapps/wc.go</tt> &#20013;&#30340;&#35789;&#39057;&#32479;&#35745;&#65288;word-count&#65289;&#65292;&#20197;&#21450; <tt>mrapps/indexer.go</tt> &#20013;&#30340;&#25991;&#26412;&#32034;&#24341;&#22120;&#12290;&#20320;&#21487;&#20197;&#25353;&#22914;&#19979;&#26041;&#24335;&#39034;&#24207;&#36816;&#34892;&#35789;&#39057;&#32479;&#35745;&#65306;</font></font></font></p><pre data-imt-pre="1" data-imt-p="1">$ cd ~/6.5840
+$ cd src/main
+$ go build -buildmode=plugin ../mrapps/wc.go
+$ rm mr-out*
+$ go run mrsequential.go wc.so pg*.txt
+$ sort mr-out-0
+A 509
+ABOUT 2
+ACT 8
+ACTRESS 1 
+...
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-pre-whitespace immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">$ cd ~/6.5840
+$ cd src/main
+$ go build -buildmode=plugin ../mrapps/wc.go
+$ rm mr-out*
+$ go run mrsequential.go wc.so pg*.txt
+$ sort mr-out-0
+A 509
+ABOUT 2
+ACT 8
+ACTRESS 1
+...
+</font></font></font></pre>
+(You might
+need to set <tt>LC_COLLATE=C</tt> environment variable for
+sort to produce the above output: <tt>LC_COLLATE=C sort mr-out-0</tt>)
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#65288;&#20320;&#21487;&#33021;&#38656;&#35201;&#35774;&#32622; <tt>LC_COLLATE=C</tt> &#29615;&#22659;&#21464;&#37327;&#25165;&#33021;&#35753; sort &#20135;&#29983;&#19978;&#36848;&#36755;&#20986;&#65306; <tt>LC_COLLATE=C sort mr-out-0</tt> &#65289;</font></font></font><p data-imt-p="1">
+<tt>mrsequential.go</tt> leaves its output in the file <tt>mr-out-0</tt>.
+The input is from the text files named <tt>pg-xxx.txt</tt>.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1"> <tt>mrsequential.go</tt> &#23558;&#20854;&#36755;&#20986;&#23384;&#25918;&#22312;&#25991;&#20214; <tt>mr-out-0</tt> &#20013;&#12290;&#36755;&#20837;&#26469;&#33258;&#21517;&#20026; <tt>pg-xxx.txt</tt> &#30340;&#25991;&#26412;&#25991;&#20214;&#12290;</font></font></font></p><p data-imt-p="1">
+Feel free to borrow code from <tt>mrsequential.go</tt>.
+You should also have a look at <tt>mrapps/wc.go</tt> to see what
+MapReduce application code looks like.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#20320;&#21487;&#20197;&#38543;&#24847;&#20511;&#29992; <tt>mrsequential.go</tt> &#20013;&#30340;&#20195;&#30721;&#12290;&#20320;&#36824;&#24212;&#35813;&#30475;&#19968;&#30475; <tt>mrapps/wc.go</tt> &#65292;&#20102;&#35299;&#19968;&#19979; MapReduce &#24212;&#29992;&#31243;&#24207;&#30340;&#20195;&#30721;&#26159;&#20160;&#20040;&#26679;&#30340;&#12290;</font></font></font></p><p data-imt-p="1">
+For this lab and all the others, we might issue updates to the code we
+provide you. To ensure that you can fetch those updates and easily
+merge them using <tt>git pull</tt>, it's best to leave the code we
+provide in the original files. You can add to the code we provide as
+directed in the lab write-ups; just don't move it. It's OK to put your
+own new functions in new files.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#23545;&#20110;&#26412;&#23454;&#39564;&#20197;&#21450;&#25152;&#26377;&#20854;&#20182;&#23454;&#39564;&#65292;&#25105;&#20204;&#21487;&#33021;&#20250;&#23545;&#25552;&#20379;&#32473;&#20320;&#20204;&#30340;&#20195;&#30721;&#21457;&#24067;&#26356;&#26032;&#12290;&#20026;&#20102;&#30830;&#20445;&#20320;&#33021;&#22815;&#33719;&#21462;&#36825;&#20123;&#26356;&#26032;&#24182;&#20351;&#29992; <tt>git pull</tt> &#36731;&#26494;&#22320;&#21512;&#24182;&#23427;&#20204;&#65292;&#26368;&#22909;&#23558;&#25105;&#20204;&#25552;&#20379;&#30340;&#20195;&#30721;&#20445;&#30041;&#22312;&#21407;&#22987;&#25991;&#20214;&#20013;&#12290;&#20320;&#21487;&#20197;&#25353;&#29031;&#23454;&#39564;&#35828;&#26126;&#20013;&#30340;&#25351;&#24341;&#22312;&#25105;&#20204;&#25552;&#20379;&#30340;&#20195;&#30721;&#22522;&#30784;&#19978;&#36827;&#34892;&#28155;&#21152;&#65307;&#21482;&#26159;&#19981;&#35201;&#31227;&#21160;&#23427;&#12290;&#25226;&#20320;&#33258;&#24049;&#30340;&#26032;&#20989;&#25968;&#25918;&#22312;&#26032;&#25991;&#20214;&#20013;&#26159;&#21487;&#20197;&#30340;&#12290;</font></font></font></p><h3 data-imt-p="1">Your Job <script>g("moderate/hard")</script>(<a class="moderate/hard" href="https://pdos.csail.mit.edu/6.824/labs/guidance.html">moderate/hard</a>)<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#20320;&#30340;&#20219;&#21153;&#65288;&#20013;&#31561;/&#22256;&#38590;&#65289;</font></font></font></h3>
+
+Your job is to implement a distributed MapReduce, consisting of
+two programs, the coordinator and the worker. There will be
+just one coordinator process, and one or more worker processes executing in
+parallel. In a real system the workers would run on a bunch of
+different machines, but for this lab you'll run them all on a single machine.
+The workers will talk to the coordinator via RPC. Each worker process will,
+in a loop, ask
+the coordinator for a task, read the task's input from one or more files,
+execute the task, write the task's output to one
+or more files, and again ask the coordinator for a
+new task. The coordinator should notice if a worker hasn't completed
+its task in a reasonable amount of time (for this lab, use ten
+seconds), and give the same task to a different worker.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#20320;&#30340;&#20219;&#21153;&#26159;&#23454;&#29616;&#19968;&#20010;&#20998;&#24067;&#24335; MapReduce&#65292;&#23427;&#30001;&#20004;&#20010;&#31243;&#24207;&#32452;&#25104;&#65306;&#21327;&#35843;&#22120;&#65288;coordinator&#65289;&#21644;&#24037;&#20316;&#22120;&#65288;worker&#65289;&#12290;&#31995;&#32479;&#20013;&#21482;&#26377;&#19968;&#20010;&#21327;&#35843;&#22120;&#36827;&#31243;&#65292;&#20197;&#21450;&#19968;&#20010;&#25110;&#22810;&#20010;&#24182;&#34892;&#25191;&#34892;&#30340;&#24037;&#20316;&#22120;&#36827;&#31243;&#12290;&#22312;&#30495;&#23454;&#31995;&#32479;&#20013;&#65292;&#24037;&#20316;&#22120;&#20250;&#36816;&#34892;&#22312;&#22810;&#21488;&#19981;&#21516;&#30340;&#26426;&#22120;&#19978;&#65292;&#20294;&#22312;&#26412;&#23454;&#39564;&#20013;&#65292;&#20320;&#23558;&#25226;&#23427;&#20204;&#20840;&#37096;&#36816;&#34892;&#22312;&#21516;&#19968;&#21488;&#26426;&#22120;&#19978;&#12290;&#24037;&#20316;&#22120;&#23558;&#36890;&#36807; RPC &#19982;&#21327;&#35843;&#22120;&#36890;&#20449;&#12290;&#27599;&#20010;&#24037;&#20316;&#22120;&#36827;&#31243;&#20250;&#22312;&#19968;&#20010;&#24490;&#29615;&#20013;&#21521;&#21327;&#35843;&#22120;&#35831;&#27714;&#20219;&#21153;&#65292;&#20174;&#19968;&#20010;&#25110;&#22810;&#20010;&#25991;&#20214;&#20013;&#35835;&#21462;&#20219;&#21153;&#36755;&#20837;&#65292;&#25191;&#34892;&#20219;&#21153;&#65292;&#23558;&#20219;&#21153;&#36755;&#20986;&#20889;&#20837;&#19968;&#20010;&#25110;&#22810;&#20010;&#25991;&#20214;&#65292;&#28982;&#21518;&#20877;&#27425;&#21521;&#21327;&#35843;&#22120;&#35831;&#27714;&#26032;&#20219;&#21153;&#12290;&#21327;&#35843;&#22120;&#24212;&#24403;&#33021;&#22815;&#21457;&#29616;&#26576;&#20010;&#24037;&#20316;&#22120;&#26410;&#22312;&#21512;&#29702;&#26102;&#38388;&#20869;&#65288;&#26412;&#23454;&#39564;&#20013;&#20026;&#21313;&#31186;&#65289;&#23436;&#25104;&#20219;&#21153;&#30340;&#24773;&#20917;&#65292;&#24182;&#23558;&#21516;&#19968;&#20219;&#21153;&#20998;&#37197;&#32473;&#21478;&#19968;&#20010;&#24037;&#20316;&#22120;&#12290;</font></font></font><p data-imt-p="1">
+We have given you a little code to start you off. The "main" routines for
+the coordinator and worker are in <tt>main/mrcoordinator.go</tt> and <tt>main/mrworker.go</tt>;
+don't change these files. You should put your implementation in <tt>mr/coordinator.go</tt>,
+<tt>mr/worker.go</tt>, and <tt>mr/rpc.go</tt>.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#25105;&#20204;&#24050;&#32463;&#32473;&#20320;&#25552;&#20379;&#20102;&#19968;&#20123;&#20837;&#38376;&#20195;&#30721;&#12290;coordinator&#65288;&#21327;&#35843;&#22120;&#65289;&#21644; worker&#65288;&#24037;&#20316;&#32773;&#65289;&#30340; main &#20363;&#31243;&#20301;&#20110; <tt>main/mrcoordinator.go</tt> &#21644; <tt>main/mrworker.go</tt> &#20013;&#65307;&#19981;&#35201;&#20462;&#25913;&#36825;&#20123;&#25991;&#20214;&#12290;&#20320;&#24212;&#35813;&#23558;&#20320;&#30340;&#23454;&#29616;&#25918;&#22312; <tt>mr/coordinator.go</tt> &#12289; <tt>mr/worker.go</tt> &#21644; <tt>mr/rpc.go</tt> &#20013;&#12290;</font></font></font></p><p data-imt-p="1">
+Here's how to run your code on the word-count MapReduce
+application. First, build the word-count plugin:
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#20197;&#19979;&#26159;&#22914;&#20309;&#22312;&#35789;&#39057;&#32479;&#35745;&#65288;word-count&#65289;MapReduce &#24212;&#29992;&#19978;&#36816;&#34892;&#20320;&#30340;&#20195;&#30721;&#12290;&#39318;&#20808;&#65292;&#26500;&#24314; word-count &#25554;&#20214;&#65306;</font></font></font></p><pre data-imt-pre="1" data-imt-p="1" data-imt_insert_failed_reason="same_text">$ cd main
+$ go build -buildmode=plugin ../mrapps/wc.go
+</pre>
+
+In one window, run the coordinator:
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#22312;&#19968;&#20010;&#31383;&#21475;&#20013;&#36816;&#34892;&#21327;&#35843;&#22120;&#65306;</font></font></font><pre data-imt-pre="1" data-imt-p="1" data-imt_insert_failed_reason="same_text">$ rm mr-out*
+$ go run mrcoordinator.go sock123 pg-*.txt
+</pre>
+
+The <tt>sock123</tt> argument specifies a socket on which the
+coordinator receives RPCs from workers.
+The <tt>pg-*.txt</tt> arguments to <tt>mrcoordinator.go</tt> are
+the input files; each file corresponds to one "split", and is the
+input to one Map task.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1"> <tt>sock123</tt> &#21442;&#25968;&#25351;&#23450;&#20102;&#21327;&#35843;&#22120;&#25509;&#25910;&#26469;&#33258;&#24037;&#20316;&#22120;&#30340; RPC &#25152;&#20351;&#29992;&#30340;&#22871;&#25509;&#23383;&#12290; <tt>mrcoordinator.go</tt> &#30340; <tt>pg-*.txt</tt> &#21442;&#25968;&#26159;&#36755;&#20837;&#25991;&#20214;&#65307;&#27599;&#20010;&#25991;&#20214;&#23545;&#24212;&#19968;&#20010;"split"&#65288;&#20998;&#29255;&#65289;&#65292;&#26159;&#19968;&#20010; Map &#20219;&#21153;&#30340;&#36755;&#20837;&#12290;</font></font></font><p data-imt-p="1">
+In one or more other windows, run some workers:
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#22312;&#19968;&#20010;&#25110;&#22810;&#20010;&#20854;&#20182;&#31383;&#21475;&#20013;&#65292;&#36816;&#34892;&#19968;&#20123; worker&#65306;</font></font></font></p><pre data-imt-pre="1" data-imt-p="1" data-imt_insert_failed_reason="same_text">$ go run mrworker.go wc.so sock123
+</pre>
+
+When the workers and coordinator have finished, look at the output
+in <tt>mr-out-*</tt>. When you've completed the lab, the
+sorted union of the output files should match the sequential
+output, like this:
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#24403;&#21508;&#20010; worker &#21644; coordinator &#37117;&#23436;&#25104;&#21518;&#65292;&#26597;&#30475; <tt>mr-out-*</tt> &#20013;&#30340;&#36755;&#20986;&#12290;&#24403;&#20320;&#23436;&#25104;&#26412;&#23454;&#39564;&#26102;&#65292;&#36755;&#20986;&#25991;&#20214;&#32463;&#36807;&#25490;&#24207;&#21512;&#24182;&#21518;&#30340;&#32467;&#26524;&#24212;&#24403;&#19982;&#39034;&#24207;&#25191;&#34892;&#30340;&#36755;&#20986;&#30456;&#21305;&#37197;&#65292;&#22914;&#19979;&#25152;&#31034;&#65306;</font></font></font><pre data-imt-pre="1" data-imt-p="1" data-imt_insert_failed_reason="same_text">$ cat mr-out-* | sort | more
+A 509
+ABOUT 2
+ACT 8
+ACTRESS 1 
+...
+</pre>
+
+<p data-imt-p="1">
+We supply you with all the tests that we'll use to grade your submitted
+lab.  The source code for the tests are in <tt>mr/mr_test.go</tt>.
+You can run the tests in the <tt>src</tt> directory:
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#25105;&#20204;&#25552;&#20379;&#20102;&#25152;&#26377;&#23558;&#29992;&#20110;&#35780;&#21028;&#20320;&#25552;&#20132;&#30340;&#23454;&#39564;&#30340;&#27979;&#35797;&#12290;&#36825;&#20123;&#27979;&#35797;&#30340;&#28304;&#20195;&#30721;&#20301;&#20110; <tt>mr/mr_test.go</tt> &#12290;&#20320;&#21487;&#20197;&#22312; <tt>src</tt> &#30446;&#24405;&#20013;&#36816;&#34892;&#36825;&#20123;&#27979;&#35797;&#65306;</font></font></font></p><pre data-imt-pre="1" data-imt-p="1" data-imt_insert_failed_reason="same_text">$ cd src
+$ make mr
+...
+</pre>
+
+The tests check that the <tt>wc</tt> and <tt>indexer</tt> MapReduce
+applications produce the correct output when given
+the <tt>pg-xxx.txt</tt> files as input. The tests also check that your
+implementation runs the Map and Reduce tasks in parallel, and that
+your implementation recovers from workers that crash while running
+tasks.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#27979;&#35797;&#20250;&#26816;&#26597; <tt>wc</tt> &#21644; <tt>indexer</tt> &#36825;&#20004;&#20010; MapReduce &#24212;&#29992;&#31243;&#24207;&#22312;&#20197; <tt>pg-xxx.txt</tt> &#25991;&#20214;&#20316;&#20026;&#36755;&#20837;&#26102;&#33021;&#21542;&#20135;&#29983;&#27491;&#30830;&#30340;&#36755;&#20986;&#12290;&#27979;&#35797;&#36824;&#20250;&#26816;&#26597;&#20320;&#30340;&#23454;&#29616;&#26159;&#21542;&#24182;&#34892;&#36816;&#34892; Map &#21644; Reduce &#20219;&#21153;&#65292;&#20197;&#21450;&#26159;&#21542;&#33021;&#20174;&#36816;&#34892;&#20219;&#21153;&#26102;&#23849;&#28291;&#30340; worker &#20013;&#24674;&#22797;&#12290;</font></font></font><p data-imt-p="1">
+If you run the tests now, they will hang in the first test:
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#22914;&#26524;&#29616;&#22312;&#36816;&#34892;&#27979;&#35797;&#65292;&#23427;&#20204;&#23558;&#22312;&#31532;&#19968;&#20010;&#27979;&#35797;&#22788;&#25346;&#36215;&#65306;</font></font></font></p>
+
+<pre data-imt-pre="1" data-imt-p="1">$ cd ~/6.5840/src
+$ make mr
+...
+cd mr; go test -v -race 
+=== RUN   TestWc
+...
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-pre-whitespace immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">$ cd ~/6.5840/src
+$ make mr
+...
+cd mr; go test -v -race
+=== RUN   TestWc
+...
+</font></font></font></pre>
+
+<p data-imt-p="1">
+You can change <tt>ret := false</tt> to true in the Done function in <tt>mr/coordinator.go</tt>
+so that the coordinator exits immediately. Then:
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#20320;&#21487;&#20197;&#22312; <tt>mr/coordinator.go</tt> &#30340; Done &#20989;&#25968;&#20013;&#23558; <tt>ret := false</tt> &#25913;&#20026; true&#65292;&#20351;&#21327;&#35843;&#22120;&#31435;&#21363;&#36864;&#20986;&#12290;&#28982;&#21518;&#65306; </font></font></font></p>
+
+<pre data-imt-pre="1" data-imt-p="1">$ make mr
+...
+=== RUN   TestWc
+2026/01/22 14:56:24 reduce created no mr-out-X output files!
+exit status 1
+FAIL    6.5840/mr       4.516s
+make: *** [Makefile:44: mr] Error 1
+$
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-pre-whitespace immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">$ make mr
+...
+=== RUN   TestWc
+2026/01/22 14:56:24 reduce &#26410;&#21019;&#24314;&#20219;&#20309; mr-out-X &#36755;&#20986;&#25991;&#20214;&#65281;
+exit status 1
+FAIL    6.5840/mr       4.516s
+make: *** [Makefile:44: mr] Error 1
+$
+</font></font></font></pre>
+
+<p data-imt-p="1">
+The tests expect to see output in files named <tt>mr-out-X</tt>, one
+for each reduce task. The empty implementations of <tt>mr/coordinator.go</tt>
+and <tt>mr/worker.go</tt> don't produce those files (or do much of
+anything else), so the test fails.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#27979;&#35797;&#26399;&#26395;&#22312;&#21517;&#20026; <tt>mr-out-X</tt> &#30340;&#25991;&#20214;&#20013;&#30475;&#21040;&#36755;&#20986;&#65292;&#27599;&#20010; reduce &#20219;&#21153;&#23545;&#24212;&#19968;&#20010;&#25991;&#20214;&#12290; <tt>mr/coordinator.go</tt> &#21644; <tt>mr/worker.go</tt> &#30340;&#31354;&#23454;&#29616;&#24182;&#19981;&#20250;&#29983;&#25104;&#36825;&#20123;&#25991;&#20214;&#65288;&#20063;&#20960;&#20046;&#19981;&#20570;&#20219;&#20309;&#20854;&#20182;&#20107;&#24773;&#65289;&#65292;&#22240;&#27492;&#27979;&#35797;&#20250;&#22833;&#36133;&#12290;</font></font></font></p><p data-imt-p="1">
+When you've finished, the test output should look like this:
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#23436;&#25104;&#21518;&#65292;&#27979;&#35797;&#36755;&#20986;&#24212;&#22914;&#19979;&#25152;&#31034;&#65306;</font></font></font></p><pre data-imt-pre="1" data-imt-p="1">$ make mr
+...
+=== RUN   TestWc
+--- PASS: TestWc (8.64s)
+=== RUN   TestIndexer
+--- PASS: TestIndexer (5.90s)
+=== RUN   TestMapParallel
+--- PASS: TestMapParallel (7.05s)
+=== RUN   TestReduceParallel
+--- PASS: TestReduceParallel (8.05s)
+=== RUN   TestJobCount
+--- PASS: TestJobCount (10.04s)
+=== RUN   TestEarlyExit
+--- PASS: TestEarlyExit (6.05s)
+=== RUN   TestCrashWorker
+2026/01/22 14:58:14 *re*-starting map ../../main/pg-tom_sawyer.txt 0
+2026/01/22 14:58:14 *re*-starting map ../../main/pg-metamorphosis.txt 2
+2026/01/22 14:58:39 *re*-starting map ../../main/pg-metamorphosis.txt 2
+2026/01/22 14:58:40 map 2 already done
+2026/01/22 14:58:45 *re*-starting reduce 0
+--- PASS: TestCrashWorker (40.18s)
+PASS
+ok      6.5840/mr       86.932s
+$
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-pre-whitespace immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">$ make mr
+...
+=== RUN   TestWc
+--- &#36890;&#36807;&#65306;TestWc (8.64 &#31186;)
+=== &#36816;&#34892; TestIndexer
+--- &#36890;&#36807;&#65306;TestIndexer (5.90 &#31186;)
+=== &#36816;&#34892; TestMapParallel
+--- PASS: TestMapParallel (7.05s)
+=== RUN   TestReduceParallel
+--- PASS: TestReduceParallel (8.05s)
+=== RUN   TestJobCount
+--- PASS: TestJobCount (10.04s)
+=== RUN   TestEarlyExit
+--- PASS: TestEarlyExit (6.05s)
+=== RUN   TestCrashWorker
+2026/01/22 14:58:14 *&#37325;&#26032;*&#21551;&#21160; map ../../main/pg-tom_sawyer.txt 0
+2026/01/22 14:58:14 *&#37325;&#26032;*&#21551;&#21160; map ../../main/pg-metamorphosis.txt 2
+2026/01/22 14:58:39 *&#37325;&#26032;*&#21551;&#21160; map ../../main/pg-metamorphosis.txt 2
+2026/01/22 14:58:40 map 2 &#24050;&#32463;&#23436;&#25104;
+2026/01/22 14:58:45 *&#37325;&#26032;*&#21551;&#21160; reduce 0
+--- PASS: TestCrashWorker (40.18s)
+PASS
+ok      6.5840/mr       86.932s
+$
+</font></font></font></pre>
+
+<p data-imt-p="1">
+Depending on your strategy for terminating worker processes, you may see errors like:
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#26681;&#25454;&#20320;&#32456;&#27490;&#24037;&#20316;&#36827;&#31243;&#30340;&#31574;&#30053;&#65292;&#20320;&#21487;&#33021;&#20250;&#30475;&#21040;&#31867;&#20284;&#20197;&#19979;&#30340;&#38169;&#35823;&#65306;</font></font></font></p><pre data-imt-pre="1" data-imt-p="1" data-imt_insert_failed_reason="same_text">2026/02/11 16:21:32 dialing:dial unix /var/tmp/5840-mr-501: connect: connection refused
+</pre>
+It is fine to see a handful of these messages per test; they arise when the worker is unable to contact the coordinator RPC server after
+the coordinator has exited.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#27599;&#27425;&#27979;&#35797;&#20013;&#20986;&#29616;&#23569;&#37327;&#36825;&#31867;&#28040;&#24687;&#26159;&#27491;&#24120;&#30340;&#65307;&#23427;&#20204;&#26159;&#22312; coordinator &#36864;&#20986;&#21518; worker &#26080;&#27861;&#36830;&#25509;&#21040; coordinator &#30340; RPC &#26381;&#21153;&#22120;&#26102;&#20135;&#29983;&#30340;&#12290;</font></font></font><p>
+</p><h3 data-imt-p="1">A few rules:<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><font class="notranslate" data-immersive-translate-translation-element-mark="1">&nbsp;&nbsp;</font><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-inline-wrapper-theme-none immersive-translate-target-translation-inline-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#19968;&#20123;&#35268;&#21017;&#65306;</font></font></font></h3>
+
+<ul>
+
+<li data-imt-p="1">
+The map phase should divide the intermediate keys into buckets for
+<tt>nReduce</tt> reduce tasks,
+where <tt>nReduce</tt> is the number of reduce tasks -- the argument that
+<tt>main/mrcoordinator.go</tt> passes to <tt>MakeCoordinator()</tt>.
+Each mapper should create <tt>nReduce</tt> intermediate files for
+consumption by the reduce tasks.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">Map &#38454;&#27573;&#24212;&#23558;&#20013;&#38388;&#38190;&#21010;&#20998;&#20026; <tt>nReduce</tt> &#20010; reduce &#20219;&#21153;&#30340;&#26742;&#65288;bucket&#65289;&#65292;&#20854;&#20013; <tt>nReduce</tt> &#26159; reduce &#20219;&#21153;&#30340;&#25968;&#37327;——&#21363; <tt>main/mrcoordinator.go</tt> &#20256;&#36882;&#32473; <tt>MakeCoordinator()</tt> &#30340;&#21442;&#25968;&#12290;&#27599;&#20010; mapper &#24212;&#21019;&#24314; <tt>nReduce</tt> &#20010;&#20013;&#38388;&#25991;&#20214;&#65292;&#20379; reduce &#20219;&#21153;&#20351;&#29992;&#12290;</font></font></font></li><li data-imt-p="1"> The worker implementation should put the output of the X'th
+reduce task in the file <tt>mr-out-X</tt>.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">worker &#30340;&#23454;&#29616;&#24212;&#23558;&#31532; X &#20010; reduce &#20219;&#21153;&#30340;&#36755;&#20986;&#25918;&#20837;&#25991;&#20214; <tt>mr-out-X</tt> &#20013;&#12290;</font></font></font></li><li data-imt-p="1"> A <tt>mr-out-X</tt> file should contain one line per Reduce
+function output. The line should be generated with the Go <tt>"%v %v"</tt>
+format, called with the key and value. Have a look in <tt>main/mrsequential.go</tt>
+for the line commented "this is the correct format".
+The tests will fail if your implementation deviates too much from this format.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#19968;&#20010; <tt>mr-out-X</tt> &#25991;&#20214;&#20013;&#65292;&#27599;&#20010; Reduce &#20989;&#25968;&#30340;&#36755;&#20986;&#24212;&#21344;&#19968;&#34892;&#12290;&#35813;&#34892;&#24212;&#20351;&#29992; Go &#30340; <tt>"%v %v"</tt> &#26684;&#24335;&#29983;&#25104;&#65292;&#24182;&#20256;&#20837;&#38190;&#21644;&#20540;&#20316;&#20026;&#21442;&#25968;&#12290;&#20320;&#21487;&#20197;&#22312; <tt>main/mrsequential.go</tt> &#20013;&#26597;&#30475;&#27880;&#37322;&#20026; "this is the correct format" &#30340;&#37027;&#19968;&#34892;&#12290;&#22914;&#26524;&#20320;&#30340;&#23454;&#29616;&#19982;&#35813;&#26684;&#24335;&#20559;&#24046;&#36807;&#22823;&#65292;&#27979;&#35797;&#23558;&#20250;&#22833;&#36133;&#12290;</font></font></font></li><li data-imt-p="1"> You can modify <tt>mr/worker.go</tt>, <tt>mr/coordinator.go</tt>, and <tt>mr/rpc.go</tt>.
+You can temporarily modify other files for testing, but make sure your code works
+with the original versions; we'll test with the original versions.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#20320;&#21487;&#20197;&#20462;&#25913; <tt>mr/worker.go</tt> &#12289; <tt>mr/coordinator.go</tt> &#21644; <tt>mr/rpc.go</tt> &#12290;&#20320;&#21487;&#20197;&#20020;&#26102;&#20462;&#25913;&#20854;&#20182;&#25991;&#20214;&#29992;&#20110;&#27979;&#35797;&#65292;&#20294;&#35831;&#30830;&#20445;&#20320;&#30340;&#20195;&#30721;&#22312;&#21407;&#22987;&#29256;&#26412;&#19979;&#20063;&#33021;&#27491;&#24120;&#36816;&#34892;&#65307;&#25105;&#20204;&#23558;&#20351;&#29992;&#21407;&#22987;&#29256;&#26412;&#36827;&#34892;&#27979;&#35797;&#12290;</font></font></font></li><li data-imt-p="1"> The worker should put intermediate Map output in files in the current
+directory, where your worker can later read them as input to Reduce tasks.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">worker &#24212;&#23558; Map &#30340;&#20013;&#38388;&#36755;&#20986;&#23384;&#25918;&#21040;&#24403;&#21069;&#30446;&#24405;&#19979;&#30340;&#25991;&#20214;&#20013;&#65292;&#20320;&#30340; worker &#20043;&#21518;&#21487;&#20197;&#23558;&#36825;&#20123;&#25991;&#20214;&#20316;&#20026; Reduce &#20219;&#21153;&#30340;&#36755;&#20837;&#26469;&#35835;&#21462;&#12290;</font></font></font></li><li data-imt-p="1"> <tt>main/mrcoordinator.go</tt> expects <tt>mr/coordinator.go</tt> to implement a
+<tt>Done()</tt> method that returns true when the MapReduce job is completely finished;
+at that point, <tt>mrcoordinator.go</tt> will exit.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1"> <tt>main/mrcoordinator.go</tt> &#26399;&#26395; <tt>mr/coordinator.go</tt> &#23454;&#29616;&#19968;&#20010; <tt>Done()</tt> &#26041;&#27861;&#65292;&#24403; MapReduce &#20219;&#21153;&#23436;&#20840;&#23436;&#25104;&#26102;&#35813;&#26041;&#27861;&#36820;&#22238; true&#65307;&#23626;&#26102;&#65292; <tt>mrcoordinator.go</tt> &#23558;&#20250;&#36864;&#20986;&#12290;</font></font></font></li><li data-imt-p="1"> When the job is completely finished, the worker processes should exit.
+A simple way to implement this is to use the return value from <tt>call()</tt>:
+if the worker fails to contact the coordinator, it can assume that the coordinator has exited
+because the job is done, so the worker can terminate too. Depending on your
+design, you might also find it helpful to have a "please exit" pseudo-task
+that the coordinator can give to workers.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#24403;&#20219;&#21153;&#23436;&#20840;&#23436;&#25104;&#21518;&#65292;worker &#36827;&#31243;&#24212;&#24403;&#36864;&#20986;&#12290;&#19968;&#31181;&#31616;&#21333;&#30340;&#23454;&#29616;&#26041;&#24335;&#26159;&#21033;&#29992; <tt>call()</tt> &#30340;&#36820;&#22238;&#20540;&#65306;&#22914;&#26524; worker &#26080;&#27861;&#32852;&#31995;&#19978; coordinator&#65292;&#23427;&#23601;&#21487;&#20197;&#35748;&#20026; coordinator &#24050;&#22240;&#20219;&#21153;&#23436;&#25104;&#32780;&#36864;&#20986;&#65292;&#22240;&#27492; worker &#20063;&#21487;&#20197;&#32456;&#27490;&#12290;&#26681;&#25454;&#20320;&#30340;&#35774;&#35745;&#65292;&#20320;&#21487;&#33021;&#36824;&#20250;&#21457;&#29616;&#65292;&#35753; coordinator &#21521; worker &#20998;&#37197;&#19968;&#20010;“&#35831;&#36864;&#20986;”&#30340;&#20266;&#20219;&#21153;&#20250;&#24456;&#26377;&#24110;&#21161;&#12290;</font></font></font></li></ul>
+
+<h3 data-imt-p="1">Hints<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><font class="notranslate" data-immersive-translate-translation-element-mark="1">&nbsp;&nbsp;</font><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-inline-wrapper-theme-none immersive-translate-target-translation-inline-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#25552;&#31034;</font></font></font></h3>
+
+<ul>
+
+<li data-imt-p="1">The <a href="https://pdos.csail.mit.edu/6.824/labs/guidance.html">Guidance page</a> has some 
+  tips on developing and debugging.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#25351;&#23548;&#39029;&#38754;&#19978;&#26377;&#19968;&#20123;&#20851;&#20110;&#24320;&#21457;&#21644;&#35843;&#35797;&#30340;&#25216;&#24039;&#12290;</font></font></font></li><li data-imt-p="1"> One way to get started is to modify <tt>mr/worker.go</tt>'s
+<tt>Worker()</tt> to send an RPC to the coordinator asking for a task. Then
+modify the coordinator to respond with the file name of an as-yet-unstarted
+map task. Then modify the worker to read that file and call the
+application Map function, as in <tt>mrsequential.go</tt>.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#19968;&#31181;&#20837;&#38376;&#26041;&#27861;&#26159;&#20462;&#25913; <tt>mr/worker.go</tt> &#30340; <tt>Worker()</tt> &#65292;&#20351;&#20854;&#21521; coordinator &#21457;&#36865;&#19968;&#20010; RPC &#20197;&#35831;&#27714;&#20219;&#21153;&#12290;&#28982;&#21518;&#20462;&#25913; coordinator&#65292;&#35753;&#23427;&#36820;&#22238;&#19968;&#20010;&#23578;&#26410;&#24320;&#22987;&#30340; map &#20219;&#21153;&#30340;&#25991;&#20214;&#21517;&#12290;&#25509;&#30528;&#20462;&#25913; worker&#65292;&#20351;&#20854;&#35835;&#21462;&#35813;&#25991;&#20214;&#24182;&#35843;&#29992;&#24212;&#29992;&#31243;&#24207;&#30340; Map &#20989;&#25968;&#65292;&#23601;&#20687; <tt>mrsequential.go</tt> &#20013;&#37027;&#26679;&#12290;</font></font></font></li><li data-imt-p="1"> The application Map and Reduce functions are loaded at run-time
+using the Go plugin package, from files whose names end in <tt>.so</tt>.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#24212;&#29992;&#31243;&#24207;&#30340; Map &#21644; Reduce &#20989;&#25968;&#26159;&#22312;&#36816;&#34892;&#26102;&#20351;&#29992; Go &#30340; plugin &#21253;&#65292;&#20174;&#25991;&#20214;&#21517;&#20197; <tt>.so</tt> &#32467;&#23614;&#30340;&#25991;&#20214;&#20013;&#21152;&#36733;&#30340;&#12290;</font></font></font></li><li data-imt-p="1"> If you change anything in the <tt>mr/</tt> directory, you will
+probably have to re-build any MapReduce plugins you use, with
+  something like <tt>go build -buildmode=plugin ../mrapps/wc.go</tt>.
+  <tt>make mr</tt> builds the plugins for you.  You can run an
+  individual test using <tt>make RUN="-run Wc" mr`</tt>, which passes
+  "-run Wc" to go <tt>go test</tt>, and selects any test
+  from <tt>mr/mr_test.go</tt> matching Wc.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#22914;&#26524;&#20320;&#26356;&#25913;&#20102; <tt>mr/</tt> &#30446;&#24405;&#20013;&#30340;&#20219;&#20309;&#20869;&#23481;&#65292;&#20320;&#21487;&#33021;&#38656;&#35201;&#37325;&#26032;&#26500;&#24314;&#20320;&#25152;&#20351;&#29992;&#30340; MapReduce &#25554;&#20214;&#65292;&#27604;&#22914;&#20351;&#29992;&#31867;&#20284; <tt>go build -buildmode=plugin ../mrapps/wc.go</tt> &#30340;&#21629;&#20196;&#12290; <tt>make mr</tt> &#20250;&#20026;&#20320;&#26500;&#24314;&#36825;&#20123;&#25554;&#20214;&#12290;&#20320;&#21487;&#20197;&#20351;&#29992; <tt>make RUN="-run Wc" mr`</tt> &#26469;&#36816;&#34892;&#21333;&#20010;&#27979;&#35797;&#65292;&#23427;&#20250;&#21521; go <tt>go test</tt> &#20256;&#36882; "-run Wc" &#21442;&#25968;&#65292;&#24182;&#20174; <tt>mr/mr_test.go</tt> &#20013;&#36873;&#25321;&#21517;&#31216;&#21305;&#37197; Wc &#30340;&#27979;&#35797;&#12290;</font></font></font></li><li data-imt-p="1"> This lab relies on the workers sharing a file system.
+That's straightforward when all workers run on the same machine, but would require a global
+filesystem like GFS if the workers ran on different machines.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#26412;&#23454;&#39564;&#20381;&#36182;&#20110;&#21508;&#20010; worker &#20849;&#20139;&#19968;&#20010;&#25991;&#20214;&#31995;&#32479;&#12290;&#24403;&#25152;&#26377; worker &#37117;&#36816;&#34892;&#22312;&#21516;&#19968;&#21488;&#26426;&#22120;&#19978;&#26102;&#65292;&#36825;&#24456;&#23481;&#26131;&#23454;&#29616;&#65307;&#20294;&#22914;&#26524; worker &#36816;&#34892;&#22312;&#19981;&#21516;&#30340;&#26426;&#22120;&#19978;&#65292;&#23601;&#38656;&#35201;&#19968;&#20010;&#31867;&#20284; GFS &#30340;&#20840;&#23616;&#25991;&#20214;&#31995;&#32479;&#12290;</font></font></font></li><li data-imt-p="1"> A reasonable naming convention for intermediate files is <tt>mr-X-Y</tt>,
+where X is the Map task number, and Y is the reduce task number.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#20013;&#38388;&#25991;&#20214;&#30340;&#19968;&#31181;&#21512;&#29702;&#21629;&#21517;&#32422;&#23450;&#26159; <tt>mr-X-Y</tt> &#65292;&#20854;&#20013; X &#26159; Map &#20219;&#21153;&#30340;&#32534;&#21495;&#65292;Y &#26159; reduce &#20219;&#21153;&#30340;&#32534;&#21495;&#12290;</font></font></font></li><li data-imt-p="1"> The worker's map task code will need a way to store intermediate
+key/value pairs in files in a way that can be correctly read back
+during reduce tasks. One possibility is to use Go's <tt>encoding/json</tt> package. To
+write key/value pairs in JSON format to an open file:
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">worker &#30340; map &#20219;&#21153;&#20195;&#30721;&#38656;&#35201;&#19968;&#31181;&#26041;&#27861;&#23558;&#20013;&#38388;&#38190;/&#20540;&#23545;&#23384;&#20648;&#21040;&#25991;&#20214;&#20013;&#65292;&#20197;&#20415;&#22312; reduce &#20219;&#21153;&#26399;&#38388;&#33021;&#22815;&#27491;&#30830;&#35835;&#22238;&#12290;&#19968;&#31181;&#21487;&#34892;&#30340;&#26041;&#24335;&#26159;&#20351;&#29992; Go &#30340; <tt>encoding/json</tt> &#21253;&#12290;&#33509;&#35201;&#23558;&#38190;/&#20540;&#23545;&#20197; JSON &#26684;&#24335;&#20889;&#20837;&#24050;&#25171;&#24320;&#30340;&#25991;&#20214;&#65306;</font></font></font><pre data-imt-pre="1" data-imt-p="1">  enc := json.NewEncoder(file)
+  for _, kv := ... {
+    err := enc.Encode(&amp;kv)
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-pre-whitespace immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">enc := json.NewEncoder(file)
+for _, kv := ... {
+err := enc.Encode(&amp;kv)
+</font></font></font></pre>
+and to read such a file back:
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#20197;&#21450;&#35835;&#21462;&#36825;&#26679;&#30340;&#25991;&#20214;&#65306;</font></font></font><pre data-imt-pre="1" data-imt-p="1">  dec := json.NewDecoder(file)
+  for {
+    var kv KeyValue
+    if err := dec.Decode(&amp;kv); err != nil {
+      break
+    }
+    kva = append(kva, kv)
+  }
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-pre-whitespace immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">dec := json.NewDecoder(file)
+for {
+var kv KeyValue
+if err := dec.Decode(&amp;kv); err != nil {
+break
+    }
+kva = append(kva, kv)
+  }
+</font></font></font></pre>
+
+</li><li data-imt-p="1"> The map part of your worker can use the <tt>ihash(key)</tt> function
+(in <tt>worker.go</tt>) to pick the reduce task for a given key.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#20320;&#32534;&#20889;&#30340; worker &#20013; map &#37096;&#20998;&#21487;&#20197;&#20351;&#29992; <tt>ihash(key)</tt> &#20989;&#25968;&#65288;&#20301;&#20110; <tt>worker.go</tt> &#20013;&#65289;&#26469;&#20026;&#32473;&#23450;&#30340; key &#36873;&#25321;&#23545;&#24212;&#30340; reduce &#20219;&#21153;&#12290;</font></font></font></li><li data-imt-p="1"> You can steal some code from <tt>mrsequential.go</tt> for reading
+Map input files, for sorting intermedate key/value pairs between the
+Map and Reduce, and for storing Reduce output in files.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#20320;&#21487;&#20197;&#20174; <tt>mrsequential.go</tt> &#20013;&#20511;&#37492;&#19968;&#20123;&#20195;&#30721;&#65292;&#29992;&#20110;&#35835;&#21462; Map &#30340;&#36755;&#20837;&#25991;&#20214;&#12289;&#22312; Map &#21644; Reduce &#20043;&#38388;&#23545;&#20013;&#38388;&#30340; key/value &#23545;&#36827;&#34892;&#25490;&#24207;&#65292;&#20197;&#21450;&#23558; Reduce &#30340;&#36755;&#20986;&#23384;&#20648;&#21040;&#25991;&#20214;&#20013;&#12290;</font></font></font></li><li data-imt-p="1"> The coordinator, as an RPC server, will be concurrent; don't forget
+to lock shared data.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">coordinator &#20316;&#20026; RPC &#26381;&#21153;&#22120;&#23558;&#26159;&#24182;&#21457;&#30340;&#65292;&#19981;&#35201;&#24536;&#35760;&#23545;&#20849;&#20139;&#25968;&#25454;&#21152;&#38145;&#12290;</font></font></font></li><li data-imt-p="1"> Workers will sometimes need to wait, e.g. reduces can't start
+until the last map has finished. One possibility is for workers to
+periodically ask the coordinator for work, sleeping
+with <tt>time.Sleep()</tt> between each request. Another possibility
+is for the relevant RPC handler in the coordinator to have a loop that
+waits, either with <tt>time.Sleep()</tt> or <tt>sync.Cond</tt>. Go
+runs the handler for each RPC in its own thread, so the fact that one
+handler is waiting needn't prevent the coordinator from processing other
+RPCs.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">worker &#26377;&#26102;&#38656;&#35201;&#31561;&#24453;&#65292;&#20363;&#22914;&#22312;&#26368;&#21518;&#19968;&#20010; map &#20219;&#21153;&#23436;&#25104;&#20043;&#21069;&#65292;reduce &#20219;&#21153;&#26080;&#27861;&#24320;&#22987;&#12290;&#19968;&#31181;&#20570;&#27861;&#26159; worker &#21608;&#26399;&#24615;&#22320;&#21521; coordinator &#35831;&#27714;&#20219;&#21153;&#65292;&#24182;&#22312;&#27599;&#27425;&#35831;&#27714;&#20043;&#38388;&#29992; <tt>time.Sleep()</tt> &#20241;&#30496;&#12290;&#21478;&#19968;&#31181;&#20570;&#27861;&#26159;&#35753; coordinator &#20013;&#30456;&#20851;&#30340; RPC &#22788;&#29702;&#31243;&#24207;&#22312;&#24490;&#29615;&#20013;&#31561;&#24453;&#65292;&#21487;&#20197;&#20351;&#29992; <tt>time.Sleep()</tt> &#25110; <tt>sync.Cond</tt> &#12290;Go &#20250;&#20026;&#27599;&#20010; RPC &#22312;&#20854;&#29420;&#31435;&#30340;&#32447;&#31243;&#20013;&#36816;&#34892;&#22788;&#29702;&#31243;&#24207;&#65292;&#22240;&#27492;&#26576;&#20010;&#22788;&#29702;&#31243;&#24207;&#22788;&#20110;&#31561;&#24453;&#29366;&#24577;&#24182;&#19981;&#20250;&#22952;&#30861; coordinator &#22788;&#29702;&#20854;&#20182; RPC&#12290;</font></font></font></li><li data-imt-p="1"> The coordinator can't reliably distinguish between crashed workers,
+workers that are alive but have stalled for some reason,
+and workers that are executing but too slowly to be useful.
+The best you can do is have the coordinator wait for
+some amount of time, and then give up and re-issue the task to
+a different worker. For this lab, have the coordinator wait for
+ten seconds; after that the coordinator should assume the worker has
+died (of course, it might not have).
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#21327;&#35843;&#22120;&#65288;coordinator&#65289;&#26080;&#27861;&#21487;&#38752;&#22320;&#21306;&#20998;&#24050;&#23849;&#28291;&#30340; worker&#12289;&#20173;&#28982;&#23384;&#27963;&#20294;&#22240;&#26576;&#31181;&#21407;&#22240;&#38519;&#20837;&#20572;&#28382;&#30340; worker&#65292;&#20197;&#21450;&#27491;&#22312;&#25191;&#34892;&#20294;&#36895;&#24230;&#22826;&#24930;&#20197;&#33268;&#20110;&#27627;&#26080;&#29992;&#22788;&#30340; worker&#12290;&#20320;&#33021;&#20570;&#30340;&#26368;&#22909;&#30340;&#21150;&#27861;&#23601;&#26159;&#35753;&#21327;&#35843;&#22120;&#31561;&#24453;&#19968;&#27573;&#26102;&#38388;&#65292;&#28982;&#21518;&#25918;&#24323;&#24182;&#23558;&#20219;&#21153;&#37325;&#26032;&#20998;&#37197;&#32473;&#21478;&#19968;&#20010; worker&#12290;&#22312;&#26412;&#23454;&#39564;&#20013;&#65292;&#35753;&#21327;&#35843;&#22120;&#31561;&#24453;&#21313;&#31186;&#38047;&#65307;&#36229;&#36807;&#36825;&#20010;&#26102;&#38388;&#21518;&#65292;&#21327;&#35843;&#22120;&#24212;&#20551;&#23450;&#35813; worker &#24050;&#32463;&#27515;&#20129;&#65288;&#24403;&#28982;&#65292;&#23427;&#21487;&#33021;&#24182;&#27809;&#26377;&#27515;&#65289;&#12290;</font></font></font></li><li data-imt-p="1"> If you choose to implement Backup Tasks (Section 3.6), note that we test that your code doesn't
+    schedule extraneous tasks when workers execute tasks without crashing.  Backup tasks should only
+    be scheduled after some relatively long period of time (e.g., 10s).
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#22914;&#26524;&#20320;&#36873;&#25321;&#23454;&#29616;&#22791;&#20221;&#20219;&#21153;&#65288;Backup Tasks&#65292;&#35265;&#31532; 3.6 &#33410;&#65289;&#65292;&#35831;&#27880;&#24847;&#25105;&#20204;&#20250;&#27979;&#35797;&#20320;&#30340;&#20195;&#30721;&#22312; worker &#39034;&#21033;&#25191;&#34892;&#20219;&#21153;&#32780;&#27809;&#26377;&#23849;&#28291;&#30340;&#24773;&#20917;&#19979;&#19981;&#20250;&#35843;&#24230;&#22810;&#20313;&#30340;&#20219;&#21153;&#12290;&#22791;&#20221;&#20219;&#21153;&#21482;&#24212;&#22312;&#32463;&#36807;&#19968;&#27573;&#30456;&#23545;&#36739;&#38271;&#30340;&#26102;&#38388;&#65288;&#20363;&#22914; 10 &#31186;&#65289;&#20043;&#21518;&#25165;&#34987;&#35843;&#24230;&#12290;</font></font></font></li><li data-imt-p="1"> To test crash recovery, you can use the <tt>mrapps/crash.go</tt>
+application plugin. It randomly exits in the Map and Reduce functions.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#20026;&#20102;&#27979;&#35797;&#23849;&#28291;&#24674;&#22797;&#65292;&#20320;&#21487;&#20197;&#20351;&#29992; <tt>mrapps/crash.go</tt> &#24212;&#29992;&#31243;&#24207;&#25554;&#20214;&#12290;&#23427;&#20250;&#22312; Map &#21644; Reduce &#20989;&#25968;&#20013;&#38543;&#26426;&#36864;&#20986;&#12290;</font></font></font></li><li data-imt-p="1"> To ensure that nobody observes partially written files in the presence of
+    crashes, the MapReduce paper mentions the trick of using a temporary file
+    and atomically renaming it once it is completely written. You can use
+    <tt>ioutil.TempFile</tt> (or <tt>os.CreateTemp</tt> if you are running
+    Go 1.17 or later) to create a temporary file and <tt>os.Rename</tt>
+    to atomically rename it.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#20026;&#20102;&#30830;&#20445;&#22312;&#21457;&#29983;&#23849;&#28291;&#26102;&#27809;&#26377;&#20154;&#20250;&#35266;&#23519;&#21040;&#37096;&#20998;&#20889;&#20837;&#30340;&#25991;&#20214;&#65292;MapReduce &#35770;&#25991;&#20013;&#25552;&#21040;&#20102;&#19968;&#31181;&#25216;&#24039;&#65306;&#20351;&#29992;&#20020;&#26102;&#25991;&#20214;&#65292;&#24182;&#22312;&#25991;&#20214;&#23436;&#20840;&#20889;&#23436;&#21518;&#21407;&#23376;&#24615;&#22320;&#37325;&#21629;&#21517;&#23427;&#12290;&#20320;&#21487;&#20197;&#20351;&#29992; <tt>ioutil.TempFile</tt> &#65288;&#22914;&#26524;&#20320;&#36816;&#34892;&#30340;&#26159; Go 1.17 &#25110;&#26356;&#39640;&#29256;&#26412;&#65292;&#21017;&#20351;&#29992; <tt>os.CreateTemp</tt> &#65289;&#26469;&#21019;&#24314;&#20020;&#26102;&#25991;&#20214;&#65292;&#24182;&#20351;&#29992; <tt>os.Rename</tt> &#26469;&#21407;&#23376;&#24615;&#22320;&#37325;&#21629;&#21517;&#23427;&#12290;</font></font></font></li><li data-imt-p="1">Go RPC sends only struct fields whose names start with capital letters.
+  Sub-structures must also have capitalized field names.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">Go RPC &#21482;&#20250;&#21457;&#36865;&#21517;&#31216;&#20197;&#22823;&#20889;&#23383;&#27597;&#24320;&#22836;&#30340;&#32467;&#26500;&#20307;&#23383;&#27573;&#12290;&#23376;&#32467;&#26500;&#20307;&#30340;&#23383;&#27573;&#21517;&#20063;&#24517;&#39035;&#20197;&#22823;&#20889;&#23383;&#27597;&#24320;&#22836;&#12290;</font></font></font></li><li data-imt-p="1"> When calling the RPC <tt>call()</tt> function, the
+reply struct should contain all default values. RPC calls
+should look like this:
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#35843;&#29992; RPC <tt>call()</tt> &#20989;&#25968;&#26102;&#65292;reply &#32467;&#26500;&#20307;&#24212;&#21253;&#21547;&#25152;&#26377;&#40664;&#35748;&#20540;&#12290;RPC &#35843;&#29992;&#24212;&#22914;&#19979;&#25152;&#31034;&#65306;</font></font></font><pre data-imt-pre="1" data-imt-p="1">  reply := SomeType{}
+  call(..., &amp;reply)
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-pre-whitespace immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">reply := SomeType{}
+call(..., &amp;reply)
+</font></font></font></pre>
+without setting any fields of reply before the call. If you
+pass reply structures that have non-default fields, the RPC
+system may silently return incorrect values.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#22312;&#35843;&#29992;&#20043;&#21069;&#19981;&#35201;&#35774;&#32622; reply &#30340;&#20219;&#20309;&#23383;&#27573;&#12290;&#22914;&#26524;&#20320;&#20256;&#20837;&#30340; reply &#32467;&#26500;&#20013;&#21253;&#21547;&#38750;&#40664;&#35748;&#20540;&#30340;&#23383;&#27573;&#65292;RPC &#31995;&#32479;&#21487;&#33021;&#20250;&#38745;&#40664;&#36820;&#22238;&#38169;&#35823;&#30340;&#20540;&#12290;</font></font></font></li></ul>
+
+<h3 data-imt-p="1">No-credit challenge exercises<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#19981;&#35745;&#23398;&#20998;&#30340;&#25361;&#25112;&#32451;&#20064;</font></font></font></h3>
+
+<p class="challenge" data-imt-p="1">
+Implement your own MapReduce application (see examples in <tt>mrapps/*</tt>), e.g., Distributed
+Grep (Section 2.3 of the MapReduce paper).
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#23454;&#29616;&#20320;&#33258;&#24049;&#30340; MapReduce &#24212;&#29992;&#65288;&#21442;&#35265; <tt>mrapps/*</tt> &#20013;&#30340;&#31034;&#20363;&#65289;&#65292;&#20363;&#22914;&#20998;&#24067;&#24335; Grep&#65288;MapReduce &#35770;&#25991;&#30340; 2.3 &#33410;&#65289;&#12290;</font></font></font></p><p class="challenge" data-imt-p="1">
+Get your MapReduce coordinator and workers to run on separate machines, as they would in practice.
+You will need to set up your RPCs to communicate over TCP/IP instead of Unix sockets (see
+the commented out line in <tt>Coordinator.server()</tt>), and read/write files using a shared file
+system. For example, you can <tt>ssh</tt> into multiple 
+<a href="http://kb.mit.edu/confluence/display/istcontrib/Getting+Started+with+Athena">Athena cluster</a>
+machines at MIT, which use 
+<a href="http://kb.mit.edu/confluence/display/istcontrib/AFS+at+MIT+-+An+Introduction">AFS</a>
+to share files; or you could rent a couple AWS instances and use 
+<a href="https://aws.amazon.com/s3/">S3</a> for storage.
+
+
+
+
+
+
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#35753;&#20320;&#30340; MapReduce &#21327;&#35843;&#22120;&#65288;coordinator&#65289;&#21644;&#24037;&#20316;&#33410;&#28857;&#65288;worker&#65289;&#20687;&#23454;&#38469;&#29983;&#20135;&#29615;&#22659;&#20013;&#37027;&#26679;&#36816;&#34892;&#22312;&#19981;&#21516;&#30340;&#26426;&#22120;&#19978;&#12290;&#20320;&#38656;&#35201;&#23558; RPC &#35774;&#32622;&#20026;&#36890;&#36807; TCP/IP &#32780;&#38750; Unix &#22871;&#25509;&#23383;&#36827;&#34892;&#36890;&#20449;&#65288;&#21442;&#35265; <tt>Coordinator.server()</tt> &#20013;&#34987;&#27880;&#37322;&#25481;&#30340;&#37027;&#34892;&#20195;&#30721;&#65289;&#65292;&#24182;&#20351;&#29992;&#20849;&#20139;&#25991;&#20214;&#31995;&#32479;&#26469;&#35835;&#20889;&#25991;&#20214;&#12290;&#20363;&#22914;&#65292;&#20320;&#21487;&#20197; <tt>ssh</tt> &#21040; MIT &#30340;&#22810;&#21488; Athena &#38598;&#32676;&#26426;&#22120;&#19978;&#65292;&#36825;&#20123;&#26426;&#22120;&#20351;&#29992; AFS &#26469;&#20849;&#20139;&#25991;&#20214;&#65307;&#25110;&#32773;&#20320;&#20063;&#21487;&#20197;&#31199;&#29992;&#20960;&#21488; AWS &#23454;&#20363;&#65292;&#24182;&#20351;&#29992; S3 &#36827;&#34892;&#23384;&#20648;&#12290;</font></font></font></p></body><div id="immersive-translate-popup" style="all: initial"><template shadowrootmode="open"><div id="mount" style="display: block;"><div class="imt-fb-container right imt-notranslate  " data-theme="light" style="z-index: 2147483637; pointer-events: none; right: 0px; top: 1076px; display: flex;"><div class="btn-animate" style="transform: translateX(-5px); opacity: 0.7; pointer-events: all; filter: blur(0px); transition: opacity 280ms cubic-bezier(0.16, 1, 0.3, 1), filter 280ms cubic-bezier(0.16, 1, 0.3, 1); will-change: opacity, filter;"><div class="imt-fb-btn imt-fb-more-button imt-fb-side" style="pointer-events: all;"><div class=" btn-animate" style="position: relative; pointer-events: all; display: inline-block;"><div><svg class="imt-fb-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M9.65332 13.3477C10.4097 13.4245 11 14.0632 11 14.8398V18.8398L10.9922 18.9932C10.9205 19.6992 10.3593 20.2604 9.65332 20.332L9.5 20.3398H5.5C4.72334 20.3398 4.08461 19.7496 4.00781 18.9932L4 18.8398V14.8398C4 14.0114 4.67157 13.3398 5.5 13.3398H9.5L9.65332 13.3477ZM18.6533 13.3477C19.4097 13.4245 20 14.0632 20 14.8398V18.8398L19.9922 18.9932C19.9205 19.6992 19.3593 20.2604 18.6533 20.332L18.5 20.3398H14.5C13.7233 20.3398 13.0846 19.7496 13.0078 18.9932L13 18.8398V14.8398C13 14.0114 13.6716 13.3398 14.5 13.3398H18.5L18.6533 13.3477ZM5.5 14.3398C5.22386 14.3398 5 14.5637 5 14.8398V18.8398C5 19.116 5.22386 19.3398 5.5 19.3398H9.5C9.77614 19.3398 10 19.116 10 18.8398V14.8398C10 14.5637 9.77614 14.3398 9.5 14.3398H5.5ZM14.5 14.3398C14.2239 14.3398 14 14.5637 14 14.8398V18.8398C14 19.116 14.2239 19.3398 14.5 19.3398H18.5C18.7761 19.3398 19 19.116 19 18.8398V14.8398C19 14.5637 18.7761 14.3398 18.5 14.3398H14.5ZM9.65332 4.34766C10.4097 4.42445 11 5.06318 11 5.83984V9.83984L10.9922 9.99316C10.9205 10.6992 10.3593 11.2604 9.65332 11.332L9.5 11.3398H5.5C4.72334 11.3398 4.08461 10.7496 4.00781 9.99316L4 9.83984V5.83984C4 5.01142 4.67157 4.33984 5.5 4.33984H9.5L9.65332 4.34766ZM16.1484 3.18848C16.2521 2.83834 16.7479 2.83834 16.8516 3.18848L17.3281 4.79785C17.5079 5.40507 17.9648 5.89104 18.5596 6.1084L20.0576 6.65625C20.3786 6.77361 20.3785 7.22732 20.0576 7.34473L18.5596 7.89258C17.9648 8.10991 17.5079 8.59598 17.3281 9.20312L16.8516 10.8125C16.7479 11.1626 16.2521 11.1626 16.1484 10.8125L15.6719 9.20312C15.4921 8.59598 15.0352 8.10991 14.4404 7.89258L12.9424 7.34473C12.6215 7.22732 12.6214 6.77361 12.9424 6.65625L14.4404 6.1084C15.0352 5.89104 15.4921 5.40507 15.6719 4.79785L16.1484 3.18848ZM5.5 5.33984C5.22386 5.33984 5 5.5637 5 5.83984V9.83984C5 10.116 5.22386 10.3398 5.5 10.3398H9.5C9.77614 10.3398 10 10.116 10 9.83984V5.83984C10 5.5637 9.77614 5.33984 9.5 5.33984H5.5Z" fill="#ED6D8F"></path></svg></div></div></div></div><div hidden="" class="imt-no-events " id="manga-button" style="position: relative;"><div class=" " style="position: relative; pointer-events: all; display: inline-block;"><div><div class="imt-manga-button btn-animate" style="opacity: 0.7; transform: translateX(2px);"><div style="position: relative;"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" fill="none" style="vertical-align: middle;"><path d="M14.8853 4.92364C14.8853 4.92364 16.3905 10.4362 22.6668 4C22.6668 4 20.3381 10.8907 25.3364 10.0843C25.3364 10.0843 22.0563 15.6994 29 18.0599C29 18.0599 22.9934 19.306 21.1617 28C21.1617 28 17.7679 24.54 14.8853 27.3549C14.8853 27.3549 13.3233 23.5724 7.33097 26.27C7.33097 26.27 10.1141 20.6549 4.83179 21.0507C4.83179 21.0507 7.16057 18.8955 3 15.9047C3 15.9047 7.50137 16.1833 6.33697 11.7117C6.33697 11.7117 10.0005 12.3421 8.66576 6.82957C8.65156 6.81491 12.4855 9.80574 14.8853 4.92364Z" fill="#ED6D8F"></path><path d="M20.8599 13.7022C20.885 13.1361 20.9543 12.5713 20.9959 12.0052C21.0337 11.568 20.8107 11.2794 20.3876 11.18C20.0759 11.1013 19.7508 11.0867 19.433 11.137C19.1951 11.1945 18.9542 11.2396 18.7113 11.2721C18.2403 11.3028 17.9973 11.5275 17.9796 11.988C17.977 12.0833 17.9596 12.1777 17.928 12.268C17.3034 13.9102 16.6774 15.5499 16.0503 17.1873C16.0301 17.2401 16.0062 17.2904 15.9671 17.3776C15.7291 16.8975 15.4281 16.4898 15.2745 15.9986C14.8073 14.5152 14.3186 13.033 13.8312 11.5594C13.6826 11.1112 13.3489 10.9344 12.8754 11.0216C12.7889 11.0365 12.7008 11.0398 12.6134 11.0314C12.2241 10.9938 11.8311 11.0404 11.4623 11.1677C11.0946 11.2991 10.9498 11.557 11.0152 11.9254C11.0428 12.0371 11.0643 12.1503 11.0795 12.2643C11.1223 13.1902 11.1777 14.1087 11.2054 15.0321C11.257 16.7992 11.2117 18.5651 11.0858 20.3284C11.0644 20.6354 11.0304 20.9424 11.0228 21.2494C11.0115 21.6092 11.1613 21.7811 11.5266 21.8143C11.9976 21.8573 12.4711 21.8708 12.9421 21.9088C13.0309 21.9201 13.121 21.9003 13.1962 21.8528C13.2714 21.8053 13.3268 21.7334 13.3527 21.6497C13.3996 21.5394 13.4252 21.4216 13.4282 21.3022C13.4295 20.8258 13.4207 20.3493 13.4081 19.8741C13.393 19.3264 13.3917 18.7763 13.3438 18.231C13.2857 17.5839 13.266 16.934 13.2847 16.2847C13.2847 16.2466 13.291 16.2073 13.2985 16.1312C13.3338 16.2024 13.3514 16.2356 13.3665 16.2712C13.9017 17.5228 14.3617 18.8037 14.7443 20.1074C14.7928 20.2421 14.7928 20.3889 14.7443 20.5237C14.6322 20.8196 14.7141 21.037 14.9659 21.1377C15.4445 21.3268 15.9331 21.4926 16.4155 21.6731C16.4865 21.7033 16.566 21.7091 16.6408 21.6895C16.7157 21.6698 16.7815 21.6259 16.8273 21.565C16.9085 21.4643 16.9743 21.3526 17.0225 21.2335C17.0537 21.1374 17.0798 21.0399 17.1006 20.9412C17.3185 20.2425 17.5653 19.5499 17.7517 18.8438C17.9785 17.9723 18.2624 17.1158 18.6018 16.2798C18.6201 16.2439 18.6411 16.2094 18.6647 16.1766C18.6761 16.2319 18.6761 16.254 18.6761 16.2761C18.6345 17.59 18.5955 18.8978 18.5501 20.2056C18.5363 20.5949 18.491 20.9829 18.4809 21.3722C18.4721 21.705 18.6207 21.8708 18.9557 21.9002C19.4355 21.9432 19.9191 21.9592 20.4002 21.9973C20.4888 22.0079 20.5784 21.9875 20.653 21.9399C20.7277 21.8922 20.7827 21.8203 20.8082 21.7369C20.8531 21.6305 20.8766 21.5167 20.8775 21.4017C20.88 20.7668 20.8674 20.132 20.8674 19.4971C20.8662 19.2846 20.8687 19.0722 20.8523 18.8622C20.8158 18.3968 20.7264 17.9314 20.7339 17.4685C20.7515 16.2122 20.8044 14.9572 20.8599 13.7022Z" fill="white"></path></svg></div></div></div></div></div><div style="display: flex; align-items: center; flex-direction: row; gap: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none" style="display: block; opacity: 0;"><g clip-path="url(#clip0_38845_9816)"><path d="M7 14C5.14348 14 3.36301 13.2625 2.05025 11.9497C0.737498 10.637 0 8.85652 0 7C0 5.14348 0.737498 3.36301 2.05025 2.05025C3.36301 0.737498 5.14348 0 7 0C8.85652 0 10.637 0.737498 11.9497 2.05025C13.2625 3.36301 14 5.14348 14 7C14 8.85652 13.2625 10.637 11.9497 11.9497C10.637 13.2625 8.85652 14 7 14Z" fill="#B1B1B1" fill-opacity="0.4"></path><path d="M6.11754 7.00052L4.18254 5.06452C4.06786 4.94725 4.00406 4.78948 4.00498 4.62546C4.00589 4.46144 4.07145 4.3044 4.18744 4.18841C4.30342 4.07243 4.46046 4.00687 4.62448 4.00595C4.7885 4.00503 4.94627 4.06884 5.06354 4.18352L6.99954 6.11852L8.93554 4.18352C8.99315 4.1246 9.06188 4.07771 9.13774 4.04554C9.2136 4.01337 9.29508 3.99656 9.37748 3.9961C9.45988 3.99564 9.54155 4.01153 9.61777 4.04285C9.69398 4.07417 9.76323 4.1203 9.82149 4.17857C9.87976 4.23683 9.92589 4.30608 9.95721 4.38229C9.98853 4.45851 10.0044 4.54018 10.004 4.62258C10.0035 4.70497 9.98669 4.78646 9.95452 4.86232C9.92235 4.93818 9.87545 5.00691 9.81654 5.06452L7.88154 7.00052L9.81654 8.93652C9.93122 9.05379 9.99502 9.21155 9.99411 9.37557C9.99319 9.5396 9.92763 9.69664 9.81164 9.81262C9.69566 9.9286 9.53862 9.99417 9.3746 9.99508C9.21058 9.996 9.05281 9.9322 8.93554 9.81752L6.99954 7.88252L5.06354 9.81752C5.00593 9.87643 4.93721 9.92333 4.86135 9.9555C4.78549 9.98767 4.704 10.0045 4.6216 10.0049C4.5392 10.0054 4.45753 9.9895 4.38131 9.95818C4.3051 9.92686 4.23585 9.88073 4.17759 9.82247C4.11932 9.7642 4.0732 9.69496 4.04188 9.61874C4.01056 9.54253 3.99467 9.46086 3.99513 9.37846C3.99559 9.29606 4.01239 9.21457 4.04456 9.13871C4.07673 9.06285 4.12363 8.99413 4.18254 8.93652L6.11754 7.00052Z" fill="white"></path></g><defs><clippath id="clip0_38845_9816"><rect width="14" height="14" fill="white"></rect></clippath></defs></svg><div style="position: relative;"><div class="imt-fb-btn right btn-animate  " dir="ltr" style="opacity: 0.7;"><div class=" " style="position: relative; pointer-events: all; display: inline-block;"><div><div class="imt-fb-btn-content"><svg class="imt-fb-logo-img imt-fb-logo-img-big-bg" width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M0 14C0 6.26801 6.26801 0 14 0C21.732 0 28 6.26801 28 14C28 21.732 21.732 28 14 28C6.26801 28 0 21.732 0 14Z" fill="#ED6D8F"></path><path d="M7.30921 15.6381C7.53044 15.6381 7.70979 15.8175 7.70979 16.0387V19.0088C7.70979 19.934 8.45993 20.684 9.38526 20.684H11.7557C11.9769 20.684 12.1562 20.8634 12.1562 21.0846V22.152C12.1562 22.3732 11.9769 22.5526 11.7557 22.5526H9.38526C7.42782 22.5526 5.84099 20.966 5.84099 19.0088V16.0387C5.84099 15.8175 6.02034 15.6381 6.24157 15.6381H7.30921ZM18.9876 12.6944C19.1515 12.6944 19.2989 12.7943 19.3597 12.9466L22.9711 22.0036C23.076 22.2667 22.8822 22.5526 22.599 22.5526H21.4672C21.3016 22.5526 21.153 22.4506 21.0934 22.2961L20.2724 20.1673C20.2128 20.0128 20.0643 19.9108 19.8986 19.9108H16.7508C16.5852 19.9108 16.4366 20.0128 16.377 20.1673L15.556 22.2961C15.4964 22.4506 15.3478 22.5526 15.1822 22.5526H14.0504C13.7672 22.5526 13.5734 22.2667 13.6783 22.0036L17.2897 12.9466C17.3505 12.7943 17.4979 12.6944 17.6618 12.6944H18.9876ZM18.5116 15.6017C18.4456 15.4308 18.2038 15.4308 18.1378 15.6017L17.3016 17.7699C17.251 17.9011 17.3478 18.0423 17.4885 18.0423H19.1609C19.3016 18.0423 19.3984 17.9012 19.3478 17.7699L18.5116 15.6017ZM9.69589 5.30028C9.79943 4.8999 10.368 4.89991 10.4715 5.30028L11.1086 7.76368C11.3244 8.59845 11.9396 9.27221 12.7513 9.56299L14.9019 10.3334C15.2559 10.4602 15.2559 10.9608 14.9019 11.0876L12.7513 11.8581C11.9396 12.1489 11.3244 12.8226 11.1086 13.6574L10.4715 16.1208C10.368 16.5212 9.79943 16.5212 9.69589 16.1208L9.05884 13.6574C8.84297 12.8226 8.22786 12.1489 7.41615 11.8581L5.26548 11.0876C4.91151 10.9608 4.91151 10.4602 5.26548 10.3334L7.41615 9.56299C8.22786 9.27221 8.84297 8.59844 9.05884 7.76368L9.69589 5.30028ZM18.0064 6.20485C19.9639 6.20485 21.5507 7.79145 21.5507 9.74861V11.281C21.5507 11.5022 21.3713 11.6816 21.1501 11.6816H20.0825C19.8612 11.6816 19.6819 11.5022 19.6819 11.281V9.74861C19.6819 8.82341 18.9318 8.07338 18.0064 8.07338H14.4343C14.2131 8.07338 14.0337 7.89403 14.0337 7.6728V6.60543C14.0337 6.3842 14.2131 6.20486 14.4343 6.20485H18.0064Z" fill="white"></path></svg><svg class="imt-float-ball-translated" width="11" height="11" viewBox="0 0 11 11" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="5.5" cy="5.5" r="5.5" fill="#68CD52"></circle><path d="M1.40857 5.87858L2.24148 5.18962L4.15344 6.64214C4.15344 6.64214 6.33547 4.15566 9.00658 2.48145L9.32541 2.87514C9.32541 2.87514 6.28665 5.55844 4.71735 9.07881L1.40857 5.87858Z" fill="white"></path></svg></div></div></div></div><div title="Close Floating Button" class="imt-fb-close-button btn-animate" style="opacity: 0; pointer-events: none; filter: blur(1px); transition: opacity 110ms cubic-bezier(0.4, 0, 1, 1), filter 110ms cubic-bezier(0.4, 0, 1, 1); will-change: opacity, filter;"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none"><g clip-path="url(#clip0_38845_9816)"><path d="M7 14C5.14348 14 3.36301 13.2625 2.05025 11.9497C0.737498 10.637 0 8.85652 0 7C0 5.14348 0.737498 3.36301 2.05025 2.05025C3.36301 0.737498 5.14348 0 7 0C8.85652 0 10.637 0.737498 11.9497 2.05025C13.2625 3.36301 14 5.14348 14 7C14 8.85652 13.2625 10.637 11.9497 11.9497C10.637 13.2625 8.85652 14 7 14Z" fill="#B1B1B1" fill-opacity="0.4"></path><path d="M6.11754 7.00052L4.18254 5.06452C4.06786 4.94725 4.00406 4.78948 4.00498 4.62546C4.00589 4.46144 4.07145 4.3044 4.18744 4.18841C4.30342 4.07243 4.46046 4.00687 4.62448 4.00595C4.7885 4.00503 4.94627 4.06884 5.06354 4.18352L6.99954 6.11852L8.93554 4.18352C8.99315 4.1246 9.06188 4.07771 9.13774 4.04554C9.2136 4.01337 9.29508 3.99656 9.37748 3.9961C9.45988 3.99564 9.54155 4.01153 9.61777 4.04285C9.69398 4.07417 9.76323 4.1203 9.82149 4.17857C9.87976 4.23683 9.92589 4.30608 9.95721 4.38229C9.98853 4.45851 10.0044 4.54018 10.004 4.62258C10.0035 4.70497 9.98669 4.78646 9.95452 4.86232C9.92235 4.93818 9.87545 5.00691 9.81654 5.06452L7.88154 7.00052L9.81654 8.93652C9.93122 9.05379 9.99502 9.21155 9.99411 9.37557C9.99319 9.5396 9.92763 9.69664 9.81164 9.81262C9.69566 9.9286 9.53862 9.99417 9.3746 9.99508C9.21058 9.996 9.05281 9.9322 8.93554 9.81752L6.99954 7.88252L5.06354 9.81752C5.00593 9.87643 4.93721 9.92333 4.86135 9.9555C4.78549 9.98767 4.704 10.0045 4.6216 10.0049C4.5392 10.0054 4.45753 9.9895 4.38131 9.95818C4.3051 9.92686 4.23585 9.88073 4.17759 9.82247C4.11932 9.7642 4.0732 9.69496 4.04188 9.61874C4.01056 9.54253 3.99467 9.46086 3.99513 9.37846C3.99559 9.29606 4.01239 9.21457 4.04456 9.13871C4.07673 9.06285 4.12363 8.99413 4.18254 8.93652L6.11754 7.00052Z" fill="white"></path></g><defs><clippath id="clip0_38845_9816"><rect width="14" height="14" fill="white"></rect></clippath></defs></svg></div></div><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none" style="display: none; opacity: 0;"><g clip-path="url(#clip0_38845_9816)"><path d="M7 14C5.14348 14 3.36301 13.2625 2.05025 11.9497C0.737498 10.637 0 8.85652 0 7C0 5.14348 0.737498 3.36301 2.05025 2.05025C3.36301 0.737498 5.14348 0 7 0C8.85652 0 10.637 0.737498 11.9497 2.05025C13.2625 3.36301 14 5.14348 14 7C14 8.85652 13.2625 10.637 11.9497 11.9497C10.637 13.2625 8.85652 14 7 14Z" fill="#B1B1B1" fill-opacity="0.4"></path><path d="M6.11754 7.00052L4.18254 5.06452C4.06786 4.94725 4.00406 4.78948 4.00498 4.62546C4.00589 4.46144 4.07145 4.3044 4.18744 4.18841C4.30342 4.07243 4.46046 4.00687 4.62448 4.00595C4.7885 4.00503 4.94627 4.06884 5.06354 4.18352L6.99954 6.11852L8.93554 4.18352C8.99315 4.1246 9.06188 4.07771 9.13774 4.04554C9.2136 4.01337 9.29508 3.99656 9.37748 3.9961C9.45988 3.99564 9.54155 4.01153 9.61777 4.04285C9.69398 4.07417 9.76323 4.1203 9.82149 4.17857C9.87976 4.23683 9.92589 4.30608 9.95721 4.38229C9.98853 4.45851 10.0044 4.54018 10.004 4.62258C10.0035 4.70497 9.98669 4.78646 9.95452 4.86232C9.92235 4.93818 9.87545 5.00691 9.81654 5.06452L7.88154 7.00052L9.81654 8.93652C9.93122 9.05379 9.99502 9.21155 9.99411 9.37557C9.99319 9.5396 9.92763 9.69664 9.81164 9.81262C9.69566 9.9286 9.53862 9.99417 9.3746 9.99508C9.21058 9.996 9.05281 9.9322 8.93554 9.81752L6.99954 7.88252L5.06354 9.81752C5.00593 9.87643 4.93721 9.92333 4.86135 9.9555C4.78549 9.98767 4.704 10.0045 4.6216 10.0049C4.5392 10.0054 4.45753 9.9895 4.38131 9.95818C4.3051 9.92686 4.23585 9.88073 4.17759 9.82247C4.11932 9.7642 4.0732 9.69496 4.04188 9.61874C4.01056 9.54253 3.99467 9.46086 3.99513 9.37846C3.99559 9.29606 4.01239 9.21457 4.04456 9.13871C4.07673 9.06285 4.12363 8.99413 4.18254 8.93652L6.11754 7.00052Z" fill="white"></path></g><defs><clippath id="clip0_38845_9816"><rect width="14" height="14" fill="white"></rect></clippath></defs></svg></div><div class="btn-animate" style="margin-top: 10px; transform: translateX(-5px); opacity: 0; pointer-events: none; filter: blur(1px); transition: opacity 110ms cubic-bezier(0.4, 0, 1, 1), filter 110ms cubic-bezier(0.4, 0, 1, 1); will-change: opacity, filter;"><div class=" btn-animate" style="position: relative; pointer-events: none; display: inline-block;"><div><div class="imt-fb-round-button"><svg class="imt-fb-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" style="width: 24px; height: 24px;"><path d="M17 8.66797H11.375" stroke="#ED6D8F" stroke-linecap="round" stroke-linejoin="round"></path><path d="M12.625 15.332L7 15.332" stroke="#ED6D8F" stroke-linecap="round" stroke-linejoin="round"></path><path d="M15.125 17C16.1605 17 17 16.1605 17 15.125C17 14.0895 16.1605 13.25 15.125 13.25C14.0895 13.25 13.25 14.0895 13.25 15.125C13.25 16.1605 14.0895 17 15.125 17Z" stroke="#ED6D8F" stroke-linecap="round" stroke-linejoin="round"></path><path d="M8.875 10.75C9.91053 10.75 10.75 9.91053 10.75 8.875C10.75 7.83947 9.91053 7 8.875 7C7.83947 7 7 7.83947 7 8.875C7 9.91053 7.83947 10.75 8.875 10.75Z" stroke="#ED6D8F" stroke-linecap="round" stroke-linejoin="round"></path><rect x="3" y="4" width="18" height="16" rx="1.66667" stroke="#ED6D8F"></rect></svg></div></div></div></div><div class="btn-animate" style="margin-top: 10px; transform: translateX(-5px); opacity: 0; pointer-events: none; filter: blur(1px); transition: opacity 110ms cubic-bezier(0.4, 0, 1, 1), filter 110ms cubic-bezier(0.4, 0, 1, 1); will-change: opacity, filter;"><div class=" btn-animate" style="position: relative; pointer-events: none; display: inline-block;"><div><div class="imt-fb-round-button"><svg class="imt-fb-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none"><mask id="mask0_43829_2633" maskUnits="userSpaceOnUse" x="0" y="0" width="20" height="20" style="mask-type: alpha;"><rect width="20" height="20" fill="#D9D9D9"></rect></mask><g mask="url(#mask0_43829_2633)"><path d="M9.99546 12.2609C10.1639 12.2609 10.305 12.2055 10.4188 12.0946C10.5327 11.9838 10.5896 11.8441 10.5896 11.6755C10.5896 11.507 10.5342 11.3659 10.4234 11.2521C10.3124 11.1384 10.1727 11.0815 10.0042 11.0815C9.83574 11.0815 9.69463 11.1369 9.58088 11.2478C9.46699 11.3586 9.41005 11.4982 9.41005 11.6667C9.41005 11.8353 9.46546 11.9765 9.5763 12.0903C9.68727 12.204 9.82699 12.2609 9.99546 12.2609ZM9.99546 10.1936C10.148 10.1936 10.2771 10.1418 10.3828 10.0382C10.4886 9.93443 10.5415 9.80568 10.5415 9.65193V5.20318C10.5415 5.04943 10.49 4.92075 10.3871 4.81713C10.2844 4.71338 10.1567 4.66151 10.0042 4.66151C9.85171 4.66151 9.72261 4.71338 9.61692 4.81713C9.51109 4.92075 9.45817 5.04943 9.45817 5.20318V9.65193C9.45817 9.80568 9.50963 9.93443 9.61255 10.0382C9.71532 10.1418 9.84296 10.1936 9.99546 10.1936ZM5.03192 14.5846L3.55359 16.063C3.34262 16.2739 3.10032 16.3221 2.82671 16.2076C2.55324 16.093 2.4165 15.8864 2.4165 15.5878V3.75776C2.4165 3.38262 2.54602 3.06554 2.80505 2.80651C3.06407 2.54748 3.38116 2.41797 3.7563 2.41797H16.2434C16.6185 2.41797 16.9356 2.54748 17.1946 2.80651C17.4537 3.06554 17.5832 3.38262 17.5832 3.75776V13.2448C17.5832 13.62 17.4537 13.9371 17.1946 14.1961C16.9356 14.4551 16.6185 14.5846 16.2434 14.5846H5.03192ZM4.58317 13.5013H16.2434C16.3075 13.5013 16.3663 13.4746 16.4196 13.4211C16.4731 13.3678 16.4998 13.309 16.4998 13.2448V3.75776C16.4998 3.69359 16.4731 3.63484 16.4196 3.58151C16.3663 3.52804 16.3075 3.5013 16.2434 3.5013H3.7563C3.69213 3.5013 3.63338 3.52804 3.58005 3.58151C3.52657 3.63484 3.49984 3.69359 3.49984 3.75776V14.5928L4.58317 13.5013Z" fill="#ED6D8F"></path></g></svg></div></div></div></div><div hidden="" id="immersive-translate-popup-overlay" class="immersive-translate-popup-overlay"><div class="immersive-translate-popup-wrapper" style="position: fixed; bottom: 30px; right: 65px;"></div></div></div></div></template></div></html>
