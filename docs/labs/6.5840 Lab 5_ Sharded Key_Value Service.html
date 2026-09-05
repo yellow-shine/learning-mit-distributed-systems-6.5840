@@ -1,0 +1,1509 @@
+<!DOCTYPE html>
+<!-- saved from url=(0053)https://pdos.csail.mit.edu/6.824/labs/lab-shard1.html -->
+<html data-immersive-translate-page-theme="light" imt-state="dual" imt-translation-dir="ltr" imt-trans-position="after"><head><meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+		<link rel="stylesheet" href="./6.5840 Lab 5_ Sharded Key_Value Service_files/style.css" type="text/css">
+		<script src="./6.5840 Lab 5_ Sharded Key_Value Service_files/guidance.js"></script>
+		<title>6.5840 Lab 5: Sharded Key/Value Service</title>
+	<style data-id="immersive-translate-default-injected-css">:root {
+  --immersive-translate-theme-underline-borderColor: #72ece9;
+  --immersive-translate-theme-nativeUnderline-borderColor: #72ece9;
+  --immersive-translate-theme-nativeDashed-borderColor: #72ece9;
+  --immersive-translate-theme-nativeDotted-borderColor: #72ece9;
+  --immersive-translate-theme-highlight-backgroundColor: #ffff00;
+  --immersive-translate-theme-dashed-borderColor: #59c1bd;
+  --immersive-translate-theme-blockquote-borderColor: #cc3355;
+  --immersive-translate-theme-thinDashed-borderColor: #ff374f;
+  --immersive-translate-theme-dashedBorder-borderColor: #94a3b8;
+  --immersive-translate-theme-dashedBorder-borderRadius: 0;
+  --immersive-translate-theme-solidBorder-borderColor: #94a3b8;
+  --immersive-translate-theme-solidBorder-borderRadius: 0;
+  --immersive-translate-theme-dotted-borderColor: #94a3b8;
+  --immersive-translate-theme-wavy-borderColor: #72ece9;
+  --immersive-translate-theme-dividingLine-borderColor: #94a3b8;
+  --immersive-translate-theme-grey-textColor: #2f4f4f;
+  --immersive-translate-theme-marker-backgroundColor: #fbda41;
+  --immersive-translate-theme-marker-backgroundColor-rgb: 251, 218, 65;
+  --immersive-translate-theme-marker2-backgroundColor: #ffff00;
+  --immersive-translate-theme-background-backgroundColor: #dbafaf;
+  --immersive-translate-theme-background-backgroundColor-rgb: 219, 175, 175;
+  --immersive-translate-theme-background-backgroundOpacity: 12;
+  --immersive-translate-theme-opacity-opacity: 10;
+}
+
+[imt-state="dual"] .immersive-translate-target-translation-pre-whitespace {
+  white-space: pre-wrap !important;
+}
+
+[imt-state="dual"] .immersive-translate-pdf-target-container {
+  position: absolute;
+  background-color: #fff;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+    sans-serif;
+  top: 0;
+  width: 600px;
+  height: 100%;
+  z-index: 2;
+  line-height: 1.3;
+  font-size: 16px;
+}
+[imt-state="dual"] .immersive-translate-target-wrapper[dir="rtl"] {
+  text-align: right;
+}
+
+.immersive-translate-target-wrapper {
+  font-feature-settings: normal;
+}
+
+[imt-state="dual"]
+  .immersive-translate-pdf-target-container
+  .immersive-translate-target-wrapper {
+  color: rgb(0, 0, 0);
+  white-space: normal;
+  position: absolute;
+}
+
+[imt-state="dual"]
+  .immersive-translate-pdf-target-container
+  .immersive-translate-target-wrapper
+  font {
+  color: inherit;
+  white-space: inherit;
+  position: unset;
+}
+
+[imt-state="translation"] .immersive-translate-target-wrapper > br {
+  display: none;
+}
+
+[imt-state="translation"]
+  .immersive-translate-target-translation-block-wrapper {
+  margin: 0 !important;
+}
+
+[imt-state="dual"] .immersive-translate-target-translation-block-wrapper {
+  margin: var(--immersive-translate-translation-spacing, 8px) 0 8px !important;
+  display: inline-block;
+}
+
+.imt-mouse-hover-power-user-compare
+  .immersive-translate-target-translation-block-wrapper {
+  background-color: rgba(226, 60, 124, 0.12);
+  padding: 6px;
+}
+
+[imt-trans-position="before"]
+  .immersive-translate-target-translation-block-wrapper {
+  display: block;
+}
+
+[imt-trans-position="before"]
+  .immersive-translate-target-translation-block-wrapper {
+  margin-top: 0 !important;
+  margin-bottom: var(--immersive-translate-translation-spacing, 8px) !important;
+}
+
+[imt-state="dual"] .immersive-translate-target-translation-pdf-block-wrapper {
+  margin: 0 !important;
+  display: inline-block;
+}
+
+[imt-state="dual"] .immersive-translate-target-translation-theme-grey-inner,
+[imt-state="translation"] .immersive-translate-target-translation-theme-grey-inner,
+[imt-state="translation"]
+  [data-imt-translation-only="1"].immersive-translate-target-inner.immersive-translate-target-translation-theme-grey {
+  color: var(--immersive-translate-theme-grey-textColor);
+}
+
+[imt-state="dual"]
+  .immersive-translate-target-translation-theme-underline-inner {
+  border-bottom: 1px solid
+    var(--immersive-translate-theme-underline-borderColor) !important;
+}
+
+[imt-state="dual"]
+  .immersive-translate-target-translation-theme-nativeUnderline-inner,
+[imt-state="translation"]
+  .immersive-translate-target-translation-theme-nativeUnderline-inner,
+[imt-state="translation"]
+  [data-imt-translation-only="1"].immersive-translate-target-inner.immersive-translate-target-translation-theme-nativeUnderline {
+  text-decoration: underline !important;
+  text-decoration-color: var(
+    --immersive-translate-theme-nativeUnderline-borderColor
+  ) !important;
+}
+
+[imt-state="dual"]
+  .immersive-translate-target-translation-block-wrapper-theme-dashedBorder {
+  border: 1px dashed var(--immersive-translate-theme-dashedBorder-borderColor) !important;
+  border-radius: var(
+    --immersive-translate-theme-dashedBorder-borderRadius
+  ) !important;
+  padding: 6px;
+  margin-top: 2px;
+  display: inline-block;
+}
+
+[imt-state="dual"]
+  .immersive-translate-target-translation-inline-wrapper-theme-dashedBorder {
+  border: 1px dashed var(--immersive-translate-theme-dashedBorder-borderColor) !important;
+  border-radius: var(
+    --immersive-translate-theme-dashedBorder-borderRadius
+  ) !important;
+  padding: 2px;
+}
+
+[imt-state="dual"]
+  .immersive-translate-target-translation-block-wrapper-theme-solidBorder {
+  border: 1px solid var(--immersive-translate-theme-solidBorder-borderColor) !important;
+  border-radius: var(
+    --immersive-translate-theme-solidBorder-borderRadius
+  ) !important;
+  padding: 6px;
+  margin-top: 2px;
+  display: inline-block;
+}
+
+[imt-state="dual"]
+  .immersive-translate-target-translation-inline-wrapper-theme-solidBorder {
+  border: 1px solid var(--immersive-translate-theme-solidBorder-borderColor) !important;
+  border-radius: var(
+    --immersive-translate-theme-solidBorder-borderRadius
+  ) !important;
+  padding: 2px;
+}
+
+[imt-state="dual"]
+  .immersive-translate-target-translation-theme-nativeDashed-inner,
+[imt-state="translation"]
+  .immersive-translate-target-translation-theme-nativeDashed-inner,
+[imt-state="translation"]
+  [data-imt-translation-only="1"].immersive-translate-target-inner.immersive-translate-target-translation-theme-nativeDashed {
+  text-decoration: underline !important;
+  text-decoration-color: var(
+    --immersive-translate-theme-nativeDashed-borderColor
+  ) !important;
+  text-decoration-style: dashed !important;
+}
+
+[imt-state="dual"]
+  .immersive-translate-target-translation-theme-thinDashed-inner {
+  border-bottom: 1px dashed
+    var(--immersive-translate-theme-thinDashed-borderColor) !important;
+}
+
+[imt-state="dual"] .immersive-translate-target-translation-theme-dotted-inner {
+  background-image: linear-gradient(
+    to right,
+    var(--immersive-translate-theme-dotted-borderColor) 30%,
+    rgba(255, 255, 255, 0) 0%
+  );
+  background-position: bottom;
+  background-size: 5px 1px;
+  background-repeat: repeat-x;
+  padding-bottom: 3px;
+}
+
+[imt-state="dual"]
+  .immersive-translate-target-translation-theme-nativeDotted-inner,
+[imt-state="translation"]
+  .immersive-translate-target-translation-theme-nativeDotted-inner,
+[imt-state="translation"]
+  [data-imt-translation-only="1"].immersive-translate-target-inner.immersive-translate-target-translation-theme-nativeDotted {
+  text-decoration: underline !important;
+  text-decoration-color: var(
+    --immersive-translate-theme-nativeDotted-borderColor
+  ) !important;
+  text-decoration-style: dotted !important;
+}
+
+[imt-state="dual"] .immersive-translate-target-translation-theme-wavy-inner,
+[imt-state="translation"] .immersive-translate-target-translation-theme-wavy-inner,
+[imt-state="translation"]
+  [data-imt-translation-only="1"].immersive-translate-target-inner.immersive-translate-target-translation-theme-wavy {
+  text-decoration: underline !important;
+  text-decoration-color: var(
+    --immersive-translate-theme-wavy-borderColor
+  ) !important;
+  text-decoration-style: wavy !important;
+}
+
+[imt-state="dual"] .immersive-translate-target-translation-theme-dashed-inner {
+  background: linear-gradient(
+      to right,
+      var(--immersive-translate-theme-dashed-borderColor) 0%,
+      var(--immersive-translate-theme-dashed-borderColor) 50%,
+      transparent 50%,
+      transparent 100%
+    )
+    repeat-x left bottom;
+  background-size: 8px 2px;
+  padding-bottom: 2px;
+}
+
+[imt-state="dual"]
+  .immersive-translate-target-translation-block-wrapper-theme-dividingLine::before {
+  content: "";
+  display: block;
+  max-width: 80px;
+  width: 10%;
+  border-top: 1px dashed
+    var(--immersive-translate-theme-dividingLine-borderColor);
+  padding-top: 8px;
+}
+
+[imt-state="dual"]
+  .immersive-translate-target-translation-inline-wrapper-theme-dividingLine::before {
+  content: "";
+  border-left: 1px dashed
+    var(--immersive-translate-theme-dividingLine-borderColor);
+  max-height: 16px;
+  height: 16px;
+  padding-left: 8px;
+}
+
+[imt-state="dual"]
+  .immersive-translate-target-translation-theme-highlight-inner,
+[imt-state="translation"]
+  .immersive-translate-target-translation-theme-highlight-inner,
+[imt-state="translation"]
+  [data-imt-translation-only="1"].immersive-translate-target-inner.immersive-translate-target-translation-theme-highlight {
+  background: var(--immersive-translate-theme-highlight-backgroundColor);
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+[imt-state="dual"]
+  .immersive-translate-target-translation-block-wrapper-theme-marker {
+  line-height: 1.5em;
+}
+
+[imt-state="dual"] .immersive-translate-target-translation-theme-marker2-inner {
+  font-weight: bold;
+  text-shadow: 10px 0px 3px
+      var(--immersive-translate-theme-marker2-backgroundColor),
+    16px 3px 9px var(--immersive-translate-theme-marker2-backgroundColor),
+    2px 0px 6px var(--immersive-translate-theme-marker2-backgroundColor),
+    -12px 0px 12px var(--immersive-translate-theme-marker2-backgroundColor) !important;
+}
+
+[imt-state="dual"] .immersive-translate-target-translation-theme-marker-inner {
+  /* TODO: add more texture */
+  background: linear-gradient(
+    to right,
+    rgba(var(--immersive-translate-theme-marker-backgroundColor-rgb), 0.1),
+    rgba(var(--immersive-translate-theme-marker-backgroundColor-rgb), 0.9) 3%,
+    rgba(var(--immersive-translate-theme-marker-backgroundColor-rgb), 0.9) 35%,
+    rgba(var(--immersive-translate-theme-marker-backgroundColor-rgb), 0.9) 70%,
+    rgba(var(--immersive-translate-theme-marker-backgroundColor-rgb), 0.8) 95%,
+    rgba(var(--immersive-translate-theme-marker-backgroundColor-rgb), 0.3)
+  );
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+[imt-state="dual"] .immersive-translate-target-translation-theme-weakening,
+[imt-state="translation"] .immersive-translate-target-translation-theme-weakening,
+[imt-state="translation"]
+  [data-imt-translation-only="1"].immersive-translate-target-inner.immersive-translate-target-translation-theme-weakening {
+  opacity: 0.618 !important;
+}
+
+[imt-state="dual"] .immersive-translate-target-translation-theme-italic,
+[imt-state="translation"] .immersive-translate-target-translation-theme-italic,
+[imt-state="translation"]
+  [data-imt-translation-only="1"].immersive-translate-target-inner.immersive-translate-target-translation-theme-italic {
+  font-style: italic !important;
+}
+
+[imt-state="dual"] .immersive-translate-target-translation-theme-bold,
+[imt-state="translation"] .immersive-translate-target-translation-theme-bold,
+[imt-state="translation"]
+  [data-imt-translation-only="1"].immersive-translate-target-inner.immersive-translate-target-translation-theme-bold {
+  font-weight: bold !important;
+}
+
+[imt-state="dual"]
+  .immersive-translate-target-translation-block-wrapper-theme-paper {
+  margin: 8px 0;
+  box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+  padding: 16px 32px;
+  display: inline-block;
+}
+
+[imt-state="dual"]
+  .immersive-translate-target-translation-block-wrapper-theme-blockquote {
+  border-left: 4px solid var(--immersive-translate-theme-blockquote-borderColor) !important;
+  padding-left: 12px !important;
+  margin-top: 4px;
+  margin-bottom: 4px;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  display: inline-block;
+}
+
+[imt-state="dual"] .immersive-translate-target-translation-theme-mask-inner {
+  filter: blur(5px) !important;
+  transition: filter 0.3s ease !important;
+  border-radius: 10px;
+  display: inline-block;
+}
+
+[data-immersive-translate-root-translation-theme="none"]
+  .immersive-translate-target-translation-theme-mask-inner {
+  filter: none !important;
+}
+
+[data-immersive-translate-root-translation-theme="mask"]
+  .immersive-translate-target-inner {
+  filter: blur(5px) !important;
+  transition: filter 0.3s ease !important;
+  border-radius: 10px;
+  display: inline-block;
+}
+
+/* opacity theme start */
+
+[imt-state="dual"] .immersive-translate-target-translation-theme-opacity-inner {
+  filter: opacity(
+    calc(var(--immersive-translate-theme-opacity-opacity) * 1%)
+  ) !important;
+  transition: filter 0.3s ease !important;
+  border-radius: 10px;
+  display: inline-block;
+}
+
+[data-immersive-translate-root-translation-theme="none"]
+  .immersive-translate-target-translation-theme-opacity-inner {
+  filter: none !important;
+}
+[data-immersive-translate-root-translation-theme="opacity"]
+  .immersive-translate-target-inner,
+[imt-state="dual"]
+  .immersive-translate-target-translation-theme-opacity-inner:hover {
+  filter: opacity(
+    calc(var(--immersive-translate-theme-opacity-opacity) * 1%)
+  ) !important;
+  transition: filter 0.3s ease !important;
+  border-radius: 10px;
+  display: inline-block;
+}
+
+[imt-state="dual"]
+  .immersive-translate-target-translation-theme-opacity-inner:hover {
+  filter: none !important;
+}
+
+[imt-state="dual"]
+  .immersive-translate-target-translation-theme-mask-inner:hover {
+  filter: none !important;
+}
+[data-immersive-translate-root-translation-theme="opacity"]
+  .immersive-translate-target-inner:hover {
+  filter: none !important;
+}
+
+[data-immersive-translate-root-translation-theme="mask"]
+  .immersive-translate-target-inner:hover {
+  filter: none !important;
+}
+
+/* opacity theme end */
+
+/* background theme start */
+[imt-state="dual"]
+  .immersive-translate-target-translation-block-wrapper-theme-background {
+  margin: 8px 0;
+  background: rgba(
+    var(--immersive-translate-theme-background-backgroundColor-rgb),
+    calc(var(--immersive-translate-theme-background-backgroundOpacity) * 1%)
+  );
+  border-radius: 4px;
+  box-shadow: unset !important;
+  padding: 12px;
+  display: inline-block;
+}
+[imt-state="dual"]
+  .immersive-translate-target-translation-theme-background-inner {
+  background: rgba(
+    var(--immersive-translate-theme-background-backgroundColor-rgb),
+    calc(var(--immersive-translate-theme-background-backgroundOpacity) * 1%)
+  );
+  padding-left: 6px;
+  padding-right: 6px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+[imt-state="dual"]
+  .immersive-translate-target-translation-block-wrapper
+  .immersive-translate-target-translation-theme-background-inner {
+  background: unset;
+  padding-left: unset;
+  padding-right: unset;
+}
+/* background theme end */
+
+/* vertical css , please remain it in the last one. */
+.immersive-translate-target-translation-vertical-block-wrapper {
+  margin: 0px 8px !important;
+}
+
+.immersive-translate-text {
+  font-size: 15px !important;
+}
+
+.immersive-translate-error-toast {
+  position: fixed;
+  top: 5%;
+  z-index: 99999999;
+  left: 0;
+  right: 0;
+  margin: auto;
+  max-width: 300px;
+  padding: 16px;
+  border-radius: 12px;
+  background-color: rgba(0, 0, 0, 0.8);
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+@media all and (min-width: 750px) {
+  .immersive-translate-error-toast {
+    max-width: 400px;
+  }
+}
+
+.immersive-translate-clickable-button {
+  cursor: pointer;
+}
+
+.immersive-translate-help-button {
+  cursor: pointer;
+}
+
+.immersive-translate-loading-text:before {
+  content: "...";
+}
+
+/* dark mode for loading */
+
+@media only screen and (prefers-color-scheme: dark) {
+  .immersive-translate-loading {
+    border: 2px rgba(255, 255, 255, 0.25) solid !important;
+    border-top: 2px rgba(255, 255, 255, 1) solid !important;
+  }
+}
+
+.immersive-translate-error-wrapper {
+  position: relative;
+  display: inline-flex;
+  padding: 6px;
+  margin: 0 12px;
+  white-space: nowrap;
+  font-size: 0.9em;
+}
+[lang="zh-CN"] .immersive-translate-error-wrapper {
+  font-size: 0.75em;
+}
+[lang="zh-TW"] .immersive-translate-error-wrapper {
+  font-size: 0.75em;
+}
+
+.immersive-translate-tooltip {
+  position: relative;
+  display: inline-flex;
+  /* little indicater to indicate it's hoverable */
+}
+
+.immersive-translate-tooltip-content {
+  /* here's the magic */
+  position: absolute;
+  z-index: 100000000000;
+
+  left: 50%;
+  bottom: 0;
+  transform: translate(-50%, 110%);
+  line-height: 1;
+  /* and add a small left margin */
+
+  /* basic styles */
+  width: max-content;
+  max-width: 250px;
+  word-wrap: break-word;
+  white-space: pre-line;
+  padding: 10px;
+  border-radius: 10px;
+  background: #000c;
+  color: #fff;
+  text-align: center;
+  font-size: 14px;
+  display: none;
+  /* hide by default */
+}
+
+.immersive-translate-tooltip:hover .immersive-translate-tooltip-content {
+  display: inline-block;
+}
+
+.immersive-translate-tooltip:hover + .immersive-translate-tooltip-content {
+  display: inline-block;
+}
+
+.immersive-translate-tooltip-content-table {
+  left: unset !important;
+  bottom: unset !important;
+  transform: translate(-10%, 50%) !important;
+}
+
+.immersive-translate-tooltip:hover:before {
+  display: inline-block;
+}
+
+.immersive-translate-loading-spinner {
+  vertical-align: middle !important;
+  width: 10px !important;
+  height: 10px !important;
+  display: inline-block !important;
+  margin: 0 4px !important;
+  border: 2px rgba(221, 244, 255, 0.6) solid !important;
+  border-top: 2px rgba(0, 0, 0, 0.375) solid !important;
+  border-left: 2px rgba(0, 0, 0, 0.375) solid !important;
+  border-radius: 50% !important;
+  padding: 0 !important;
+  -webkit-animation: immersive-translate-loading-animation 0.6s infinite linear !important;
+  animation: immersive-translate-loading-animation 0.6s infinite linear !important;
+}
+
+@-webkit-keyframes immersive-translate-loading-animation {
+  from {
+    -webkit-transform: rotate(0deg);
+  }
+
+  to {
+    -webkit-transform: rotate(359deg);
+  }
+}
+
+@keyframes immersive-translate-loading-animation {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(359deg);
+  }
+}
+
+.imt-image-status {
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--bg-2, #fff);
+  font-size: 14px;
+}
+</style><style data-id="immersive-translate-user-custom-style">:root {
+
+.immersive-translate-target-inner { font-family: inherit; }
+
+
+.immersive-translate-target-inner { font-family: inherit; }
+}
+</style><style data-id="immersive-translate-dynamic-injected-css">.immersive-translate-target-wrapper[dir='rtl'] {text-align: right;display:block!important;}
+[dir='rtl'] .immersive-translate-target-wrapper:not([dir]) {text-align:left;direction:ltr;}
+[imt-translation-dir=rtl] [data-imt-translation-only] {text-align:right;}
+.immersive-translate-target-wrapper {word-break:break-word; user-select:text; font-feature-settings:normal;}
+[imt-state=dual] .immersive-translate-target-translation-block-wrapper-theme-dividingLine::before {display:block;}
+[imt-trans-position=before] .immersive-translate-target-translation-block-wrapper {display:block!important;}
+[data-imt-clamp-unlocked] {scrollbar-width: none;-ms-overflow-style: none;}
+[data-imt-clamp-unlocked]::-webkit-scrollbar {display: none;}
+table [data-imt-split-divider] {display: none !important;}
+</style></head>
+	<body>
+		<div align="center">
+			<h2 data-imt-p="1"><a href="https://pdos.csail.mit.edu/6.824/index.html">6.5840</a> - Spring 2026<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">6.5840 - 2026 &#24180;&#26149;&#23395;</font></font></font></h2>
+			<h1 data-imt-p="1">6.5840 Lab 5: Sharded Key/Value Service<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">6.5840 &#23454;&#39564; 5&#65306;&#20998;&#29255;&#38190;/&#20540;&#26381;&#21153;</font></font></font></h1>
+
+			<p data-imt-p="1">
+  <b><a href="https://pdos.csail.mit.edu/6.824/labs/collab.html">Collaboration policy</a></b> //
+  <b><a href="https://pdos.csail.mit.edu/6.824/labs/submit.html">Submit lab</a></b> //
+  <b><a href="https://pdos.csail.mit.edu/6.824/labs/go.html">Setup Go</a></b> //
+  <b><a href="https://pdos.csail.mit.edu/6.824/labs/guidance.html">Guidance</a></b> //
+  <b><a href="https://piazza.com/mit/spring2026/65840">Piazza</a></b><font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#21327;&#20316;&#25919;&#31574; // &#25552;&#20132;&#23454;&#39564; // &#23433;&#35013; Go // &#25351;&#21335; // Piazza</font></font></font>
+</p>
+
+		</div>
+		<hr>
+
+                <h3 data-imt-p="1">Introduction<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><font class="notranslate" data-immersive-translate-translation-element-mark="1">&nbsp;&nbsp;</font><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-inline-wrapper-theme-none immersive-translate-target-translation-inline-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#31616;&#20171;</font></font></font></h3>
+
+                <p data-imt-p="1">
+                  You can either do a <a href="https://pdos.csail.mit.edu/6.824/project.html">final project</a> based
+                  on your own ideas, or this lab.
+
+		<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#20320;&#21487;&#20197;&#36873;&#25321;&#22522;&#20110;&#33258;&#24049;&#30340;&#24819;&#27861;&#20570;&#19968;&#20010;&#26399;&#26411;&#39033;&#30446;&#65292;&#25110;&#32773;&#23436;&#25104;&#26412;&#23454;&#39564;&#12290;</font></font></font></p><p data-imt-p="1">
+		In this lab you'll build a key/value storage system
+		that "shards," or partitions, the keys over a set of
+                Raft-replicated key/value server groups
+		(shardgrps).  A shard is a subset of the
+		key/value pairs; for example, all the keys starting
+		with "a" might be one shard, all the keys starting
+		with "b" another, etc. The reason for sharding is
+		performance. Each shardgrp
+		handles puts and gets for just a few of
+		the shards, and the shardgrps operate in parallel;
+		thus total system throughput (puts and gets per unit
+		time) increases in proportion to the number of
+		shardgrps.
+
+                <font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#22312;&#26412;&#23454;&#39564;&#20013;&#65292;&#20320;&#23558;&#26500;&#24314;&#19968;&#20010;&#38190;/&#20540;&#23384;&#20648;&#31995;&#32479;&#65292;&#35813;&#31995;&#32479;&#23558;&#38190;“&#20998;&#29255;”&#65288;shard&#65289;&#65292;&#21363;&#20998;&#21306;&#65292;&#21040;&#19968;&#32452;&#30001; Raft &#22797;&#21046;&#30340;&#38190;/&#20540;&#26381;&#21153;&#22120;&#32452;&#65288;shardgrp&#65289;&#19978;&#12290;&#20998;&#29255;&#26159;&#38190;/&#20540;&#23545;&#30340;&#19968;&#20010;&#23376;&#38598;&#65307;&#20363;&#22914;&#65292;&#25152;&#26377;&#20197; "a" &#24320;&#22836;&#30340;&#38190;&#21487;&#33021;&#23646;&#20110;&#19968;&#20010;&#20998;&#29255;&#65292;&#25152;&#26377;&#20197; "b" &#24320;&#22836;&#30340;&#38190;&#23646;&#20110;&#21478;&#19968;&#20010;&#20998;&#29255;&#65292;&#20381;&#27492;&#31867;&#25512;&#12290;&#20998;&#29255;&#30340;&#30446;&#30340;&#22312;&#20110;&#25552;&#21319;&#24615;&#33021;&#12290;&#27599;&#20010; shardgrp &#21482;&#22788;&#29702;&#20854;&#20013;&#23569;&#25968;&#20960;&#20010;&#20998;&#29255;&#30340; put &#21644; get &#25805;&#20316;&#65292;&#24182;&#19988;&#21508; shardgrp &#24182;&#34892;&#36816;&#34892;&#65307;&#22240;&#27492;&#65292;&#31995;&#32479;&#30340;&#24635;&#21534;&#21520;&#37327;&#65288;&#21333;&#20301;&#26102;&#38388;&#20869;&#30340; put &#21644; get &#25805;&#20316;&#25968;&#65289;&#20250;&#38543; shardgrp &#25968;&#37327;&#30340;&#22686;&#21152;&#32780;&#25104;&#27604;&#20363;&#22320;&#22686;&#38271;&#12290;</font></font></font></p><p>
+
+                <img src="./6.5840 Lab 5_ Sharded Key_Value Service_files/shardkv.png" alt="shardkv design" width="400" class="center">
+
+		</p><p data-imt-p="1">The sharded key/value service has the components shown
+		above. Shardgrps (shown with blue squares) store
+		shards with keys: shardgrp 1 holds a shard storing key
+		"a", and shardgrp 2 holds a shard storing key
+		"b". Clients of the sharded key/value service interact
+		with the service through a clerk (shown with a green
+		circle), which implements <tt>Get</tt>
+		and <tt>Put</tt> methods.  To find the shardgrp for a
+		key passed to <tt>Put</tt>/<tt>Get</tt>, the clerk
+		gets the configuration from the kvsrv (shown with a
+		black square), which you implemented in Lab 2. The
+		configuration (not shown) describes the mapping from
+		shards to shardgrps (e.g., shard 1 is served by
+		shardgrp 3).
+
+                <font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#20998;&#29255;&#38190;&#20540;&#26381;&#21153;&#21253;&#21547;&#22914;&#19978;&#25152;&#31034;&#30340;&#32452;&#20214;&#12290;Shardgrp&#65288;&#20197;&#34013;&#33394;&#26041;&#22359;&#34920;&#31034;&#65289;&#23384;&#20648;&#24102;&#26377;&#38190;&#30340;&#20998;&#29255;&#65306;shardgrp 1 &#25345;&#26377;&#19968;&#20010;&#23384;&#20648;&#38190; "a" &#30340;&#20998;&#29255;&#65292;shardgrp 2 &#25345;&#26377;&#19968;&#20010;&#23384;&#20648;&#38190; "b" &#30340;&#20998;&#29255;&#12290;&#20998;&#29255;&#38190;&#20540;&#26381;&#21153;&#30340;&#23458;&#25143;&#31471;&#36890;&#36807; clerk&#65288;&#20197;&#32511;&#33394;&#22278;&#22280;&#34920;&#31034;&#65289;&#19982;&#26381;&#21153;&#36827;&#34892;&#20132;&#20114;&#65292;clerk &#23454;&#29616;&#20102; <tt>Get</tt> &#21644; <tt>Put</tt> &#26041;&#27861;&#12290;&#20026;&#20102;&#25214;&#21040;&#20256;&#36882;&#32473; <tt>Put</tt> / <tt>Get</tt> &#30340;&#38190;&#25152;&#23545;&#24212;&#30340; shardgrp&#65292;clerk &#20250;&#20174; kvsrv&#65288;&#20197;&#40657;&#33394;&#26041;&#22359;&#34920;&#31034;&#65289;&#33719;&#21462;&#37197;&#32622;&#65292;&#32780; kvsrv &#27491;&#26159;&#20320;&#22312; Lab 2 &#20013;&#23454;&#29616;&#30340;&#26381;&#21153;&#12290;&#37197;&#32622;&#65288;&#22270;&#20013;&#26410;&#26174;&#31034;&#65289;&#25551;&#36848;&#20102;&#20998;&#29255;&#21040; shardgrp &#30340;&#26144;&#23556;&#20851;&#31995;&#65288;&#20363;&#22914;&#65292;&#20998;&#29255; 1 &#30001; shardgrp 3 &#25552;&#20379;&#26381;&#21153;&#65289;&#12290;</font></font></font></p><p data-imt-p="1">An administrator (i.e., the tester) uses another
+                client, the controller (shown with a purple circle),
+                to add/remove shardgrps from the cluster and
+                update which shardgrp should serve a shard. The
+                controller has one main
+                method: <tt>ChangeConfigTo</tt>, which takes as
+                argument a new configuration and changes the system
+                from the current configuration to the new
+                configuration; this involves moving shards to new
+                shardgrps that are joining the system and moving
+                shards away from shardgrps that are leaving the system.  To
+                do so the controller 1) makes RPCs
+                (<tt>FreezeShard</tt>, <tt>InstallShard</tt>,
+                and <tt>DeleteShard</tt>) to shardgrps, and 2) updates the
+                configuration stored in kvsrv.
+
+		<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#31649;&#29702;&#21592;&#65288;&#21363;&#27979;&#35797;&#20154;&#21592;&#65289;&#20250;&#20351;&#29992;&#21478;&#19968;&#20010;&#23458;&#25143;&#31471;——&#25511;&#21046;&#22120;&#65288;controller&#65292;&#22270;&#20013;&#20197;&#32043;&#33394;&#22278;&#22280;&#34920;&#31034;&#65289;——&#26469;&#21521;&#38598;&#32676;&#28155;&#21152;/&#31227;&#38500;&#20998;&#29255;&#32452;&#65288;shardgrp&#65289;&#65292;&#24182;&#26356;&#26032;&#24212;&#30001;&#21738;&#20010;&#20998;&#29255;&#32452;&#26469;&#26381;&#21153;&#26576;&#20010;&#20998;&#29255;&#65288;shard&#65289;&#12290;&#25511;&#21046;&#22120;&#26377;&#19968;&#20010;&#20027;&#35201;&#26041;&#27861;&#65306; <tt>ChangeConfigTo</tt> &#65292;&#23427;&#25509;&#21463;&#19968;&#20010;&#26032;&#37197;&#32622;&#20316;&#20026;&#21442;&#25968;&#65292;&#24182;&#23558;&#31995;&#32479;&#20174;&#24403;&#21069;&#37197;&#32622;&#20999;&#25442;&#21040;&#26032;&#37197;&#32622;&#65307;&#36825;&#19968;&#36807;&#31243;&#28041;&#21450;&#23558;&#20998;&#29255;&#31227;&#21160;&#21040;&#27491;&#22312;&#21152;&#20837;&#31995;&#32479;&#30340;&#26032;&#20998;&#29255;&#32452;&#65292;&#20197;&#21450;&#23558;&#20998;&#29255;&#20174;&#27491;&#22312;&#36864;&#20986;&#31995;&#32479;&#30340;&#20998;&#29255;&#32452;&#20013;&#31227;&#36208;&#12290;&#20026;&#27492;&#65292;&#25511;&#21046;&#22120; 1) &#21521;&#21508;&#20998;&#29255;&#32452;&#21457;&#36215; RPC &#35843;&#29992;&#65288; <tt>FreezeShard</tt> &#12289; <tt>InstallShard</tt> &#21644; <tt>DeleteShard</tt> &#65289;&#65292;&#24182; 2) &#26356;&#26032;&#23384;&#20648;&#22312; kvsrv &#20013;&#30340;&#37197;&#32622;&#12290;</font></font></font></p><p data-imt-p="1"> The reason for the controller is that a sharded
+		storage system must be able to shift shards among
+		shardgrps. One reason is that some shardgrps may
+		become more loaded than others, so that shards need to
+		be moved to balance the load. Another reason is that
+		shardgrps may join and leave the system: new shardgrps
+		may be added to increase capacity, or existing
+		shardgrps may be taken offline for repair or
+		retirement.
+
+		<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#20043;&#25152;&#20197;&#38656;&#35201;&#25511;&#21046;&#22120;&#65292;&#26159;&#22240;&#20026;&#20998;&#29255;&#23384;&#20648;&#31995;&#32479;&#24517;&#39035;&#33021;&#22815;&#22312;&#21508;&#20998;&#29255;&#32452;&#20043;&#38388;&#36716;&#31227;&#20998;&#29255;&#12290;&#19968;&#20010;&#21407;&#22240;&#26159;&#26576;&#20123;&#20998;&#29255;&#32452;&#30340;&#36127;&#36733;&#21487;&#33021;&#20250;&#39640;&#20110;&#20854;&#20182;&#20998;&#29255;&#32452;&#65292;&#22240;&#27492;&#38656;&#35201;&#31227;&#21160;&#20998;&#29255;&#20197;&#24179;&#34913;&#36127;&#36733;&#12290;&#21478;&#19968;&#20010;&#21407;&#22240;&#26159;&#20998;&#29255;&#32452;&#21487;&#33021;&#20250;&#21152;&#20837;&#25110;&#31163;&#24320;&#31995;&#32479;&#65306;&#21487;&#20197;&#28155;&#21152;&#26032;&#30340;&#20998;&#29255;&#32452;&#20197;&#22686;&#21152;&#23481;&#37327;&#65292;&#25110;&#32773;&#35753;&#29616;&#26377;&#30340;&#20998;&#29255;&#32452;&#19979;&#32447;&#20197;&#36827;&#34892;&#32500;&#20462;&#25110;&#36864;&#24441;&#12290;</font></font></font></p><p data-imt-p="1"> The main challenges in this lab will be ensuring
+		linearizability of
+                <tt>Get</tt>/<tt>Put</tt> operations while handling 1)
+                  changes in the assignment of shards to shardgrps,
+                and 2) recovering from a controller that fails or is partitioned
+                during <tt>ChangeConfigTo</tt>.
+
+                <font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#26412;&#23454;&#39564;&#30340;&#20027;&#35201;&#25361;&#25112;&#22312;&#20110;&#65292;&#22312;&#22788;&#29702;&#20197;&#19979;&#24773;&#20917;&#30340;&#21516;&#26102;&#30830;&#20445; <tt>Get</tt> / <tt>Put</tt> &#25805;&#20316;&#30340;&#32447;&#24615;&#19968;&#33268;&#24615;&#65306;1) &#20998;&#29255;&#21040; shardgrp &#30340;&#20998;&#37197;&#21457;&#29983;&#21464;&#21270;&#65307;2) &#25511;&#21046;&#22120;&#22312; <tt>ChangeConfigTo</tt> &#26399;&#38388;&#21457;&#29983;&#25925;&#38556;&#25110;&#34987;&#20998;&#21306;&#21518;&#30340;&#24674;&#22797;&#12290;</font></font></font></p><ol>
+                <li data-imt-p="1"><tt>ChangeConfigTo</tt> moves shards from one
+		shardgrp to another. A risk is that some clients might
+		use the old shardgrp while other clients use the new
+		shardgrp, which could break linearizability.  You will
+		need to ensure that at most one shardgrp is serving
+		requests for each shard at any one time.
+
+                <font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1"> <tt>ChangeConfigTo</tt> &#20250;&#23558;&#20998;&#29255;&#20174;&#19968;&#20010; shardgrp &#31227;&#21160;&#21040;&#21478;&#19968;&#20010; shardgrp&#12290;&#23384;&#22312;&#36825;&#26679;&#19968;&#31181;&#39118;&#38505;&#65306;&#19968;&#20123;&#23458;&#25143;&#31471;&#21487;&#33021;&#20173;&#22312;&#20351;&#29992;&#26087;&#30340; shardgrp&#65292;&#32780;&#21478;&#19968;&#20123;&#23458;&#25143;&#31471;&#24050;&#32463;&#24320;&#22987;&#20351;&#29992;&#26032;&#30340; shardgrp&#65292;&#36825;&#21487;&#33021;&#20250;&#30772;&#22351;&#32447;&#24615;&#19968;&#33268;&#24615;&#12290;&#20320;&#38656;&#35201;&#30830;&#20445;&#22312;&#20219;&#19968;&#26102;&#21051;&#65292;&#27599;&#20010;&#20998;&#29255;&#26368;&#22810;&#21482;&#30001;&#19968;&#20010; shardgrp &#25552;&#20379;&#35831;&#27714;&#26381;&#21153;&#12290;</font></font></font></li><li data-imt-p="1">If <tt>ChangeConfigTo</tt> fails while
+                reconfiguring, some shards may be inaccessible if they
+                have started but not completed moving from one
+                shardgrp to another.  To make forward progress, the
+                tester starts a new controller, and your job is to
+                ensure that the new one completes the reconfiguration
+                that the previous controller started.
+
+                <font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#22914;&#26524; <tt>ChangeConfigTo</tt> &#22312;&#37325;&#26032;&#37197;&#32622;&#26399;&#38388;&#21457;&#29983;&#25925;&#38556;&#65292;&#37027;&#20040;&#24050;&#32463;&#24320;&#22987;&#20294;&#23578;&#26410;&#23436;&#25104;&#20174;&#19968;&#20010; shardgrp &#21040;&#21478;&#19968;&#20010; shardgrp &#36801;&#31227;&#30340;&#20998;&#29255;&#21487;&#33021;&#20250;&#21464;&#24471;&#26080;&#27861;&#35775;&#38382;&#12290;&#20026;&#20102;&#20351;&#31995;&#32479;&#33021;&#22815;&#32487;&#32493;&#25512;&#36827;&#65292;&#27979;&#35797;&#31243;&#24207;&#20250;&#21551;&#21160;&#19968;&#20010;&#26032;&#30340;&#25511;&#21046;&#22120;&#65292;&#32780;&#20320;&#30340;&#20219;&#21153;&#26159;&#30830;&#20445;&#36825;&#20010;&#26032;&#25511;&#21046;&#22120;&#23436;&#25104;&#19978;&#19968;&#20010;&#25511;&#21046;&#22120;&#24050;&#24320;&#22987;&#30340;&#37325;&#26032;&#37197;&#32622;&#12290;</font></font></font></li></ol>
+
+		<p class="note" data-imt-p="1">
+		This lab uses "configuration" to refer to the
+		assignment of shards to shardgrps. This is not the
+		same as Raft cluster membership changes. You don't
+		have to implement Raft cluster membership changes.
+
+                <font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#26412;&#23454;&#39564;&#29992; "configuration"&#65288;&#37197;&#32622;&#65289;&#19968;&#35789;&#26469;&#25351;&#20195;&#20998;&#29255;&#21040; shardgrp &#30340;&#20998;&#37197;&#12290;&#36825;&#19982; Raft &#38598;&#32676;&#25104;&#21592;&#21464;&#26356;&#24182;&#19981;&#26159;&#19968;&#22238;&#20107;&#65292;&#20320;&#26080;&#38656;&#23454;&#29616; Raft &#38598;&#32676;&#25104;&#21592;&#21464;&#26356;&#12290;</font></font></font></p><p class="note" data-imt-p="1"> A shardgrp server is a member of only
+                  a single shardgrp. The set of servers in a
+                  given shardgrp will never change.
+
+                <font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#19968;&#20010; shardgrp &#26381;&#21153;&#22120;&#21482;&#23646;&#20110;&#21333;&#20010; shardgrp&#12290;&#32473;&#23450; shardgrp &#20013;&#30340;&#26381;&#21153;&#22120;&#38598;&#21512;&#27704;&#36828;&#19981;&#20250;&#25913;&#21464;&#12290;</font></font></font></p><p class="note" data-imt-p="1">
+		Only RPC may be used for interaction among clients and servers.
+		For example, different instances of your server are not allowed
+		to share Go variables or files.
+
+		<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#23458;&#25143;&#31471;&#19982;&#26381;&#21153;&#22120;&#20043;&#38388;&#30340;&#20132;&#20114;&#21482;&#33021;&#20351;&#29992; RPC&#12290;&#20363;&#22914;&#65292;&#19981;&#20801;&#35768;&#20320;&#30340;&#26381;&#21153;&#22120;&#30340;&#19981;&#21516;&#23454;&#20363;&#20849;&#20139; Go &#21464;&#37327;&#25110;&#25991;&#20214;&#12290;</font></font></font></p><p data-imt-p="1">
+    In Part A, you will implement a working <tt>shardctrler</tt>,
+    which will store and retrieve configurations in a <tt>kvsrv</tt>.
+    You will also implement the <tt>shardgrp</tt>, replicated
+    with your Raft <tt>rsm</tt> package, and a corresponding
+    <tt>shardgrp</tt> clerk. The <tt>shardctrler</tt> talks
+    to the <tt>shardgrp</tt> clerks to move shards between
+    different groups.
+
+    <font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#22312; A &#37096;&#20998;&#65292;&#20320;&#23558;&#23454;&#29616;&#19968;&#20010;&#21487;&#27491;&#24120;&#24037;&#20316;&#30340; <tt>shardctrler</tt> &#65292;&#23427;&#23558;&#22312; <tt>kvsrv</tt> &#20013;&#23384;&#20648;&#21644;&#26816;&#32034;&#37197;&#32622;&#12290;&#20320;&#36824;&#23558;&#23454;&#29616; <tt>shardgrp</tt> &#65288;&#20351;&#29992;&#20320;&#30340; Raft <tt>rsm</tt> &#21253;&#36827;&#34892;&#22797;&#21046;&#65289;&#65292;&#20197;&#21450;&#30456;&#24212;&#30340; <tt>shardgrp</tt> &#23458;&#25143;&#31471;&#12290; <tt>shardctrler</tt> &#20250;&#19982; <tt>shardgrp</tt> &#23458;&#25143;&#31471;&#36890;&#20449;&#65292;&#20197;&#22312;&#19981;&#21516;&#32452;&#20043;&#38388;&#31227;&#21160;&#20998;&#29255;&#12290;</font></font></font></p><p data-imt-p="1">
+    In Part B, you will modify your <tt>shardctrler</tt> to handle
+    failures and partitions during config changes. In Part C,
+    you will extend your <tt>shardctrler</tt> to allow for concurrent
+    controllers without interfering with each other. Finally, in
+    Part D, you will have the opportunity to extend your solution
+    in any way you like.
+
+		<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#22312; B &#37096;&#20998;&#65292;&#20320;&#23558;&#20462;&#25913;&#20320;&#30340; <tt>shardctrler</tt> &#65292;&#20197;&#22788;&#29702;&#37197;&#32622;&#21464;&#26356;&#26399;&#38388;&#30340;&#25925;&#38556;&#21644;&#20998;&#21306;&#12290;&#22312; C &#37096;&#20998;&#65292;&#20320;&#23558;&#25193;&#23637;&#20320;&#30340; <tt>shardctrler</tt> &#65292;&#20197;&#20801;&#35768;&#22810;&#20010;&#25511;&#21046;&#22120;&#24182;&#21457;&#36816;&#34892;&#32780;&#20114;&#19981;&#24178;&#25200;&#12290;&#26368;&#21518;&#65292;&#22312; D &#37096;&#20998;&#65292;&#20320;&#23558;&#26377;&#26426;&#20250;&#20197;&#20219;&#20309;&#20320;&#21916;&#27426;&#30340;&#26041;&#24335;&#25193;&#23637;&#20320;&#30340;&#35299;&#20915;&#26041;&#26696;&#12290;</font></font></font></p><p data-imt-p="1">
+		This lab's sharded key/value service follows the same
+		general design as Flat Datacenter Storage, BigTable,
+		Spanner, FAWN, Apache HBase, Rosebud, Spinnaker, and
+		many others. These systems differ in many details from
+		this lab, though, and are also typically more
+		sophisticated and capable. For example, the lab
+		doesn't evolve the sets of peers in each Raft group;
+		its data and query models are simple; and so on.
+
+		<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#26412;&#23454;&#39564;&#30340;&#20998;&#29255;&#38190;/&#20540;&#26381;&#21153;&#37319;&#29992;&#20102;&#19982; Flat Datacenter Storage&#12289;BigTable&#12289;Spanner&#12289;FAWN&#12289;Apache HBase&#12289;Rosebud&#12289;Spinnaker &#20197;&#21450;&#35768;&#22810;&#20854;&#20182;&#31995;&#32479;&#30456;&#21516;&#30340;&#22823;&#20307;&#35774;&#35745;&#12290;&#19981;&#36807;&#65292;&#36825;&#20123;&#31995;&#32479;&#22312;&#35768;&#22810;&#32454;&#33410;&#19978;&#19982;&#26412;&#23454;&#39564;&#26377;&#25152;&#19981;&#21516;&#65292;&#32780;&#19988;&#36890;&#24120;&#20063;&#26356;&#20026;&#22797;&#26434;&#21644;&#24378;&#22823;&#12290;&#20363;&#22914;&#65292;&#26412;&#23454;&#39564;&#19981;&#20250;&#23545;&#27599;&#20010; Raft &#32452;&#20013;&#30340;&#25104;&#21592;&#38598;&#21512;&#36827;&#34892;&#21464;&#26356;&#65307;&#20854;&#25968;&#25454;&#21644;&#26597;&#35810;&#27169;&#22411;&#20063;&#24456;&#31616;&#21333;&#65307;&#31561;&#31561;&#12290;</font></font></font></p><p class="note" data-imt-p="1">
+		  Lab 5 will use your <tt>kvsrv</tt> from Lab 2, and your
+		  <tt>rsm</tt> and <tt>Raft</tt> from Lab 4. Your Lab 5
+      and Lab 4 must use the same <tt>rsm</tt> and <tt>Raft</tt>
+      implementations.
+
+    <font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">Lab 5 &#23558;&#20351;&#29992;&#20320;&#22312; Lab 2 &#20013;&#23454;&#29616;&#30340; <tt>kvsrv</tt> &#65292;&#20197;&#21450;&#20320;&#22312; Lab 4 &#20013;&#23454;&#29616;&#30340; <tt>rsm</tt> &#21644; <tt>Raft</tt> &#12290;&#20320;&#30340; Lab 5 &#21644; Lab 4 &#24517;&#39035;&#20351;&#29992;&#30456;&#21516;&#30340; <tt>rsm</tt> &#21644; <tt>Raft</tt> &#23454;&#29616;&#12290;</font></font></font></p><p class="note" data-imt-p="1">
+      You may use late hours for Part A, but you may not use
+      late hours for Parts B-D.
+
+		<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#20320;&#21487;&#20197;&#20026; Part A &#20351;&#29992;&#24310;&#26399;&#26102;&#38388;&#65292;&#20294;&#19981;&#33021;&#20026; Part B-D &#20351;&#29992;&#24310;&#26399;&#26102;&#38388;&#12290;</font></font></font></p><h3 data-imt-p="1">Getting Started<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><font class="notranslate" data-immersive-translate-translation-element-mark="1">&nbsp;&nbsp;</font><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-inline-wrapper-theme-none immersive-translate-target-translation-inline-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#20934;&#22791;&#24037;&#20316;</font></font></font></h3>
+
+        <div class="important">
+        <p data-imt-p="1">
+        Do a <tt>git pull</tt> to get the latest lab software.
+        <font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#35831;&#25191;&#34892; <tt>git pull</tt> &#26469;&#33719;&#21462;&#26368;&#26032;&#30340;&#23454;&#39564;&#36719;&#20214;&#12290;</font></font></font></p></div>
+
+		<p data-imt-p="1">
+		We supply you with tests and skeleton code
+		in <tt>src/shardkv1</tt>:
+		<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#25105;&#20204;&#22312; <tt>src/shardkv1</tt> &#20013;&#20026;&#20320;&#25552;&#20379;&#20102;&#27979;&#35797;&#21644;&#39592;&#26550;&#20195;&#30721;&#65306;</font></font></font></p><ul>
+		  <li data-imt-p="1"><tt>client.go</tt> for the shardkv clerk
+                  <font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#29992;&#20110; shardkv clerk &#30340; <tt>client.go</tt> </font></font></font></li><li data-imt-p="1"> <tt>shardcfg</tt> package for computing shard
+		    configurations
+		<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#29992;&#20110;&#35745;&#31639;&#20998;&#29255;&#37197;&#32622;&#30340; <tt>shardcfg</tt> &#21253;</font></font></font></li><li data-imt-p="1"><tt>shardgrp</tt> package: for the shardgrp
+		clerk and server.
+		<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1"> <tt>shardgrp</tt> &#21253;&#65306;&#29992;&#20110; shardgrp &#30340; clerk &#21644; server&#12290;</font></font></font></li><li data-imt-p="1"><tt>shardctrler</tt>
+		  package, which contains <tt>shardctrler.go</tt> with
+                  methods for the controller to change a configuration
+		  (<tt>ChangeConfigTo</tt>) and to get a
+		  configuration (<tt>Query</tt>)
+                  <font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1"> <tt>shardctrler</tt> &#21253;&#65292;&#20854;&#20013;&#21253;&#21547; <tt>shardctrler.go</tt> &#65292;&#25552;&#20379;&#25511;&#21046;&#22120;&#29992;&#20110;&#26356;&#25913;&#37197;&#32622;&#65288; <tt>ChangeConfigTo</tt> &#65289;&#21644;&#33719;&#21462;&#37197;&#32622;&#65288; <tt>Query</tt> &#65289;&#30340;&#26041;&#27861;</font></font></font></li></ul>
+		<p data-imt-p="1">
+		To get up and running, execute the following commands:
+		<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#35201;&#21551;&#21160;&#24182;&#36816;&#34892;&#65292;&#35831;&#25191;&#34892;&#20197;&#19979;&#21629;&#20196;&#65306;</font></font></font></p><pre data-imt-pre="1" data-imt-p="1">$ cd ~/6.5840
+$ git pull
+...
+$ cd src
+$ make RUN="-run 5A" shardkv
+go build -race -o main/kvsrv1d main/kvsrv1d.go
+go build -race -o main/shardgrp1d main/shardgrp1d.go
+cd shardkv1; go test -timeout 15m -v -race -run 5A
+=== RUN  TestInitQuery5A
+Test (5A): Init and Query ... (reliable network)...
+...<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-pre-whitespace immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">$ cd ~/6.5840
+$ git pull
+...
+$ cd src
+$ make RUN="-run 5A" shardkv
+go build -race -o main/kvsrv1d main/kvsrv1d.go
+go build -race -o main/shardgrp1d main/shardgrp1d.go
+cd shardkv1; go test -timeout 15m -v -race -run 5A
+=== RUN  TestInitQuery5A
+&#27979;&#35797; (5A)&#65306;&#21021;&#22987;&#21270;&#21644;&#26597;&#35810; ...&#65288;&#21487;&#38752;&#32593;&#32476;&#65289;...
+...</font></font></font></pre>
+
+		<h3 data-imt-p="1">Part A: Moving shards <script>g("hard") </script>(<a class="hard" href="https://pdos.csail.mit.edu/6.824/labs/guidance.html">hard</a>)<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">Part A&#65306;&#31227;&#21160;&#20998;&#29255;&#65288;&#22256;&#38590;&#65289;</font></font></font></h3>
+
+		<p data-imt-p="1">
+                  Your first job is to implement shardgrps and the
+                  <tt>InitConfig</tt>, <tt>Query</tt>,
+                  and <tt>ChangeConfigTo</tt> methods
+                  when there are no failures.
+                  We have given you the code for describing a
+                  configuration, in
+                  <tt>shardkv1/shardcfg</tt>.
+                  Each <tt>shardcfg.ShardConfig</tt> has a unique
+                  identifying number, a mapping from shard number to
+                  group number, and a mapping from group number to the
+                  list of servers replicating that group.
+		  There will usually be more shards than groups
+		  (so that each group serves more than one shard), in
+		  order that load can be shifted at a fairly fine
+		  granularity.
+
+		<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#20320;&#30340;&#31532;&#19968;&#20010;&#20219;&#21153;&#26159;&#22312;&#27809;&#26377;&#25925;&#38556;&#30340;&#24773;&#20917;&#19979;&#23454;&#29616; shardgrps &#20197;&#21450; <tt>InitConfig</tt> &#12289; <tt>Query</tt> &#21644; <tt>ChangeConfigTo</tt> &#26041;&#27861;&#12290;&#25105;&#20204;&#24050;&#32463;&#22312; <tt>shardkv1/shardcfg</tt> &#20013;&#25552;&#20379;&#20102;&#29992;&#20110;&#25551;&#36848;&#37197;&#32622;&#65288;configuration&#65289;&#30340;&#20195;&#30721;&#12290;&#27599;&#20010; <tt>shardcfg.ShardConfig</tt> &#37117;&#26377;&#19968;&#20010;&#21807;&#19968;&#30340;&#26631;&#35782;&#32534;&#21495;&#12289;&#19968;&#20010;&#20174;&#20998;&#29255;&#65288;shard&#65289;&#32534;&#21495;&#21040;&#32452;&#65288;group&#65289;&#32534;&#21495;&#30340;&#26144;&#23556;&#65292;&#20197;&#21450;&#19968;&#20010;&#20174;&#32452;&#32534;&#21495;&#21040;&#22797;&#21046;&#35813;&#32452;&#30340;&#26381;&#21153;&#22120;&#21015;&#34920;&#30340;&#26144;&#23556;&#12290;&#36890;&#24120;&#20998;&#29255;&#30340;&#25968;&#37327;&#20250;&#22810;&#20110;&#32452;&#30340;&#25968;&#37327;&#65288;&#36825;&#26679;&#27599;&#20010;&#32452;&#20250;&#26381;&#21153;&#22810;&#20110;&#19968;&#20010;&#20998;&#29255;&#65289;&#65292;&#20197;&#20415;&#33021;&#22815;&#20197;&#30456;&#24403;&#32454;&#30340;&#31890;&#24230;&#26469;&#36716;&#31227;&#36127;&#36733;&#12290;</font></font></font></p><p data-imt-p="1">
+		  Implement these two methods in
+                  <tt>shardctrler/shardctrler.go</tt>:
+
+                  <font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#22312; <tt>shardctrler/shardctrler.go</tt> &#20013;&#23454;&#29616;&#36825;&#20004;&#20010;&#26041;&#27861;&#65306;</font></font></font></p><ul>
+
+		<li data-imt-p="1">The <tt>InitConfig</tt> method receives the first
+		configuration, passed to it by the tester as
+                a <tt>shardcfg.ShardConfig</tt>.
+                <tt>InitConfig</tt> should store the configuration in
+                an instance of Lab 2's <tt>kvsrv</tt>.
+
+		<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1"> <tt>InitConfig</tt> &#26041;&#27861;&#25509;&#25910;&#27979;&#35797;&#22120;&#20256;&#36882;&#32473;&#23427;&#30340;&#31532;&#19968;&#20010;&#37197;&#32622;&#65292;&#20854;&#31867;&#22411;&#20026; <tt>shardcfg.ShardConfig</tt> &#12290; <tt>InitConfig</tt> &#24212;&#23558;&#35813;&#37197;&#32622;&#23384;&#20648;&#22312; Lab 2 &#30340; <tt>kvsrv</tt> &#23454;&#20363;&#20013;&#12290;</font></font></font></li><li data-imt-p="1"> The <tt>Query</tt> method returns the current
+		configuration; it should read the configuration from
+                <tt>kvsrv</tt>, previously stored there by <tt>InitConfig</tt>.
+
+                  <font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1"> <tt>Query</tt> &#26041;&#27861;&#36820;&#22238;&#24403;&#21069;&#37197;&#32622;&#65307;&#23427;&#24212;&#20174; <tt>kvsrv</tt> &#20013;&#35835;&#21462;&#37197;&#32622;&#65292;&#35813;&#37197;&#32622;&#27492;&#21069;&#30001; <tt>InitConfig</tt> &#23384;&#20648;&#20110;&#20854;&#20013;&#12290;</font></font></font></li></ul>
+
+                  		<p class="todo" data-imt-p="1">
+                   Implement <tt>InitConfig</tt> and <tt>Query</tt>, and
+                   store the configuration in <tt>kvsrv</tt>.
+		   You're done when your code passes the
+		   first test.  Note this task doesn't require any shardgrps.
+                   <font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#23454;&#29616; <tt>InitConfig</tt> &#21644; <tt>Query</tt> &#65292;&#24182;&#23558;&#37197;&#32622;&#23384;&#20648;&#22312; <tt>kvsrv</tt> &#20013;&#12290;&#24403;&#20320;&#30340;&#20195;&#30721;&#36890;&#36807;&#31532;&#19968;&#20010;&#27979;&#35797;&#26102;&#65292;&#20219;&#21153;&#21363;&#21578;&#23436;&#25104;&#12290;&#35831;&#27880;&#24847;&#65292;&#27492;&#20219;&#21153;&#19981;&#38656;&#35201;&#20219;&#20309; shardgrps&#12290;</font></font></font></p><pre data-imt-pre="1" data-imt-p="1">$ cd ~/6.5840/src
+$ make RUN="-run TestInitQuery5A" shardkv
+go build -race -o main/kvsrv1d main/kvsrv1d.go
+go build -race -o main/shardgrp1d main/shardgrp1d.go
+cd shardkv1; go test -timeout 15m -v -race -run TestInitQuery5A
+=== RUN   TestInitQuery5A
+Test (5A): Init and Query ... (reliable network)...
+  ... Passed --  time  0.0s #peers 1 #RPCs     3 #Ops    0
+--- PASS: TestInitQuery5A (0.13s)
+PASS
+ok  	6.5840/shardkv1	1.143s
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-pre-whitespace immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">$ cd ~/6.5840/src
+$ make RUN="-run TestInitQuery5A" shardkv
+go build -race -o main/kvsrv1d main/kvsrv1d.go
+go build -race -o main/shardgrp1d main/shardgrp1d.go
+cd shardkv1; go test -timeout 15m -v -race -run TestInitQuery5A
+=== RUN   TestInitQuery5A
+&#27979;&#35797; (5A)&#65306;&#21021;&#22987;&#21270;&#21644;&#26597;&#35810; ...&#65288;&#21487;&#38752;&#32593;&#32476;&#65289;...
+... Passed --  time  0.0s #peers 1 #RPCs     3 #Ops    0
+--- PASS: TestInitQuery5A (0.13s)
+PASS
+ok  	6.5840/shardkv1	1.143s
+</font></font></font></pre>
+
+                    <ul class="hints">
+                      <li data-imt-p="1"> Implement <tt>InitConfig</tt> and <tt>Query</tt>
+                        by storing and reading the initial
+                        configuration from <tt>kvsrv</tt>:
+                        use the <tt>Get</tt>/<tt>Put</tt> methods of
+                        <tt>ShardCtrler.IKVClerk</tt> to talk to <tt>kvsrv</tt>,
+                        use the <tt>String</tt> method
+                        of <tt>ShardConfig</tt> to turn
+                        a <tt>ShardConfig</tt> into a string that you
+                        can pass to <tt>Put</tt>,
+                        and use the <tt>shardcfg.FromString()</tt> function to
+                        turn a string into a <tt>ShardConfig</tt>.
+                     <font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#36890;&#36807;&#23384;&#20648;&#24182;&#35835;&#21462;&#26469;&#33258; <tt>kvsrv</tt> &#30340;&#21021;&#22987;&#37197;&#32622;&#26469;&#23454;&#29616; <tt>InitConfig</tt> &#21644; <tt>Query</tt> &#65306;&#20351;&#29992; <tt>ShardCtrler.IKVClerk</tt> &#30340; <tt>Get</tt> / <tt>Put</tt> &#26041;&#27861;&#19982; <tt>kvsrv</tt> &#36890;&#20449;&#65292;&#20351;&#29992; <tt>ShardConfig</tt> &#30340; <tt>String</tt> &#26041;&#27861;&#23558; <tt>ShardConfig</tt> &#36716;&#25442;&#20026;&#21487;&#20256;&#36882;&#32473; <tt>Put</tt> &#30340;&#23383;&#31526;&#20018;&#65292;&#24182;&#20351;&#29992; <tt>shardcfg.FromString()</tt> &#20989;&#25968;&#23558;&#23383;&#31526;&#20018;&#36716;&#25442;&#20026; <tt>ShardConfig</tt> &#12290;</font></font></font></li></ul>
+
+		<p class="todo" data-imt-p="1">
+                  Implement an initial version of <tt>shardgrp</tt>
+                  in <tt>shardkv1/shardgrp/server.go</tt> and a corresponding
+                  clerk in <tt>shardkv1/shardgrp/client.go</tt> by
+                  copying code from your Lab 4 <tt>kvraft</tt> solution.
+                  <font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#36890;&#36807;&#20174;&#20320;&#30340; Lab 4 <tt>kvraft</tt> &#35299;&#20915;&#26041;&#26696;&#20013;&#22797;&#21046;&#20195;&#30721;&#65292;&#22312; <tt>shardkv1/shardgrp/server.go</tt> &#20013;&#23454;&#29616; <tt>shardgrp</tt> &#30340;&#21021;&#22987;&#29256;&#26412;&#65292;&#24182;&#22312; <tt>shardkv1/shardgrp/client.go</tt> &#20013;&#23454;&#29616;&#30456;&#24212;&#30340; clerk&#12290;</font></font></font><br>
+                  <br>
+                  Implement a clerk in <tt>shardkv1/client.go</tt>
+                  that uses the <tt>Query</tt> method to find the
+                  shardgrp for a key, and then talks to that
+                  shardgrp.  You're done when your code passes the
+                  <tt>Static</tt> test.
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#22312; <tt>shardkv1/client.go</tt> &#20013;&#23454;&#29616;&#19968;&#20010; clerk&#65292;&#23427;&#20351;&#29992; <tt>Query</tt> &#26041;&#27861;&#26597;&#25214;&#26576;&#20010; key &#25152;&#23646;&#30340; shardgrp&#65292;&#28982;&#21518;&#19982;&#35813; shardgrp &#36890;&#20449;&#12290;&#24403;&#20320;&#30340;&#20195;&#30721;&#36890;&#36807; <tt>Static</tt> &#27979;&#35797;&#26102;&#65292;&#21363;&#23436;&#25104;&#20102;&#36825;&#37096;&#20998;&#12290;</font></font></font></p><pre data-imt-pre="1" data-imt-p="1">$ cd ~/6.5840/src
+$ make RUN="-run TestStatiOneShardGroup5A" shardkv
+go build -race -o main/kvsrv1d main/kvsrv1d.go
+go build -race -o main/shardgrp1d main/shardgrp1d.go
+cd shardkv1; go test -timeout 15m -v -race -run TestStaticOneShardGroup5A
+=== RUN   TestStaticOneShardGroup5A
+Test (5A): one shard group ... (reliable network)...
+  ... Passed --  time  9.4s #peers 1 #RPCs   822 #Ops  420
+--- PASS: TestStaticOneShardGroup5A (9.52s)
+PASS
+ok  	6.5840/shardkv1	10.542s
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-pre-whitespace immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">$ cd ~/6.5840/src
+$ make RUN="-run TestStatiOneShardGroup5A" shardkv
+go build -race -o main/kvsrv1d main/kvsrv1d.go
+go build -race -o main/shardgrp1d main/shardgrp1d.go
+cd shardkv1; go test -timeout 15m -v -race -run TestStaticOneShardGroup5A
+=== RUN   TestStaticOneShardGroup5A
+&#27979;&#35797; (5A)&#65306;&#21333;&#20010;&#20998;&#29255;&#32452; ...&#65288;&#21487;&#38752;&#32593;&#32476;&#65289;...
+... &#36890;&#36807; --  &#26102;&#38388;  9.4s #peers 1 #RPCs   822 #Ops  420
+--- PASS: TestStaticOneShardGroup5A (9.52s)
+PASS
+ok  	6.5840/shardkv1	10.542s
+</font></font></font></pre>
+
+                    <ul class="hints">
+                      <li data-imt-p="1"> Copy code from your <tt>kvraft</tt> client.go and
+		        server.go for <tt>Put</tt> and <tt>Get</tt>,
+		        and any other code you need from <tt>kvraft</tt>.
+                      <font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#20174;&#20320;&#30340; <tt>kvraft</tt> &#22797;&#21046;&#29992;&#20110; <tt>Put</tt> &#21644; <tt>Get</tt> &#30340; client.go &#21644; server.go &#20195;&#30721;&#65292;&#24182;&#20174; <tt>kvraft</tt> &#22797;&#21046;&#20320;&#38656;&#35201;&#30340;&#20219;&#20309;&#20854;&#20182;&#20195;&#30721;&#12290;</font></font></font></li><li data-imt-p="1">
+                  The code in <tt>shardkv1/client.go</tt> provides
+                  the <tt>Put</tt>/<tt>Get</tt> clerk for the overall system: it finds out
+                  which shardgrp holds the desired key's shard by
+                  invoking the <tt>Query</tt> method,
+                  and then talks to the shardgrp that holds
+                  that shard.
+
+                  <font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1"> <tt>shardkv1/client.go</tt> &#20013;&#30340;&#20195;&#30721;&#20026;&#25972;&#20010;&#31995;&#32479;&#25552;&#20379;&#20102; <tt>Put</tt> / <tt>Get</tt> clerk&#65306;&#23427;&#36890;&#36807;&#35843;&#29992; <tt>Query</tt> &#26041;&#27861;&#25214;&#20986;&#25345;&#26377;&#30446;&#26631; key &#25152;&#22312; shard &#30340; shardgrp&#65292;&#28982;&#21518;&#19982;&#25345;&#26377;&#35813; shard &#30340; shardgrp &#36890;&#20449;&#12290;</font></font></font></li><li data-imt-p="1">
+                  Implement
+		  <tt>shardkv1/client.go</tt>, including its <tt>Put</tt>/<tt>Get</tt> methods.
+		  Use <tt>shardcfg.Key2Shard()</tt>
+		  to find the shard number for a key.
+		  The tester passes a
+		  <tt>ShardCtrler</tt> object to
+		  <tt>MakeClerk</tt> in <tt>shardkv1/client.go</tt>.
+                  Retrieve the current configuration using the
+                  <tt>Query</tt> method.
+
+		      <font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#23454;&#29616; <tt>shardkv1/client.go</tt> &#65292;&#21253;&#25324;&#23427;&#30340; <tt>Put</tt> / <tt>Get</tt> &#26041;&#27861;&#12290;&#20351;&#29992; <tt>shardcfg.Key2Shard()</tt> &#26469;&#26597;&#25214;&#26576;&#20010; key &#23545;&#24212;&#30340; shard &#32534;&#21495;&#12290;&#27979;&#35797;&#31243;&#24207;&#20250;&#22312; <tt>shardkv1/client.go</tt> &#20013;&#23558;&#19968;&#20010; <tt>ShardCtrler</tt> &#23545;&#35937;&#20256;&#36882;&#32473; <tt>MakeClerk</tt> &#12290;&#20351;&#29992; <tt>Query</tt> &#26041;&#27861;&#33719;&#21462;&#24403;&#21069;&#37197;&#32622;&#12290;</font></font></font></li><li data-imt-p="1">To put/get a key from a shardgrp, the shardkv
+		      clerk should create a shardgrp clerk for the
+		      shardgrp by calling <tt>shardgrp.MakeClerk</tt>,
+		      passing in the servers found in the
+		      configuration and the shardkv
+		      clerk's <tt>ck.clnt</tt>. Use the
+            <tt>GidServers()</tt> method from <tt>ShardConfig</tt> to get the group for
+            a shard.
+
+                     <font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" data-imt-deferred-display="" style="display: none;"><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#35201;&#20174;&#26576;&#20010; shardgrp &#20013;&#23545; key &#25191;&#34892; put/get &#25805;&#20316;&#65292;shardkv clerk &#24212;&#36890;&#36807;&#35843;&#29992; <tt>shardgrp.MakeClerk</tt> &#20026;&#35813; shardgrp &#21019;&#24314;&#19968;&#20010; shardgrp clerk&#65292;&#24182;&#20256;&#20837;&#37197;&#32622;&#20013;&#30340; servers &#20197;&#21450; shardkv clerk &#30340; <tt>ck.clnt</tt> &#12290;&#20351;&#29992; <tt>ShardConfig</tt> &#20013;&#30340; <tt>GidServers()</tt> &#26041;&#27861;&#26469;&#33719;&#21462;&#26576;&#20010;&#20998;&#29255;&#25152;&#23646;&#30340;&#32452;&#12290;</font></font></font></li><li data-imt-p="1"><tt>shardkv1/client.go</tt>'s Put must
+                     return <tt>ErrMaybe</tt> when the reply was maybe lost, but
+                     this Put invokes <tt>shardgrp</tt>'s Put to talk
+                     a particular shardgrp.  The inner Put can signal
+                     this with an error.
+
+                      <font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1"> <tt>shardkv1/client.go</tt> &#30340; Put &#22312;&#22238;&#22797;&#21487;&#33021;&#24050;&#20002;&#22833;&#26102;&#24517;&#39035;&#36820;&#22238; <tt>ErrMaybe</tt> &#65292;&#20294;&#36825;&#20010; Put &#35843;&#29992;&#20102; <tt>shardgrp</tt> &#30340; Put &#26469;&#19982;&#29305;&#23450;&#30340; shardgrp &#36890;&#20449;&#12290;&#20869;&#37096;&#30340; Put &#21487;&#20197;&#36890;&#36807;&#19968;&#20010;&#38169;&#35823;&#26469;&#21457;&#20986;&#35813;&#20449;&#21495;&#12290;</font></font></font></li><li data-imt-p="1">Upon creation, the first shardgrp (<tt>shardcfg.Gid1</tt>)
+                        should initialize itself to own all shards.
+
+                    <font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#22312;&#21019;&#24314;&#26102;&#65292;&#31532;&#19968;&#20010; shardgrp&#65288; <tt>shardcfg.Gid1</tt> &#65289;&#24212;&#23558;&#33258;&#24049;&#21021;&#22987;&#21270;&#20026;&#25317;&#26377;&#25152;&#26377;&#20998;&#29255;&#12290;</font></font></font></li></ul>
+
+<p data-imt-p="1">
+  Now you should support movement of shards among groups by
+  implementing
+  the <tt>ChangeConfigTo</tt> method, which
+  changes from an old configuration to a new configuration.  The new
+  configuration may include new shardgrps that are not present in the
+  old configuration, and may exclude shardgrps that were present
+  in the old configuration. The controller should move shards
+  (the key/value data) so that the set of shards stored by each
+  shardgrp matches the new configuration.
+
+                  <font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#29616;&#22312;&#20320;&#24212;&#24403;&#36890;&#36807;&#23454;&#29616; <tt>ChangeConfigTo</tt> &#26041;&#27861;&#26469;&#25903;&#25345;&#20998;&#29255;&#22312;&#21508;&#32452;&#20043;&#38388;&#30340;&#31227;&#21160;&#65292;&#35813;&#26041;&#27861;&#23558;&#37197;&#32622;&#20174;&#26087;&#37197;&#32622;&#20999;&#25442;&#21040;&#26032;&#37197;&#32622;&#12290;&#26032;&#37197;&#32622;&#20013;&#21487;&#33021;&#21253;&#21547;&#26087;&#37197;&#32622;&#20013;&#19981;&#23384;&#22312;&#30340;&#26032; shardgrp&#65292;&#20063;&#21487;&#33021;&#19981;&#21253;&#21547;&#26087;&#37197;&#32622;&#20013;&#24050;&#26377;&#30340;&#26576;&#20123; shardgrp&#12290;&#25511;&#21046;&#22120;&#24212;&#24403;&#31227;&#21160;&#20998;&#29255;&#65288;&#21363;&#38190;/&#20540;&#25968;&#25454;&#65289;&#65292;&#20351;&#27599;&#20010; shardgrp &#25152;&#23384;&#20648;&#30340;&#20998;&#29255;&#38598;&#21512;&#19982;&#26032;&#37197;&#32622;&#30456;&#21305;&#37197;&#12290;</font></font></font></p><p data-imt-p="1">The approach we suggest for
+                moving a shard is for <tt>ChangeConfigTo</tt>
+		to first "freeze" the shard at the source
+		shardgrp, causing that shardgrp to
+		reject <tt>Put</tt>'s for keys in the moving
+		shard. Then, copy (install) the shard to the destination
+		shardgrp; then delete the frozen shard. Finally,
+		post a new configuration so that clients can find the
+		moved shard.  A nice property of this approach is that it
+		avoids any direct interactions among the shardgrps.
+		It also supports serving shards that are not affected
+		by an ongoing configuration change.
+
+                  <font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" data-imt-deferred-display="" style="display: none;"><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#25105;&#20204;&#24314;&#35758;&#30340;&#36801;&#31227;&#20998;&#29255;&#26041;&#27861;&#26159;&#35753; <tt>ChangeConfigTo</tt> &#20808;&#22312;&#28304; shardgrp &#22788;"&#20923;&#32467;"&#35813;&#20998;&#29255;&#65292;&#20351;&#35813; shardgrp &#25298;&#32477;&#38024;&#23545;&#36801;&#31227;&#20013;&#20998;&#29255;&#20869;&#38190;&#30340; <tt>Put</tt> &#12290;&#28982;&#21518;&#65292;&#23558;&#35813;&#20998;&#29255;&#22797;&#21046;&#65288;&#23433;&#35013;&#65289;&#21040;&#30446;&#26631; shardgrp&#65307;&#25509;&#30528;&#21024;&#38500;&#34987;&#20923;&#32467;&#30340;&#20998;&#29255;&#12290;&#26368;&#21518;&#65292;&#21457;&#24067;&#26032;&#30340;&#37197;&#32622;&#65292;&#20197;&#20415;&#23458;&#25143;&#31471;&#33021;&#22815;&#25214;&#21040;&#36801;&#31227;&#21518;&#30340;&#20998;&#29255;&#12290;&#36825;&#31181;&#26041;&#27861;&#30340;&#19968;&#20010;&#20248;&#28857;&#26159;&#36991;&#20813;&#20102; shardgrp &#20043;&#38388;&#30340;&#20219;&#20309;&#30452;&#25509;&#20132;&#20114;&#12290;&#23427;&#36824;&#25903;&#25345;&#32487;&#32493;&#26381;&#21153;&#37027;&#20123;&#19981;&#21463;&#27491;&#22312;&#36827;&#34892;&#30340;&#37197;&#32622;&#21464;&#26356;&#24433;&#21709;&#30340;&#20998;&#29255;&#12290;</font></font></font></p><p data-imt-p="1">To be able to order changes to the configuration,
+                    each configuration has a unique
+                    number <tt>Num</tt>
+                    (see <tt>shardcfg/shardcfg.go</tt>).  The tester
+                    in Part A invokes <tt>ChangeConfigTo</tt>
+                    sequentially, and the configuration passed
+                    to <tt>ChangeConfigTo</tt> will have
+                    a <tt>Num</tt> one larger than the previous one;
+                    thus, a configuration with a higher
+                    <tt>Num</tt> is newer than one with a
+                    lower <tt>Num</tt>.
+
+                  <font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" data-imt-deferred-display="" style="display: none;"><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#20026;&#20102;&#33021;&#22815;&#23545;&#37197;&#32622;&#30340;&#26356;&#25913;&#36827;&#34892;&#25490;&#24207;&#65292;&#27599;&#20010;&#37197;&#32622;&#37117;&#26377;&#19968;&#20010;&#21807;&#19968;&#30340;&#32534;&#21495; <tt>Num</tt> &#65288;&#21442;&#35265; <tt>shardcfg/shardcfg.go</tt> &#65289;&#12290;Part A &#20013;&#30340;&#27979;&#35797;&#22120;&#20250;&#25353;&#39034;&#24207;&#35843;&#29992; <tt>ChangeConfigTo</tt> &#65292;&#20256;&#36882;&#32473; <tt>ChangeConfigTo</tt> &#30340;&#37197;&#32622;&#30340; <tt>Num</tt> &#23558;&#27604;&#21069;&#19968;&#20010;&#22823; 1&#65307;&#22240;&#27492;&#65292; <tt>Num</tt> &#36739;&#39640;&#30340;&#37197;&#32622;&#27604; <tt>Num</tt> &#36739;&#20302;&#30340;&#37197;&#32622;&#26356;&#26032;&#12290;</font></font></font></p><p data-imt-p="1">The network may delay RPCs, and RPCs may arrive
+                    out of order at the shardgrps.  To reject old
+                    <tt>FreezeShard</tt>, <tt>InstallShard</tt>,
+                    and <tt>DeleteShard</tt> RPCs, they should
+                    include <tt>Num</tt>
+                    (see <tt>shardgrp/shardrpc/shardrpc.go</tt>), and
+                    shardgrps must remember the largest <tt>Num</tt>
+                    they have seen for each shard.
+
+		  <font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" data-imt-deferred-display="" style="display: none;"><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#32593;&#32476;&#21487;&#33021;&#20250;&#24310;&#36831; RPC&#65292;&#19988; RPC &#21487;&#33021;&#20081;&#24207;&#21040;&#36798; shardgrp&#12290;&#20026;&#20102;&#25298;&#32477;&#36807;&#26399;&#30340; <tt>FreezeShard</tt> &#12289; <tt>InstallShard</tt> &#21644; <tt>DeleteShard</tt> RPC&#65292;&#36825;&#20123; RPC &#24212;&#21253;&#21547; <tt>Num</tt> &#65288;&#21442;&#35265; <tt>shardgrp/shardrpc/shardrpc.go</tt> &#65289;&#65292;&#24182;&#19988; shardgrp &#24517;&#39035;&#35760;&#20303;&#38024;&#23545;&#27599;&#20010;&#20998;&#29255;&#25152;&#35265;&#21040;&#36807;&#30340;&#26368;&#22823; <tt>Num</tt> &#12290;</font></font></font></p><p class="todo" data-imt-p="1">Implement <tt>ChangeConfigTo</tt>
+                    (in <tt>shardctrler/shardctrler.go</tt>) and
+                    extend <tt>shardgrp</tt> to support freeze,
+                    install, and delete.  <tt>ChangeConfigTo</tt>
+                    should always succeed in Part A because the tester
+                    doesn't induce failures in this part. You will
+                    need to implement
+                 <tt>FreezeShard</tt>, <tt>InstallShard</tt>, and <tt>DeleteShard</tt>
+                in <tt>shardgrp/client.go</tt>
+                and <tt>shardgrp/server.go</tt> using the RPCs in
+                the <tt>shardgrp/shardrpc</tt> package, and reject old RPCs
+                based on <tt>Num</tt>. You will also need modify the
+                shardkv clerk in <tt>shardkv1/client.go</tt> to
+		handle <tt>ErrWrongGroup</tt>, which a shardgrp should
+		return if it isn't reponsible for the shard.
+                <font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#23454;&#29616; <tt>ChangeConfigTo</tt> &#65288;&#20301;&#20110; <tt>shardctrler/shardctrler.go</tt> &#20013;&#65289;&#65292;&#24182;&#25193;&#23637; <tt>shardgrp</tt> &#20197;&#25903;&#25345;&#20923;&#32467;&#65288;freeze&#65289;&#12289;&#23433;&#35013;&#65288;install&#65289;&#21644;&#21024;&#38500;&#65288;delete&#65289;&#12290;&#22312; Part A &#20013; <tt>ChangeConfigTo</tt> &#24212;&#24403;&#24635;&#26159;&#33021;&#25104;&#21151;&#65292;&#22240;&#20026;&#27979;&#35797;&#31243;&#24207;&#22312;&#36825;&#19968;&#37096;&#20998;&#19981;&#20250;&#24341;&#20837;&#25925;&#38556;&#12290;&#20320;&#38656;&#35201;&#20351;&#29992; <tt>shardgrp/shardrpc</tt> &#21253;&#20013;&#30340; RPC&#65292;&#22312; <tt>shardgrp/client.go</tt> &#21644; <tt>shardgrp/server.go</tt> &#20013;&#23454;&#29616; <tt>FreezeShard</tt> &#12289; <tt>InstallShard</tt> &#21644; <tt>DeleteShard</tt> &#65292;&#24182;&#26681;&#25454; <tt>Num</tt> &#25298;&#32477;&#36807;&#26399;&#30340; RPC&#12290;&#20320;&#36824;&#38656;&#35201;&#20462;&#25913; <tt>shardkv1/client.go</tt> &#20013;&#30340; shardkv clerk &#26469;&#22788;&#29702; <tt>ErrWrongGroup</tt> &#65292;&#24403;&#26576;&#20010; shardgrp &#19981;&#36127;&#36131;&#35813;&#20998;&#29255;&#65288;shard&#65289;&#26102;&#65292;&#23427;&#24212;&#24403;&#36820;&#22238;&#35813;&#38169;&#35823;&#12290;</font></font></font><br>
+                <br>
+                You have completed this task when
+                 you pass the <tt>JoinBasic</tt> and <tt>DeleteBasic</tt> tests. These
+                 tests focus on adding shardgrps; you don't have to
+                worry about shardgrps leaving just yet.
+
+		<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#24403;&#20320;&#36890;&#36807; <tt>JoinBasic</tt> &#21644; <tt>DeleteBasic</tt> &#27979;&#35797;&#21518;&#65292;&#21363;&#34920;&#31034;&#20320;&#23436;&#25104;&#20102;&#27492;&#20219;&#21153;&#12290;&#36825;&#20123;&#27979;&#35797;&#20027;&#35201;&#20851;&#27880;&#28155;&#21152; shardgrp&#65307;&#30446;&#21069;&#20320;&#36824;&#19981;&#38656;&#35201;&#25285;&#24515; shardgrp &#30340;&#31163;&#24320;&#12290;</font></font></font></p><ul class="hints">
+
+                  <li data-imt-p="1"> A shardgrp should respond with
+                  an <tt>ErrWrongGroup</tt> error to a
+                  client <tt>Put</tt>/<tt>Get</tt> with a key that the
+                  shardgrp isn't responsible for (i.e., for a key
+                  whose shard is not assigned to the shardgrp).  You
+                  will have to modify <tt>shardkv1/client.go</tt> to
+                  reread the configuration and retry
+                  the <tt>Put</tt>/<tt>Get</tt>.
+
+		  <font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#24403;&#23458;&#25143;&#31471;&#20351;&#29992;&#35813; shardgrp &#19981;&#36127;&#36131;&#30340;&#38190;&#65288;&#21363;&#35813;&#38190;&#25152;&#23646;&#20998;&#29255;&#26410;&#34987;&#20998;&#37197;&#32473;&#35813; shardgrp&#65289;&#36827;&#34892; <tt>Put</tt> / <tt>Get</tt> &#26102;&#65292;shardgrp &#24212;&#36820;&#22238; <tt>ErrWrongGroup</tt> &#38169;&#35823;&#12290;&#20320;&#38656;&#35201;&#20462;&#25913; <tt>shardkv1/client.go</tt> &#65292;&#20351;&#20854;&#37325;&#26032;&#35835;&#21462;&#37197;&#32622;&#24182;&#37325;&#35797; <tt>Put</tt> / <tt>Get</tt> &#12290;</font></font></font></li><li data-imt-p="1"> Note that you will have to run <tt>FreezeShard</tt>,
+                  <tt>InstallShard</tt>, and <tt>DeleteShard</tt> through
+                  your <tt>rsm</tt> package, just like <tt>Put</tt>
+                  and <tt>Get</tt>.
+
+		  <font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#35831;&#27880;&#24847;&#65292;&#20320;&#24517;&#39035;&#36890;&#36807;&#20320;&#30340; <tt>rsm</tt> &#21253;&#26469;&#36816;&#34892; <tt>FreezeShard</tt> &#12289; <tt>InstallShard</tt> &#21644; <tt>DeleteShard</tt> &#65292;&#23601;&#20687; <tt>Put</tt> &#21644; <tt>Get</tt> &#19968;&#26679;&#12290;</font></font></font></li><li data-imt-p="1">You can send an entire map as your state
+        in an RPC request or reply, which may help
+        keep the code for shard transfer simple.
+
+		 <font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#20320;&#21487;&#20197;&#22312; RPC &#35831;&#27714;&#25110;&#22238;&#22797;&#20013;&#30452;&#25509;&#21457;&#36865;&#25972;&#20010; map &#20316;&#20026;&#29366;&#24577;&#65292;&#36825;&#26377;&#21161;&#20110;&#35753;&#20998;&#29255;&#36801;&#31227;&#30340;&#20195;&#30721;&#20445;&#25345;&#31616;&#21333;&#12290;</font></font></font></li><li data-imt-p="1">If one of your RPC handlers includes in its reply
+	     	  a map (e.g. a key/value map) that's part of your
+	     	  server's state, you may get bugs due to races. The
+	     	  RPC system has to read the map in order to send it
+	     	  to the caller, but it isn't holding a lock that
+	     	  covers the map. Your server, however, may proceed to
+	     	  modify the same map while the RPC system is reading
+	     	  it. The solution is for the RPC handler to include a
+	     	  copy of the map in the reply.
+
+		 <font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#22914;&#26524;&#20320;&#30340;&#26576;&#20010; RPC &#22788;&#29702;&#20989;&#25968;&#22312;&#20854;&#22238;&#22797;&#20013;&#21253;&#21547;&#20102;&#20316;&#20026;&#26381;&#21153;&#22120;&#29366;&#24577;&#19968;&#37096;&#20998;&#30340; map&#65288;&#20363;&#22914;&#38190;/&#20540; map&#65289;&#65292;&#21487;&#33021;&#20250;&#22240;&#31454;&#24577;&#26465;&#20214;&#65288;race&#65289;&#32780;&#20135;&#29983; bug&#12290;RPC &#31995;&#32479;&#24517;&#39035;&#35835;&#21462;&#35813; map &#25165;&#33021;&#23558;&#20854;&#21457;&#36865;&#32473;&#35843;&#29992;&#26041;&#65292;&#20294;&#23427;&#24182;&#27809;&#26377;&#25345;&#26377;&#35206;&#30422;&#35813; map &#30340;&#38145;&#12290;&#28982;&#32780;&#65292;&#22312; RPC &#31995;&#32479;&#35835;&#21462;&#35813; map &#30340;&#21516;&#26102;&#65292;&#20320;&#30340;&#26381;&#21153;&#22120;&#21487;&#33021;&#20250;&#32487;&#32493;&#20462;&#25913;&#21516;&#19968;&#20010; map&#12290;&#35299;&#20915;&#21150;&#27861;&#26159;&#35753; RPC &#22788;&#29702;&#20989;&#25968;&#22312;&#22238;&#22797;&#20013;&#21253;&#21547;&#35813; map &#30340;&#21103;&#26412;&#12290;</font></font></font></li></ul>
+
+                  <p class="todo" data-imt-p="1">Extend <tt>ChangeConfigTo</tt> to
+                    handle shard groups that leave; i.e., shardgrps
+                    that are present in the current configuration but
+                    not in the new one. Your solution should
+                    pass <tt>TestJoinLeaveBasic5A</tt> now.  (You
+                    may have handled this scenario already in the
+                    previous task, but the previous tests didn't test
+                    for shardgrps leaving.)
+
+                   <font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#25193;&#23637; <tt>ChangeConfigTo</tt> &#65292;&#20351;&#20854;&#33021;&#22815;&#22788;&#29702;&#31163;&#24320;&#30340;&#20998;&#29255;&#32452;&#65288;shard group&#65289;&#65307;&#21363;&#23384;&#22312;&#20110;&#24403;&#21069;&#37197;&#32622;&#20013;&#20294;&#19981;&#23384;&#22312;&#20110;&#26032;&#37197;&#32622;&#20013;&#30340; shardgrp&#12290;&#29616;&#22312;&#20320;&#30340;&#35299;&#20915;&#26041;&#26696;&#24212;&#35813;&#33021;&#36890;&#36807; <tt>TestJoinLeaveBasic5A</tt> &#12290;&#65288;&#20320;&#21487;&#33021;&#22312;&#21069;&#19968;&#20010;&#20219;&#21153;&#20013;&#24050;&#32463;&#22788;&#29702;&#36807;&#36825;&#31181;&#24773;&#20917;&#65292;&#20294;&#20043;&#21069;&#30340;&#27979;&#35797;&#24182;&#27809;&#26377;&#38024;&#23545; shardgrp &#31163;&#24320;&#30340;&#22330;&#26223;&#36827;&#34892;&#27979;&#35797;&#12290;&#65289;</font></font></font></p><p class="todo" data-imt-p="1"> Make your solution pass all Part A
+                 tests, which check that your sharded key/value
+                 service supports many groups joining and leaving,
+                 shardgrps restarting from snapshots, processing <tt>Get</tt>s
+                 while some shards are offline or involved in a
+                 configuration change, and linearizability when many
+                 clients interact with the service while the tester
+                 concurrently invokes the controller's <tt>ChangeConfigTo</tt> to
+                 rebalance shards.
+
+
+		
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#35753;&#20320;&#30340;&#26041;&#26696;&#36890;&#36807;&#25152;&#26377; Part A &#27979;&#35797;&#65292;&#36825;&#20123;&#27979;&#35797;&#20250;&#26816;&#26597;&#20320;&#30340;&#20998;&#29255;&#38190;/&#20540;&#26381;&#21153;&#26159;&#21542;&#25903;&#25345;&#22810;&#20010;&#32452;&#30340;&#21152;&#20837;&#19982;&#31163;&#24320;&#12289;shardgrp &#20174;&#24555;&#29031;&#37325;&#21551;&#12289;&#22312;&#26576;&#20123;&#20998;&#29255;&#22788;&#20110;&#31163;&#32447;&#29366;&#24577;&#25110;&#27491;&#22788;&#20110;&#37197;&#32622;&#21464;&#26356;&#26399;&#38388;&#26102;&#22788;&#29702; <tt>Get</tt> &#65292;&#20197;&#21450;&#22312;&#27979;&#35797;&#22120;&#24182;&#21457;&#35843;&#29992;&#25511;&#21046;&#22120;&#30340; <tt>ChangeConfigTo</tt> &#26469;&#37325;&#26032;&#24179;&#34913;&#20998;&#29255;&#30340;&#21516;&#26102;&#65292;&#22810;&#20010;&#23458;&#25143;&#31471;&#19982;&#26381;&#21153;&#20132;&#20114;&#26102;&#30340;&#32447;&#24615;&#19968;&#33268;&#24615;&#12290;</font></font></font></p><pre data-imt-pre="1" data-imt-p="1">$ cd ~/6.5840/src
+$ make RUN="-run 5A" shardkv
+go build -race -o main/kvsrv1d main/kvsrv1d.go
+go build -race -o main/shardgrp1d main/shardgrp1d.go
+cd shardkv1; go test -timeout 15m -v -race -run 5A
+Test (5A): Init and Query ... (reliable network)...
+  ... Passed --  time  0.0s #peers 1 #RPCs     3 #Ops    0
+Test (5A): one shard group ... (reliable network)...
+  ... Passed --  time  5.1s #peers 1 #RPCs   792 #Ops  180
+Test (5A): a group joins... (reliable network)...
+  ... Passed --  time 12.9s #peers 1 #RPCs  6300 #Ops  180
+Test (5A): delete ... (reliable network)...
+  ... Passed --  time  8.4s #peers 1 #RPCs  1533 #Ops  360
+Test (5A): basic groups join/leave ... (reliable network)...
+  ... Passed --  time 13.7s #peers 1 #RPCs  5676 #Ops  240
+Test (5A): many groups join/leave ... (reliable network)...
+  ... Passed --  time 22.1s #peers 1 #RPCs  3529 #Ops  180
+Test (5A): many groups join/leave ... (unreliable network)...
+  ... Passed --  time 54.8s #peers 1 #RPCs  5055 #Ops  180
+Test (5A): shutdown ... (reliable network)...
+  ... Passed --  time 11.7s #peers 1 #RPCs  2807 #Ops  180
+Test (5A): progress ... (reliable network)...
+  ... Passed --  time  8.8s #peers 1 #RPCs   974 #Ops   82
+Test (5A): progress ... (reliable network)...
+  ... Passed --  time 13.9s #peers 1 #RPCs  2443 #Ops  390
+Test (5A): one concurrent clerk reliable... (reliable network)...
+  ... Passed --  time 20.0s #peers 1 #RPCs  5326 #Ops 1248
+Test (5A): many concurrent clerks reliable... (reliable network)...
+  ... Passed --  time 20.4s #peers 1 #RPCs 21688 #Ops 10500
+Test (5A): one concurrent clerk unreliable ... (unreliable network)...
+  ... Passed --  time 25.8s #peers 1 #RPCs  2654 #Ops  176
+Test (5A): many concurrent clerks unreliable... (unreliable network)...
+  ... Passed --  time 25.3s #peers 1 #RPCs  7553 #Ops 1896
+PASS
+ok      6.5840/shardkv1 243.115s
+$<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" data-imt-deferred-display="" style="display: none;"><br><font class="notranslate immersive-translate-target-translation-pre-whitespace immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">$ cd ~/6.5840/src
+$ make RUN="-run 5A" shardkv
+go build -race -o main/kvsrv1d main/kvsrv1d.go
+go build -race -o main/shardgrp1d main/shardgrp1d.go
+cd shardkv1; go test -timeout 15m -v -race -run 5A
+Test (5A): Init and Query ...&#65288;&#21487;&#38752;&#32593;&#32476;&#65289;...
+... Passed --  time  0.0s #peers 1 #RPCs     3 #Ops    0
+&#27979;&#35797; (5A)&#65306;&#21333;&#20010;&#20998;&#29255;&#32452; ...&#65288;&#21487;&#38752;&#32593;&#32476;&#65289;...
+... &#36890;&#36807; --  &#26102;&#38388;  5.1s #&#33410;&#28857; 1 #RPC &#27425;&#25968;  792 #&#25805;&#20316;  180
+&#27979;&#35797; (5A)&#65306;&#19968;&#20010;&#32452;&#21152;&#20837; ...&#65288;&#21487;&#38752;&#32593;&#32476;&#65289;...
+... &#36890;&#36807; --  &#26102;&#38388; 12.9s #&#33410;&#28857; 1 #RPC &#27425;&#25968;  6300 #&#25805;&#20316;  180
+&#27979;&#35797; (5A)&#65306;&#21024;&#38500; ...&#65288;&#21487;&#38752;&#32593;&#32476;&#65289;...
+... &#36890;&#36807; --  &#26102;&#38388;  8.4s #&#33410;&#28857; 1 #RPC  1533 #&#25805;&#20316;  360
+&#27979;&#35797; (5A)&#65306;&#22522;&#26412;&#20998;&#32452;&#21152;&#20837;/&#31163;&#24320; ...&#65288;&#21487;&#38752;&#32593;&#32476;&#65289;...
+... &#36890;&#36807; --  &#26102;&#38388; 13.7s #&#33410;&#28857; 1 #RPC  5676 #&#25805;&#20316;  240
+&#27979;&#35797; (5A)&#65306;&#22810;&#20010;&#32452;&#30340;&#21152;&#20837;/&#31163;&#24320; ...&#65288;&#21487;&#38752;&#32593;&#32476;&#65289;...
+... &#36890;&#36807; --  &#26102;&#38388; 22.1s #&#33410;&#28857; 1 #RPC  3529 #&#25805;&#20316;  180
+&#27979;&#35797; (5A)&#65306;&#22810;&#20010;&#32452;&#30340;&#21152;&#20837;/&#31163;&#24320; ...&#65288;&#19981;&#21487;&#38752;&#32593;&#32476;&#65289;...
+... &#36890;&#36807; --  &#26102;&#38388; 54.8s #&#33410;&#28857; 1 #RPC  5055 #&#25805;&#20316;  180
+&#27979;&#35797; (5A)&#65306;&#20851;&#38381; ... (&#21487;&#38752;&#32593;&#32476;)...
+... &#36890;&#36807; --  &#26102;&#38388; 11.7s #&#33410;&#28857; 1 #RPC  2807 #&#25805;&#20316;  180
+&#27979;&#35797; (5A)&#65306;&#36827;&#24230; ... (&#21487;&#38752;&#32593;&#32476;)...
+... &#36890;&#36807; --  &#26102;&#38388;  8.8s #&#33410;&#28857; 1 #RPC   974 #&#25805;&#20316;  82
+&#27979;&#35797; (5A)&#65306;&#36827;&#24230; ...&#65288;&#21487;&#38752;&#32593;&#32476;&#65289;...
+... &#36890;&#36807; --  &#26102;&#38388; 13.9 &#31186; #&#33410;&#28857;&#25968; 1 #RPC &#25968; 2443 #&#25805;&#20316;&#25968; 390
+&#27979;&#35797; (5A)&#65306;&#21333;&#20010;&#24182;&#21457; clerk reliable...&#65288;&#21487;&#38752;&#32593;&#32476;&#65289;...
+... &#36890;&#36807; --  &#26102;&#38388; 20.0 &#31186; #&#33410;&#28857;&#25968; 1 #RPC &#25968; 5326 #&#25805;&#20316;&#25968; 1248
+&#27979;&#35797; (5A)&#65306;&#22810;&#20010;&#24182;&#21457;&#23458;&#25143;&#31471; &#21487;&#38752;...&#65288;&#21487;&#38752;&#32593;&#32476;&#65289;...
+... &#36890;&#36807; --  &#26102;&#38388; 20.4s #&#33410;&#28857; 1 #RPC &#25968; 21688 #&#25805;&#20316;&#25968; 10500
+&#27979;&#35797; (5A)&#65306;&#21333;&#20010;&#24182;&#21457;&#23458;&#25143;&#31471; &#19981;&#21487;&#38752; ...&#65288;&#19981;&#21487;&#38752;&#32593;&#32476;&#65289;...
+... &#36890;&#36807; --  &#26102;&#38388; 25.8s #&#33410;&#28857; 1 #RPC &#25968;  2654 #&#25805;&#20316;&#25968;  176
+&#27979;&#35797; (5A)&#65306;&#22823;&#37327;&#24182;&#21457;&#23458;&#25143;&#31471;&#65292;&#19981;&#21487;&#38752;...&#65288;&#19981;&#21487;&#38752;&#32593;&#32476;&#65289;...
+... &#36890;&#36807; --  &#32791;&#26102; 25.3s #&#33410;&#28857; 1 #RPC  7553 #&#25805;&#20316; 1896
+&#36890;&#36807;
+&#36890;&#36807;      6.5840/shardkv1 243.115s
+$</font></font></font></pre>
+
+
+                <p class="note" data-imt-p="1"> Your solution must continue serving shards
+		that are not affected by an ongoing configuration
+		change.
+
+		<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#20320;&#30340;&#35299;&#20915;&#26041;&#26696;&#24517;&#39035;&#33021;&#22815;&#32487;&#32493;&#20026;&#26410;&#21463;&#27491;&#22312;&#36827;&#34892;&#30340;&#37197;&#32622;&#21464;&#26356;&#24433;&#21709;&#30340;&#20998;&#29255;&#25552;&#20379;&#26381;&#21153;&#12290;</font></font></font></p><h3 data-imt-p="1">Part B: Handling a failed controller <script>g("easy")</script>(<a class="easy" href="https://pdos.csail.mit.edu/6.824/labs/guidance.html">easy</a>)<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">Part B&#65306;&#22788;&#29702;&#21457;&#29983;&#25925;&#38556;&#30340;&#25511;&#21046;&#22120;&#65288;&#31616;&#21333;&#65289;</font></font></font></h3>
+
+                <p data-imt-p="1">The controller is a short-lived command, which an
+                  administrator invokes: it moves shards and then
+                  exits.  But, it may fail or lose network
+                  connectivity while moving shards.  The main task in
+                  this part of the lab is recovering from a controller
+                  that fails to complete
+                  <tt>ChangeConfigTo</tt>. The tester starts a new
+                  controller and invokes its <tt>ChangeConfigTo</tt>
+                  after partitioning the first controller; you have to
+                  modify the controller so that the new one finishes
+                  the reconfiguration.
+                The tester calls <tt>InitController</tt> when
+                starting a controller; you can modify that function
+                to check whether an interrupted configuration
+                change needs to be completed.
+
+              <font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#25511;&#21046;&#22120;&#26159;&#19968;&#20010;&#29983;&#21629;&#21608;&#26399;&#30701;&#26242;&#30340;&#21629;&#20196;&#65292;&#30001;&#31649;&#29702;&#21592;&#35843;&#29992;&#65306;&#23427;&#31227;&#21160;&#20998;&#29255;&#65292;&#28982;&#21518;&#36864;&#20986;&#12290;&#20294;&#26159;&#65292;&#23427;&#22312;&#31227;&#21160;&#20998;&#29255;&#30340;&#36807;&#31243;&#20013;&#21487;&#33021;&#20250;&#21457;&#29983;&#25925;&#38556;&#25110;&#22833;&#21435;&#32593;&#32476;&#36830;&#25509;&#12290;&#23454;&#39564;&#36825;&#19968;&#37096;&#20998;&#30340;&#20027;&#35201;&#20219;&#21153;&#26159;&#20174;&#19968;&#20010;&#26410;&#33021;&#23436;&#25104; <tt>ChangeConfigTo</tt> &#30340;&#25511;&#21046;&#22120;&#20013;&#24674;&#22797;&#12290;&#27979;&#35797;&#31243;&#24207;&#22312;&#23545;&#31532;&#19968;&#20010;&#25511;&#21046;&#22120;&#36827;&#34892;&#20998;&#21306;&#21518;&#65292;&#20250;&#21551;&#21160;&#19968;&#20010;&#26032;&#30340;&#25511;&#21046;&#22120;&#24182;&#35843;&#29992;&#23427;&#30340; <tt>ChangeConfigTo</tt> &#65307;&#20320;&#38656;&#35201;&#20462;&#25913;&#25511;&#21046;&#22120;&#65292;&#20351;&#26032;&#25511;&#21046;&#22120;&#33021;&#22815;&#23436;&#25104;&#37325;&#26032;&#37197;&#32622;&#12290;&#27979;&#35797;&#31243;&#24207;&#22312;&#21551;&#21160;&#25511;&#21046;&#22120;&#26102;&#20250;&#35843;&#29992; <tt>InitController</tt> &#65307;&#20320;&#21487;&#20197;&#20462;&#25913;&#35813;&#20989;&#25968;&#65292;&#20197;&#26816;&#26597;&#26159;&#21542;&#26377;&#34987;&#20013;&#26029;&#30340;&#37197;&#32622;&#21464;&#26356;&#38656;&#35201;&#23436;&#25104;&#12290;</font></font></font></p><p data-imt-p="1">A good approach to allowing a controller to
+                finish a reconfiguration that a previous one started
+                is to keep two configurations: a current one and a
+                next one, both stored in the controller's kvsrv.
+		When a controller starts a reconfiguration, it
+		stores the next configuration.
+                Once a controller completes the reconfiguration, it
+                makes the next configuration the current one.
+                Modify <tt>InitController</tt>
+                to first check if there is a stored next
+                configuration with a higher configuration number than
+                the current one, and if so, complete the shard moves
+                necessary to reconfigure to the next one.
+
+	      <font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#35753;&#25511;&#21046;&#22120;&#33021;&#22815;&#23436;&#25104;&#19978;&#19968;&#20010;&#25511;&#21046;&#22120;&#24050;&#24320;&#22987;&#30340;&#37325;&#37197;&#32622;&#30340;&#19968;&#20010;&#22909;&#26041;&#27861;&#26159;&#20445;&#30041;&#20004;&#20010;&#37197;&#32622;&#65306;&#24403;&#21069;&#37197;&#32622;&#21644;&#19979;&#19968;&#20010;&#37197;&#32622;&#65292;&#20004;&#32773;&#37117;&#23384;&#20648;&#22312;&#25511;&#21046;&#22120;&#30340; kvsrv &#20013;&#12290;&#24403;&#25511;&#21046;&#22120;&#24320;&#22987;&#19968;&#27425;&#37325;&#37197;&#32622;&#26102;&#65292;&#23427;&#20250;&#23384;&#20648;&#19979;&#19968;&#20010;&#37197;&#32622;&#12290;&#19968;&#26086;&#25511;&#21046;&#22120;&#23436;&#25104;&#20102;&#37325;&#37197;&#32622;&#65292;&#23427;&#23601;&#23558;&#19979;&#19968;&#20010;&#37197;&#32622;&#21464;&#20026;&#24403;&#21069;&#37197;&#32622;&#12290;&#20462;&#25913; <tt>InitController</tt> &#65292;&#20351;&#20854;&#39318;&#20808;&#26816;&#26597;&#26159;&#21542;&#23384;&#20648;&#20102;&#37197;&#32622;&#32534;&#21495;&#39640;&#20110;&#24403;&#21069;&#37197;&#32622;&#30340;&#19979;&#19968;&#20010;&#37197;&#32622;&#65292;&#22914;&#26524;&#26377;&#65292;&#21017;&#23436;&#25104;&#37325;&#26032;&#37197;&#32622;&#21040;&#19979;&#19968;&#20010;&#37197;&#32622;&#25152;&#38656;&#30340;&#20998;&#29255;&#31227;&#21160;&#12290;</font></font></font></p><p class="todo" data-imt-p="1">
+                Modify shardctrler to implement the above approach.
+                A controller that picks up the work from a
+                failed controller may
+                repeat <tt>FreezeShard</tt>, <tt>InstallShard</tt>,
+                and <tt>Delete</tt> RPCs; shardgrps can use <tt>Num</tt> to
+                detect duplicates and reject them.  You have completed
+                this task if your solution passes the Part B tests.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#20462;&#25913; shardctrler &#20197;&#23454;&#29616;&#19978;&#36848;&#26041;&#27861;&#12290;&#25509;&#25163;&#22833;&#36133;&#25511;&#21046;&#22120;&#24037;&#20316;&#30340;&#25511;&#21046;&#22120;&#21487;&#33021;&#20250;&#37325;&#22797; <tt>FreezeShard</tt> &#12289; <tt>InstallShard</tt> &#21644; <tt>Delete</tt> RPC&#65307;shardgrps &#21487;&#20197;&#20351;&#29992; <tt>Num</tt> &#26469;&#26816;&#27979;&#37325;&#22797;&#35831;&#27714;&#24182;&#25298;&#32477;&#23427;&#20204;&#12290;&#22914;&#26524;&#20320;&#30340;&#35299;&#20915;&#26041;&#26696;&#36890;&#36807;&#20102; B &#37096;&#20998;&#30340;&#27979;&#35797;&#65292;&#21363;&#34920;&#31034;&#20320;&#23436;&#25104;&#20102;&#27492;&#20219;&#21153;&#12290;</font></font></font></p><pre data-imt-pre="1" data-imt-p="1">$ cd ~/6.5840/src
+$ make RUN="-run 5B" shardkv
+go build -race -o main/kvsrv1d main/k
+go build -race -o main/shardgrp1d main/shardgrp1d.go
+cd shardkv1; go test -timeout 15m -v -race -run 5B
+Test (5B): Join/leave while a shardgrp is down... (reliable network)...
+  ... Passed --  time  9.2s #peers 1 #RPCs   899 #Ops  120
+Test (5B): recover controller ... (reliable network)...
+  ... Passed --  time 26.4s #peers 1 #RPCs  3724 #Ops  360
+PASS
+ok      6.5840/shardkv1 35.805s
+$<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-pre-whitespace immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">$ cd ~/6.5840/src
+$ make RUN="-run 5B" shardkv
+go build -race -o main/kvsrv1d main/k
+go build -race -o main/shardgrp1d main/shardgrp1d.go
+cd shardkv1; go test -timeout 15m -v -race -run 5B
+&#27979;&#35797; (5B)&#65306;&#22312;&#26576;&#20010; shardgrp &#23445;&#26426;&#26102;&#36827;&#34892;&#21152;&#20837;/&#31163;&#24320;&#25805;&#20316;...&#65288;&#21487;&#38752;&#32593;&#32476;&#65289;...
+... &#36890;&#36807; --  &#26102;&#38388;  9.2s #&#33410;&#28857; 1 #RPC   899 #&#25805;&#20316;  120
+&#27979;&#35797; (5B)&#65306;&#24674;&#22797;&#25511;&#21046;&#22120; ...&#65288;&#21487;&#38752;&#32593;&#32476;&#65289;...
+... &#36890;&#36807; --  &#26102;&#38388; 26.4s #&#33410;&#28857; 1 #RPC  3724 #&#25805;&#20316;  360
+&#36890;&#36807;
+ok      6.5840/shardkv1 35.805s
+$</font></font></font></pre>
+
+                <ul class="hints">
+                  <li data-imt-p="1"> The tester calls <tt>InitController</tt>
+                  when starting a controller; you can implement
+                  recovery in that method
+                    in <tt>shardctrler/shardctrler.go</tt>.
+                <font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#27979;&#35797;&#22120;&#22312;&#21551;&#21160;&#25511;&#21046;&#22120;&#26102;&#20250;&#35843;&#29992; <tt>InitController</tt> &#65307;&#20320;&#21487;&#20197;&#22312; <tt>shardctrler/shardctrler.go</tt> &#20013;&#30340;&#35813;&#26041;&#27861;&#37324;&#23454;&#29616;&#24674;&#22797;&#36923;&#36753;&#12290;</font></font></font></li></ul>
+
+		<h3 data-imt-p="1">Part C: Concurrent configuration changes <script>g("moderate")</script>(<a class="moderate" href="https://pdos.csail.mit.edu/6.824/labs/guidance.html">moderate</a>)<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">C &#37096;&#20998;&#65306;&#24182;&#21457;&#37197;&#32622;&#21464;&#26356;&#65288;&#20013;&#31561;&#65289;</font></font></font></h3>
+
+		<p data-imt-p="1">In this part of the lab you will modify the
+		controller to allow for concurrent controllers. When a
+		controller crashes or is partitioned, the tester will
+		start a new controller, which must finish any work
+		that the old controller might have in progress (i.e.,
+		finishing moving shards like in Part B).  This means
+		that several controllers may run concurrently and
+		send RPCs to the shardgrps and the <tt>kvsrv</tt> that stores
+		configurations.
+
+		<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#22312;&#23454;&#39564;&#30340;&#36825;&#19968;&#37096;&#20998;&#20013;&#65292;&#20320;&#23558;&#20462;&#25913;&#25511;&#21046;&#22120;&#65288;controller&#65289;&#65292;&#20351;&#20854;&#25903;&#25345;&#22810;&#20010;&#25511;&#21046;&#22120;&#24182;&#21457;&#36816;&#34892;&#12290;&#24403;&#26576;&#20010;&#25511;&#21046;&#22120;&#23849;&#28291;&#25110;&#36973;&#36935;&#32593;&#32476;&#20998;&#21306;&#26102;&#65292;&#27979;&#35797;&#31243;&#24207;&#20250;&#21551;&#21160;&#19968;&#20010;&#26032;&#30340;&#25511;&#21046;&#22120;&#65292;&#23427;&#24517;&#39035;&#23436;&#25104;&#26087;&#25511;&#21046;&#22120;&#21487;&#33021;&#23578;&#26410;&#23436;&#25104;&#30340;&#24037;&#20316;&#65288;&#20363;&#22914;&#65292;&#20687; B &#37096;&#20998;&#37027;&#26679;&#23436;&#25104;&#20998;&#29255;&#30340;&#31227;&#21160;&#65289;&#12290;&#36825;&#24847;&#21619;&#30528;&#21487;&#33021;&#20250;&#26377;&#22810;&#20010;&#25511;&#21046;&#22120;&#21516;&#26102;&#36816;&#34892;&#65292;&#24182;&#21521;&#21508;&#20010; shardgrp &#20197;&#21450;&#23384;&#20648;&#37197;&#32622;&#30340; <tt>kvsrv</tt> &#21457;&#36865; RPC&#12290;</font></font></font></p><p data-imt-p="1">The main challenge is to ensure these controllers
+		don't step on each other.  In Part A you already
+		fenced all the shardgrp RPCs with <tt>Num</tt> so that
+		old RPCs are rejected.  Even if several controllers
+		pick up the work of an old controller concurrently,
+		one of them succeeds and the others repeat all the
+		RPCs, the shardgrps will ignore them.
+
+                  <font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#20027;&#35201;&#30340;&#25361;&#25112;&#22312;&#20110;&#30830;&#20445;&#36825;&#20123;&#25511;&#21046;&#22120;&#20043;&#38388;&#19981;&#20250;&#20114;&#30456;&#24178;&#25200;&#12290;&#22312; A &#37096;&#20998;&#20013;&#65292;&#20320;&#24050;&#32463;&#29992; <tt>Num</tt> &#23545;&#25152;&#26377;&#21457;&#24448; shardgrp &#30340; RPC &#20570;&#20102;&#38450;&#25252;&#65288;fence&#65289;&#65292;&#20174;&#32780;&#25298;&#32477;&#26087;&#30340; RPC&#12290;&#21363;&#20351;&#26377;&#22810;&#20010;&#25511;&#21046;&#22120;&#21516;&#26102;&#25509;&#25163;&#26576;&#20010;&#26087;&#25511;&#21046;&#22120;&#30340;&#24037;&#20316;——&#20854;&#20013;&#19968;&#20010;&#25104;&#21151;&#20102;&#65292;&#32780;&#20854;&#20313;&#30340;&#21017;&#37325;&#22797;&#21457;&#36865;&#25152;&#26377; RPC——shardgrp &#20063;&#20250;&#24573;&#30053;&#36825;&#20123;&#37325;&#22797;&#30340;&#35831;&#27714;&#12290;</font></font></font></p><p data-imt-p="1"> Thus the challenging case left is to ensure that
+		  only one controller updates the next configuration
+		  to avoid that two controllers (e.g., a partitioned
+		  one and a new one) put different configurations in
+		  the next one.  To stress this scenario, the tester runs
+		  several controllers concurrently and each one
+		  computes the next configuration by reading the
+		  current configuration and updating it for a shardgrp
+		  that left or joined, and then the tester
+		  invokes <tt>ChangeConfigTo</tt>; thus multiple
+		  controllers may invoke <tt>ChangeConfigTo</tt> with
+		  different configuration with the same <tt>Num</tt>.
+		  You can use the version number of a key and
+		  versioned <tt>Put</tt>s to ensure that only one
+		  controller updates the next configuration and that
+		  the other invocations return without doing anything.
+
+		<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#22240;&#27492;&#65292;&#21097;&#19979;&#20855;&#26377;&#25361;&#25112;&#24615;&#30340;&#24773;&#20917;&#26159;&#35201;&#30830;&#20445;&#21482;&#26377;&#19968;&#20010;&#25511;&#21046;&#22120;&#26356;&#26032;&#19979;&#19968;&#20010;&#37197;&#32622;&#65292;&#20197;&#36991;&#20813;&#20004;&#20010;&#25511;&#21046;&#22120;&#65288;&#20363;&#22914;&#65292;&#19968;&#20010;&#34987;&#20998;&#21306;&#30340;&#25511;&#21046;&#22120;&#21644;&#19968;&#20010;&#26032;&#30340;&#25511;&#21046;&#22120;&#65289;&#22312;&#19979;&#19968;&#20010;&#37197;&#32622;&#20013;&#25918;&#20837;&#19981;&#21516;&#30340;&#37197;&#32622;&#12290;&#20026;&#20102;&#23545;&#36825;&#20010;&#22330;&#26223;&#36827;&#34892;&#21387;&#21147;&#27979;&#35797;&#65292;&#27979;&#35797;&#31243;&#24207;&#20250;&#24182;&#21457;&#36816;&#34892;&#22810;&#20010;&#25511;&#21046;&#22120;&#65292;&#27599;&#20010;&#25511;&#21046;&#22120;&#36890;&#36807;&#35835;&#21462;&#24403;&#21069;&#37197;&#32622;&#65292;&#24182;&#38024;&#23545;&#26576;&#20010;&#31163;&#24320;&#25110;&#21152;&#20837;&#30340; shardgrp &#23545;&#20854;&#36827;&#34892;&#26356;&#26032;&#65292;&#20174;&#32780;&#35745;&#31639;&#20986;&#19979;&#19968;&#20010;&#37197;&#32622;&#65292;&#28982;&#21518;&#27979;&#35797;&#31243;&#24207;&#35843;&#29992; <tt>ChangeConfigTo</tt> &#65307;&#36825;&#26679;&#19968;&#26469;&#65292;&#22810;&#20010;&#25511;&#21046;&#22120;&#21487;&#33021;&#20250;&#20197;&#19981;&#21516;&#30340;&#37197;&#32622;&#20294;&#30456;&#21516;&#30340; <tt>Num</tt> &#26469;&#35843;&#29992; <tt>ChangeConfigTo</tt> &#12290;&#20320;&#21487;&#20197;&#21033;&#29992;&#38190;&#30340;&#29256;&#26412;&#21495;&#20197;&#21450;&#24102;&#29256;&#26412;&#30340; <tt>Put</tt> &#26469;&#30830;&#20445;&#21482;&#26377;&#19968;&#20010;&#25511;&#21046;&#22120;&#26356;&#26032;&#19979;&#19968;&#20010;&#37197;&#32622;&#65292;&#32780;&#20854;&#20182;&#35843;&#29992;&#21017;&#19981;&#20570;&#20219;&#20309;&#25805;&#20316;&#30452;&#25509;&#36820;&#22238;&#12290;</font></font></font></p><p class="todo" data-imt-p="1">
+		  Modify your controller so that only one controller
+		  can post a next configuration for a
+		  configuration <tt>Num</tt>.  The tester will start
+		  many controllers but only one should
+		  start <tt>ChangeConfigTo</tt> for a new
+		  configuation.
+		  You have completed this task
+		  if you pass the concurrent tests of
+		  Part C:
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#35831;&#20462;&#25913;&#20320;&#30340;&#25511;&#21046;&#22120;&#65292;&#20351;&#24471;&#23545;&#20110;&#19968;&#20010;&#37197;&#32622; <tt>Num</tt> &#65292;&#21482;&#26377;&#19968;&#20010;&#25511;&#21046;&#22120;&#33021;&#22815;&#21457;&#24067;&#19979;&#19968;&#20010;&#37197;&#32622;&#12290;&#27979;&#35797;&#31243;&#24207;&#20250;&#21551;&#21160;&#35768;&#22810;&#25511;&#21046;&#22120;&#65292;&#20294;&#23545;&#20110;&#19968;&#20010;&#26032;&#37197;&#32622;&#65292;&#24212;&#35813;&#21482;&#26377;&#19968;&#20010;&#25511;&#21046;&#22120;&#21551;&#21160; <tt>ChangeConfigTo</tt> &#12290;&#22914;&#26524;&#20320;&#36890;&#36807;&#20102; C &#37096;&#20998;&#30340;&#24182;&#21457;&#27979;&#35797;&#65292;&#23601;&#35828;&#26126;&#20320;&#23436;&#25104;&#20102;&#36825;&#20010;&#20219;&#21153;&#65306;</font></font></font></p><pre data-imt-pre="1" data-imt-p="1">$ cd ~/6.5840/src
+$ make RUN="-run TestConcurrentReliable5C" shardkv
+go build -race -o main/kvsrv1d main/k
+go build -race -o main/shardgrp1d main/shardgrp1d.go
+cd shardkv1; go test -timeout 15m -v -race -run TestConcurrentReliable5C
+Test (5C): Concurrent ctrlers ... (reliable network)...
+  ... Passed --  time  8.2s #peers 1 #RPCs  1753 #Ops  120
+PASS
+ok      6.5840/shardkv1 8.364s
+$ make RUN="-run TestAcquireLockConcurrentUnreliable5C" shardkv
+go build -race -o main/kvsrv1d main/k
+go build -race -o main/shardgrp1d main/shardgrp1d.go
+cd shardkv1; go test -timeout 15m -v -race -run TestAcquireLockConcurrentUnreliable5C
+Test (5C): Concurrent ctrlers ... (unreliable network)...
+  ... Passed --  time 23.8s #peers 1 #RPCs  1850 #Ops  120
+PASS
+ok      6.5840/shardkv1 24.008s
+$<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-pre-whitespace immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">$ cd ~/6.5840/src
+$ make RUN="-run TestConcurrentReliable5C" shardkv
+go build -race -o main/kvsrv1d main/k
+go build -race -o main/shardgrp1d main/shardgrp1d.go
+cd shardkv1; go test -timeout 15m -v -race -run TestConcurrentReliable5C
+Test (5C)&#65306;&#24182;&#21457;&#25511;&#21046;&#22120; ...&#65288;&#21487;&#38752;&#32593;&#32476;&#65289;...
+... Passed --  time  8.2s #peers 1 #RPCs  1753 #Ops  120
+PASS
+ok      6.5840/shardkv1 8.364s
+$ make RUN="-run TestAcquireLockConcurrentUnreliable5C" shardkv
+go build -race -o main/kvsrv1d main/k
+go build -race -o main/shardgrp1d main/shardgrp1d.go
+cd shardkv1; go test -timeout 15m -v -race -run TestAcquireLockConcurrentUnreliable5C
+Test (5C): Concurrent ctrlers ... (unreliable network)...
+... Passed --  time 23.8s #peers 1 #RPCs  1850 #Ops  120
+PASS
+ok      6.5840/shardkv1 24.008s
+$</font></font></font></pre>
+
+		<ul class="hints">
+                   <li data-imt-p="1">See <tt>concurCtrler</tt> in <tt>test.go</tt>
+                     to see how the tester runs controllers concurrently.
+                <font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#35831;&#21442;&#38405; <tt>test.go</tt> &#20013;&#30340; <tt>concurCtrler</tt> &#65292;&#20102;&#35299;&#27979;&#35797;&#22120;&#22914;&#20309;&#24182;&#21457;&#22320;&#36816;&#34892;&#25511;&#21046;&#22120;&#12290;</font></font></font></li></ul>
+
+		<p class="todo" data-imt-p="1">
+		In this exercise you will put recovery of an old
+		controller together with a new controller: a new
+		controller should perform recovery from Part B.  If
+		the old controller was partitioned
+		during <tt>ChangeConfigTo</tt>, you will have to make
+		sure that the old controller doesn't interfere with the
+		new controller.  If all the controller's updates are
+		already properly fenced with <tt>Num</tt> checks from Part B,
+		you don't have to write extra code.  You have completed
+		this task if you pass the
+                <tt>Partition</tt> tests.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#22312;&#26412;&#32451;&#20064;&#20013;&#65292;&#20320;&#38656;&#35201;&#23558;&#26087;&#25511;&#21046;&#22120;&#30340;&#24674;&#22797;&#19982;&#26032;&#25511;&#21046;&#22120;&#32467;&#21512;&#36215;&#26469;&#65306;&#26032;&#25511;&#21046;&#22120;&#24212;&#24403;&#25191;&#34892; B &#37096;&#20998;&#20013;&#30340;&#24674;&#22797;&#25805;&#20316;&#12290;&#22914;&#26524;&#26087;&#25511;&#21046;&#22120;&#22312; <tt>ChangeConfigTo</tt> &#26399;&#38388;&#34987;&#20998;&#21306;&#38548;&#31163;&#65292;&#20320;&#24517;&#39035;&#30830;&#20445;&#26087;&#25511;&#21046;&#22120;&#19981;&#20250;&#24178;&#25200;&#26032;&#25511;&#21046;&#22120;&#12290;&#22914;&#26524;&#25511;&#21046;&#22120;&#30340;&#25152;&#26377;&#26356;&#26032;&#37117;&#24050;&#32463;&#25353;&#29031; B &#37096;&#20998;&#30340;&#35201;&#27714;&#36890;&#36807; <tt>Num</tt> &#26816;&#26597;&#36827;&#34892;&#20102;&#22949;&#21892;&#30340;&#38450;&#25252;&#65292;&#37027;&#20040;&#20320;&#26080;&#38656;&#32534;&#20889;&#39069;&#22806;&#30340;&#20195;&#30721;&#12290;&#21482;&#35201;&#20320;&#36890;&#36807;&#20102; <tt>Partition</tt> &#27979;&#35797;&#65292;&#23601;&#35828;&#26126;&#20320;&#23436;&#25104;&#20102;&#36825;&#20010;&#20219;&#21153;&#12290;</font></font></font></p><pre data-imt-pre="1" data-imt-p="1">$ cd ~/6.5840/src
+$ make RUN="-run Partition" shardkv
+go build -race -o main/kvsrv1d main/k
+go build -race -o main/shardgrp1d main/shardgrp1d.go
+cd shardkv1; go test -timeout 15m -v -race -run Partition
+Test (5C): partition controller in join... (reliable network)...
+  ... Passed --  time  7.8s #peers 1 #RPCs   876 #Ops  120
+Test (5C): controllers with leased leadership ... (reliable network)...
+  ... Passed --  time 36.8s #peers 1 #RPCs  3981 #Ops  360
+Test (5C): controllers with leased leadership ... (unreliable network)...
+  ... Passed --  time 52.4s #peers 1 #RPCs  2901 #Ops  240
+Test (5C): controllers with leased leadership ... (reliable network)...
+  ... Passed --  time 60.2s #peers 1 #RPCs 27415 #Ops 11182
+Test (5C): controllers with leased leadership ... (unreliable network)...
+  ... Passed --  time 60.5s #peers 1 #RPCs 11422 #Ops 2336
+PASS
+ok      6.5840/shardkv1 217.779s
+$<font class="notranslate immersive-translate-target-wrapper" translate="no" lang="zh-CN" data-immersive-translate-loading-id="" id="75" style="">&nbsp; <font class="immersive-translate-loading-spinner notranslate"></font></font></pre>
+
+                <p data-imt-p="1">You have completed implementing a highly-available
+                sharded key/value service with many shard groups for
+                scalability, reconfiguration to handle changes in
+                load, and with a fault-tolerant controller; congrats!
+
+		<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#20320;&#24050;&#32463;&#23436;&#25104;&#20102;&#19968;&#20010;&#39640;&#21487;&#29992;&#20998;&#29255;&#38190;/&#20540;&#26381;&#21153;&#30340;&#23454;&#29616;&#65292;&#35813;&#26381;&#21153;&#25317;&#26377;&#22810;&#20010;&#20998;&#29255;&#32452;&#20197;&#23454;&#29616;&#21487;&#25193;&#23637;&#24615;&#12289;&#33021;&#22815;&#36890;&#36807;&#37325;&#26032;&#37197;&#32622;&#26469;&#24212;&#23545;&#36127;&#36733;&#21464;&#21270;&#65292;&#24182;&#19988;&#37197;&#22791;&#20102;&#19968;&#20010;&#23481;&#38169;&#30340;&#25511;&#21046;&#22120;&#65307;&#24685;&#21916;&#65281;</font></font></font></p><p class="todo" data-imt-p="1">Rerun all tests to check that your
+                recent changes to the controller haven't broken earlier
+                tests.
+
+      <font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#37325;&#26032;&#36816;&#34892;&#25152;&#26377;&#27979;&#35797;&#65292;&#20197;&#26816;&#26597;&#20320;&#26368;&#36817;&#23545;&#25511;&#21046;&#22120;&#30340;&#20462;&#25913;&#27809;&#26377;&#30772;&#22351;&#20043;&#21069;&#30340;&#27979;&#35797;&#12290;</font></font></font></p><div class="important">
+      <p data-imt-p="1">Gradescope will rerun the Lab 3A-D and Lab 4A-C tests
+      on your submission, in addition to the 5C tests.
+      Before submitting, double check that your solution works:
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#38500;&#20102; 5C &#27979;&#35797;&#20043;&#22806;&#65292;Gradescope &#36824;&#20250;&#22312;&#20320;&#30340;&#25552;&#20132;&#19978;&#37325;&#26032;&#36816;&#34892; Lab 3A-D &#21644; Lab 4A-C &#30340;&#27979;&#35797;&#12290;&#22312;&#25552;&#20132;&#20043;&#21069;&#65292;&#35831;&#20180;&#32454;&#26816;&#26597;&#20320;&#30340;&#35299;&#20915;&#26041;&#26696;&#26159;&#21542;&#27491;&#24120;&#24037;&#20316;&#65306;</font></font></font></p><pre data-imt-pre="1" data-imt-p="1" data-imt_insert_failed_reason="same_text">$ make raft1
+$ make kvraft1
+$ make shardkv</pre>
+      <p></p>
+      </div>
+
+		<h3 data-imt-p="1">Part D: Extend your solution<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">Part D&#65306;&#25193;&#23637;&#20320;&#30340;&#35299;&#20915;&#26041;&#26696;</font></font></font></h3>
+
+                <p data-imt-p="1">In this final part of the lab, you get to extend
+                your solution in any way you like. You will have to
+                write your own tests for whatever extensions you choose
+                to implement.
+
+		<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#22312;&#26412;&#23454;&#39564;&#30340;&#26368;&#21518;&#19968;&#37096;&#20998;&#65292;&#20320;&#21487;&#20197;&#25353;&#33258;&#24049;&#21916;&#27426;&#30340;&#26041;&#24335;&#20219;&#24847;&#25193;&#23637;&#20320;&#30340;&#35299;&#20915;&#26041;&#26696;&#12290;&#26080;&#35770;&#20320;&#36873;&#25321;&#23454;&#29616;&#20309;&#31181;&#25193;&#23637;&#21151;&#33021;&#65292;&#37117;&#38656;&#35201;&#33258;&#34892;&#32534;&#20889;&#30456;&#24212;&#30340;&#27979;&#35797;&#12290;</font></font></font></p><p class="todo" data-imt-p="1">Implement one of the ideas below or
+		come up with your own idea.  Write a paragraph in a
+		file <tt>extension.md</tt> describing your extension,
+		and upload <tt>extension.md</tt> to Gradescope.
+		If you would like to do one of the harder, open-ended
+		extensions, feel free to partner up with another
+		student in the class.
+
+                <font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#23454;&#29616;&#19979;&#38754;&#21015;&#20986;&#30340;&#26576;&#20010;&#24819;&#27861;&#65292;&#25110;&#32773;&#25552;&#20986;&#20320;&#33258;&#24049;&#30340;&#24819;&#27861;&#12290;&#22312;&#25991;&#20214; <tt>extension.md</tt> &#20013;&#20889;&#19968;&#27573;&#35805;&#25551;&#36848;&#20320;&#30340;&#25193;&#23637;&#65292;&#24182;&#23558; <tt>extension.md</tt> &#19978;&#20256;&#21040; Gradescope&#12290;&#22914;&#26524;&#20320;&#24819;&#23581;&#35797;&#36739;&#38590;&#30340;&#24320;&#25918;&#24615;&#25193;&#23637;&#65292;&#21487;&#20197;&#19982;&#29677;&#19978;&#21478;&#19968;&#20301;&#21516;&#23398;&#33258;&#30001;&#32452;&#38431;&#12290;</font></font></font></p><p data-imt-p="1">Here are some ideas for possible extension (the first
+                few are easy and the later ones are more open ended):
+                  <font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#20197;&#19979;&#26159;&#19968;&#20123;&#21487;&#33021;&#30340;&#25193;&#23637;&#24819;&#27861;&#65288;&#21069;&#20960;&#20010;&#27604;&#36739;&#31616;&#21333;&#65292;&#21518;&#38754;&#30340;&#21017;&#26356;&#21152;&#24320;&#25918;&#65289;&#65306;</font></font></font></p><ul>
+
+                    <li data-imt-p="1"> <script>g("easy")</script>(<a class="easy" href="https://pdos.csail.mit.edu/6.824/labs/guidance.html">easy</a>) Change the tester
+                    to use <tt>kvraft</tt> instead of <tt>kvsrv</tt>
+                    (i.e., replace the <tt>kvsrv.StartKVServer</tt>
+                    in <tt>MakeTestMaxRaft</tt> in <tt>test.go</tt>
+                    with <tt>kvraft.StartKVServer</tt>) so that the
+                    controller uses your kvraft to store its
+                    configuration.  Write a test that checks that the
+                    controller can query and update the configuration
+                    while one of the kvraft peers is down. The
+                    existing code for the tester is distributed across
+                    <tt>src/kvtest1</tt>, <tt>src/shardkv1</tt>, and
+                    <tt>src/tester1</tt>.
+
+                    <font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#65288;&#31616;&#21333;&#65289;&#20462;&#25913;&#27979;&#35797;&#22120;&#65292;&#20351;&#20854;&#20351;&#29992; <tt>kvraft</tt> &#32780;&#19981;&#26159; <tt>kvsrv</tt> &#65288;&#21363;&#25226; <tt>test.go</tt> &#20013; <tt>MakeTestMaxRaft</tt> &#37324;&#30340; <tt>kvsrv.StartKVServer</tt> &#26367;&#25442;&#20026; <tt>kvraft.StartKVServer</tt> &#65289;&#65292;&#35753;&#25511;&#21046;&#22120;&#20351;&#29992;&#20320;&#30340; kvraft &#26469;&#23384;&#20648;&#20854;&#37197;&#32622;&#12290;&#32534;&#20889;&#19968;&#20010;&#27979;&#35797;&#65292;&#26816;&#26597;&#24403;&#26576;&#20010; kvraft &#33410;&#28857;&#23445;&#26426;&#26102;&#65292;&#25511;&#21046;&#22120;&#20173;&#33021;&#26597;&#35810;&#21644;&#26356;&#26032;&#37197;&#32622;&#12290;&#27979;&#35797;&#22120;&#30340;&#29616;&#26377;&#20195;&#30721;&#20998;&#24067;&#22312; <tt>src/kvtest1</tt> &#12289; <tt>src/shardkv1</tt> &#21644; <tt>src/tester1</tt> &#20013;&#12290;</font></font></font></li><li data-imt-p="1"> <script>g("moderate")</script>(<a class="moderate" href="https://pdos.csail.mit.edu/6.824/labs/guidance.html">moderate</a>)
+                      Change <tt>kvsrv</tt> to implement
+                      exactly-once semantics for <tt>Put</tt>/<tt>Get</tt> as in
+                      <a href="http://nil.csail.mit.edu/6.5840/2024/labs/lab-kvsrv.html">Lab 2</a>
+                      from last year (see the dropped messages part).
+                      You may be able to port over some tests from
+                      2024 instead of having to write your own from
+                      scratch.  Implement exactly-once also in your <tt>kvraft</tt>.
+
+                    <font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#65288;&#20013;&#31561;&#65289;&#20462;&#25913; <tt>kvsrv</tt> &#65292;&#20026; <tt>Put</tt> / <tt>Get</tt> &#23454;&#29616;&#24688;&#22909;&#19968;&#27425;&#35821;&#20041;&#65292;&#31867;&#20284;&#20110;&#21435;&#24180;&#30340; Lab 2&#65288;&#21442;&#35265;&#20002;&#24323;&#28040;&#24687;&#37096;&#20998;&#65289;&#12290;&#20320;&#21487;&#20197;&#30452;&#25509;&#31227;&#26893; 2024 &#24180;&#30340;&#19968;&#20123;&#27979;&#35797;&#65292;&#32780;&#19981;&#24517;&#20174;&#22836;&#32534;&#20889;&#33258;&#24049;&#30340;&#27979;&#35797;&#12290;&#21516;&#26102;&#22312;&#20320;&#30340; <tt>kvraft</tt> &#20013;&#23454;&#29616;&#24688;&#22909;&#19968;&#27425;&#35821;&#20041;&#12290;</font></font></font></li><li data-imt-p="1"> <script>g("moderate")</script>(<a class="moderate" href="https://pdos.csail.mit.edu/6.824/labs/guidance.html">moderate</a>)
+                    Change <tt>kvsrv</tt> to support a
+                    <tt>Range</tt> function, which returns all keys in
+                    the range <tt>low</tt> key to <tt>high</tt> key.
+                    The lazy way to implement <tt>Range</tt> is to
+                    iterate through the key/value map that the server
+                    maintains; a better way is to use a data structure
+                    that supports range searches (e.g.,
+                    B-tree). Include a test that fails the lazy
+                    solution but passes on the better solution.
+
+                    <font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">( &#20013;&#31561;) &#20462;&#25913; <tt>kvsrv</tt> &#65292;&#20351;&#20854;&#25903;&#25345;&#19968;&#20010; <tt>Range</tt> &#20989;&#25968;&#65292;&#35813;&#20989;&#25968;&#36820;&#22238;&#20174; <tt>low</tt> &#38190;&#21040; <tt>high</tt> &#38190;&#33539;&#22260;&#20869;&#30340;&#25152;&#26377;&#38190;&#12290;&#23454;&#29616; <tt>Range</tt> &#30340;&#20599;&#25042;&#26041;&#24335;&#26159;&#36941;&#21382;&#26381;&#21153;&#22120;&#25152;&#32500;&#25252;&#30340;&#38190;/&#20540;&#26144;&#23556;&#65307;&#26356;&#22909;&#30340;&#26041;&#24335;&#26159;&#20351;&#29992;&#19968;&#31181;&#25903;&#25345;&#33539;&#22260;&#26597;&#25214;&#30340;&#25968;&#25454;&#32467;&#26500;&#65288;&#20363;&#22914; B &#26641;&#65289;&#12290;&#35831;&#21152;&#20837;&#19968;&#20010;&#27979;&#35797;&#65292;&#20351;&#20599;&#25042;&#30340;&#35299;&#20915;&#26041;&#26696;&#26080;&#27861;&#36890;&#36807;&#65292;&#32780;&#26356;&#22909;&#30340;&#35299;&#20915;&#26041;&#26696;&#33021;&#22815;&#36890;&#36807;&#12290;</font></font></font></li><li data-imt-p="1"> <script>g("hard")</script>(<a class="hard" href="https://pdos.csail.mit.edu/6.824/labs/guidance.html">hard</a>) Modify your <tt>kvraft</tt>
+                      implementation to allow the leader to
+                      serve <tt>Get</tt>s without running
+                      the <tt>Get</tt> through <tt>rsm</tt>.  That is,
+                      implement the optimization described at the end
+                      of section 8 of the raft paper, including
+                      leases, to ensure that kvraft maintains
+                      linearizability. Your implementation should pass
+                      the existing kvraft tests.  You should also add
+                      a test that checks that your optimized
+                      implementation is faster (e.g., by comparing the
+                      number of RPCs) and a test that checks that term
+                      switches are slower because a new leader must wait
+                      until the lease has expired.
+
+
+                   <font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">( &#22256;&#38590;) &#20462;&#25913;&#20320;&#30340; <tt>kvraft</tt> &#23454;&#29616;&#65292;&#20801;&#35768; leader &#22312;&#26080;&#38656;&#36890;&#36807; <tt>rsm</tt> &#36816;&#34892; <tt>Get</tt> &#30340;&#24773;&#20917;&#19979;&#26381;&#21153; <tt>Get</tt> s&#12290;&#20063;&#23601;&#26159;&#35828;&#65292;&#23454;&#29616; raft &#35770;&#25991;&#31532; 8 &#33410;&#26411;&#23614;&#25152;&#25551;&#36848;&#30340;&#20248;&#21270;&#65288;&#21253;&#25324;&#31199;&#32422;/lease&#65289;&#65292;&#20197;&#30830;&#20445; kvraft &#20445;&#25345;&#32447;&#24615;&#19968;&#33268;&#24615;&#12290;&#20320;&#30340;&#23454;&#29616;&#24212;&#35813;&#33021;&#22815;&#36890;&#36807;&#29616;&#26377;&#30340; kvraft &#27979;&#35797;&#12290;&#20320;&#36824;&#24212;&#28155;&#21152;&#19968;&#20010;&#27979;&#35797;&#65292;&#29992;&#26469;&#26816;&#26597;&#20320;&#30340;&#20248;&#21270;&#23454;&#29616;&#26159;&#21542;&#26356;&#24555;&#65288;&#20363;&#22914;&#65292;&#36890;&#36807;&#27604;&#36739; RPC &#30340;&#25968;&#37327;&#65289;&#65292;&#20197;&#21450;&#19968;&#20010;&#27979;&#35797;&#65292;&#29992;&#26469;&#26816;&#26597;&#20219;&#26399;&#20999;&#25442;&#26159;&#21542;&#21464;&#24930;&#65292;&#22240;&#20026;&#26032;&#30340; leader &#24517;&#39035;&#31561;&#24453;&#31199;&#32422;&#36807;&#26399;&#12290;</font></font></font></li><li data-imt-p="1"><script>g("hard")</script>(<a class="hard" href="https://pdos.csail.mit.edu/6.824/labs/guidance.html">hard</a>) Support transactions
+                     in <tt>kvraft</tt> so that a developer can
+                     perform several <tt>Put</tt> and <tt>Get</tt>s
+                     atomically.  Once you have transaction, you don't
+                     need version Puts anymore; transactions subsume
+                     versioned Puts.  Look at
+                    <a href="https://etcd.io/docs/v3.4/learning/api/">etcd's
+                    transactions</a> for an example interface.  Write
+                    tests to demonstrate your extension works.
+
+                    <font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#65288;&#22256;&#38590;&#65289;&#22312; <tt>kvraft</tt> &#20013;&#25903;&#25345;&#20107;&#21153;&#65292;&#20351;&#24320;&#21457;&#32773;&#33021;&#22815;&#21407;&#23376;&#24615;&#22320;&#25191;&#34892;&#22810;&#20010; <tt>Put</tt> &#21644; <tt>Get</tt> &#12290;&#19968;&#26086;&#26377;&#20102;&#20107;&#21153;&#65292;&#20320;&#23601;&#19981;&#20877;&#38656;&#35201;&#29256;&#26412;&#21270; Put &#20102;&#65307;&#20107;&#21153;&#24050;&#32463;&#28085;&#30422;&#20102;&#29256;&#26412;&#21270; Put &#30340;&#21151;&#33021;&#12290;&#21487;&#20197;&#21442;&#32771; etcd &#30340;&#20107;&#21153;&#20316;&#20026;&#25509;&#21475;&#31034;&#20363;&#12290;&#32534;&#20889;&#27979;&#35797;&#26469;&#35777;&#26126;&#20320;&#30340;&#25193;&#23637;&#21487;&#20197;&#27491;&#24120;&#24037;&#20316;&#12290;</font></font></font></li><li data-imt-p="1"> <script>g("hard")</script>(<a class="hard" href="https://pdos.csail.mit.edu/6.824/labs/guidance.html">hard</a>)
+		      Modify <tt>shardkv</tt> to support transactions
+		      so that a developer can perform
+		      several <tt>Put</tt>s and <tt>Get</tt>s
+		      atomically across shards.  This requires
+		      implementing two-phase-commit and two-phase
+		      locking. Write tests to demonstrate that your
+		      extension works.
+
+                  <font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#65288;&#22256;&#38590;&#65289;&#20462;&#25913; <tt>shardkv</tt> &#20197;&#25903;&#25345;&#20107;&#21153;&#65292;&#20351;&#24320;&#21457;&#32773;&#33021;&#22815;&#36328;&#20998;&#29255;&#21407;&#23376;&#24615;&#22320;&#25191;&#34892;&#22810;&#20010; <tt>Put</tt> &#21644; <tt>Get</tt> &#12290;&#36825;&#38656;&#35201;&#23454;&#29616;&#20004;&#38454;&#27573;&#25552;&#20132;&#65288;two-phase-commit&#65289;&#21644;&#20004;&#38454;&#27573;&#38145;&#65288;two-phase locking&#65289;&#12290;&#32534;&#20889;&#27979;&#35797;&#26469;&#35777;&#26126;&#20320;&#30340;&#25193;&#23637;&#21487;&#20197;&#27491;&#24120;&#24037;&#20316;&#12290;</font></font></font></li></ul>
+
+		<h3 data-imt-p="1">Handin procedure<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><font class="notranslate" data-immersive-translate-translation-element-mark="1">&nbsp;&nbsp;</font><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-inline-wrapper-theme-none immersive-translate-target-translation-inline-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#25552;&#20132;&#27969;&#31243;</font></font></font></h3>
+
+		<div class="important">
+			<p data-imt-p="1">
+			Before submitting, please run <em>all</em> the tests
+			one final time.
+
+			<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#25552;&#20132;&#20043;&#21069;&#65292;&#35831;&#26368;&#21518;&#36816;&#34892;&#19968;&#36941;&#25152;&#26377;&#27979;&#35797;&#12290;</font></font></font></p><p data-imt-p="1">
+			Before submitting, double check that your solution
+			works with:
+
+			<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#25552;&#20132;&#20043;&#21069;&#65292;&#35831;&#20877;&#27425;&#30830;&#35748;&#20320;&#30340;&#35299;&#20915;&#26041;&#26696;&#22312;&#20197;&#19979;&#24773;&#20917;&#19979;&#33021;&#27491;&#24120;&#24037;&#20316;&#65306;</font></font></font></p><pre data-imt-pre="1" data-imt-p="1" data-imt_insert_failed_reason="same_text">$ make raft1
+$ make kvraft1
+$ make shardkv</pre>
+		</div>
+
+		<hr>
+
+	
+
+
+
+
+</body><div id="immersive-translate-popup" style="all: initial"><template shadowrootmode="open"><div id="mount" style="display: block;"><div class="imt-fb-container right imt-notranslate  " data-theme="light" style="z-index: 2147483637; pointer-events: none; right: 0px; top: 1076px; display: flex;"><div class="btn-animate" style="transform: translateX(-5px); opacity: 0.7; pointer-events: all; filter: blur(0px); transition: opacity 280ms cubic-bezier(0.16, 1, 0.3, 1), filter 280ms cubic-bezier(0.16, 1, 0.3, 1); will-change: opacity, filter;"><div class="imt-fb-btn imt-fb-more-button imt-fb-side" style="pointer-events: all;"><div class=" btn-animate" style="position: relative; pointer-events: all; display: inline-block;"><div><svg class="imt-fb-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M9.65332 13.3477C10.4097 13.4245 11 14.0632 11 14.8398V18.8398L10.9922 18.9932C10.9205 19.6992 10.3593 20.2604 9.65332 20.332L9.5 20.3398H5.5C4.72334 20.3398 4.08461 19.7496 4.00781 18.9932L4 18.8398V14.8398C4 14.0114 4.67157 13.3398 5.5 13.3398H9.5L9.65332 13.3477ZM18.6533 13.3477C19.4097 13.4245 20 14.0632 20 14.8398V18.8398L19.9922 18.9932C19.9205 19.6992 19.3593 20.2604 18.6533 20.332L18.5 20.3398H14.5C13.7233 20.3398 13.0846 19.7496 13.0078 18.9932L13 18.8398V14.8398C13 14.0114 13.6716 13.3398 14.5 13.3398H18.5L18.6533 13.3477ZM5.5 14.3398C5.22386 14.3398 5 14.5637 5 14.8398V18.8398C5 19.116 5.22386 19.3398 5.5 19.3398H9.5C9.77614 19.3398 10 19.116 10 18.8398V14.8398C10 14.5637 9.77614 14.3398 9.5 14.3398H5.5ZM14.5 14.3398C14.2239 14.3398 14 14.5637 14 14.8398V18.8398C14 19.116 14.2239 19.3398 14.5 19.3398H18.5C18.7761 19.3398 19 19.116 19 18.8398V14.8398C19 14.5637 18.7761 14.3398 18.5 14.3398H14.5ZM9.65332 4.34766C10.4097 4.42445 11 5.06318 11 5.83984V9.83984L10.9922 9.99316C10.9205 10.6992 10.3593 11.2604 9.65332 11.332L9.5 11.3398H5.5C4.72334 11.3398 4.08461 10.7496 4.00781 9.99316L4 9.83984V5.83984C4 5.01142 4.67157 4.33984 5.5 4.33984H9.5L9.65332 4.34766ZM16.1484 3.18848C16.2521 2.83834 16.7479 2.83834 16.8516 3.18848L17.3281 4.79785C17.5079 5.40507 17.9648 5.89104 18.5596 6.1084L20.0576 6.65625C20.3786 6.77361 20.3785 7.22732 20.0576 7.34473L18.5596 7.89258C17.9648 8.10991 17.5079 8.59598 17.3281 9.20312L16.8516 10.8125C16.7479 11.1626 16.2521 11.1626 16.1484 10.8125L15.6719 9.20312C15.4921 8.59598 15.0352 8.10991 14.4404 7.89258L12.9424 7.34473C12.6215 7.22732 12.6214 6.77361 12.9424 6.65625L14.4404 6.1084C15.0352 5.89104 15.4921 5.40507 15.6719 4.79785L16.1484 3.18848ZM5.5 5.33984C5.22386 5.33984 5 5.5637 5 5.83984V9.83984C5 10.116 5.22386 10.3398 5.5 10.3398H9.5C9.77614 10.3398 10 10.116 10 9.83984V5.83984C10 5.5637 9.77614 5.33984 9.5 5.33984H5.5Z" fill="#ED6D8F"></path></svg></div></div></div></div><div hidden="" class="imt-no-events " id="manga-button" style="position: relative;"><div class=" " style="position: relative; pointer-events: all; display: inline-block;"><div><div class="imt-manga-button btn-animate" style="opacity: 0.7; transform: translateX(2px);"><div style="position: relative;"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" fill="none" style="vertical-align: middle;"><path d="M14.8853 4.92364C14.8853 4.92364 16.3905 10.4362 22.6668 4C22.6668 4 20.3381 10.8907 25.3364 10.0843C25.3364 10.0843 22.0563 15.6994 29 18.0599C29 18.0599 22.9934 19.306 21.1617 28C21.1617 28 17.7679 24.54 14.8853 27.3549C14.8853 27.3549 13.3233 23.5724 7.33097 26.27C7.33097 26.27 10.1141 20.6549 4.83179 21.0507C4.83179 21.0507 7.16057 18.8955 3 15.9047C3 15.9047 7.50137 16.1833 6.33697 11.7117C6.33697 11.7117 10.0005 12.3421 8.66576 6.82957C8.65156 6.81491 12.4855 9.80574 14.8853 4.92364Z" fill="#ED6D8F"></path><path d="M20.8599 13.7022C20.885 13.1361 20.9543 12.5713 20.9959 12.0052C21.0337 11.568 20.8107 11.2794 20.3876 11.18C20.0759 11.1013 19.7508 11.0867 19.433 11.137C19.1951 11.1945 18.9542 11.2396 18.7113 11.2721C18.2403 11.3028 17.9973 11.5275 17.9796 11.988C17.977 12.0833 17.9596 12.1777 17.928 12.268C17.3034 13.9102 16.6774 15.5499 16.0503 17.1873C16.0301 17.2401 16.0062 17.2904 15.9671 17.3776C15.7291 16.8975 15.4281 16.4898 15.2745 15.9986C14.8073 14.5152 14.3186 13.033 13.8312 11.5594C13.6826 11.1112 13.3489 10.9344 12.8754 11.0216C12.7889 11.0365 12.7008 11.0398 12.6134 11.0314C12.2241 10.9938 11.8311 11.0404 11.4623 11.1677C11.0946 11.2991 10.9498 11.557 11.0152 11.9254C11.0428 12.0371 11.0643 12.1503 11.0795 12.2643C11.1223 13.1902 11.1777 14.1087 11.2054 15.0321C11.257 16.7992 11.2117 18.5651 11.0858 20.3284C11.0644 20.6354 11.0304 20.9424 11.0228 21.2494C11.0115 21.6092 11.1613 21.7811 11.5266 21.8143C11.9976 21.8573 12.4711 21.8708 12.9421 21.9088C13.0309 21.9201 13.121 21.9003 13.1962 21.8528C13.2714 21.8053 13.3268 21.7334 13.3527 21.6497C13.3996 21.5394 13.4252 21.4216 13.4282 21.3022C13.4295 20.8258 13.4207 20.3493 13.4081 19.8741C13.393 19.3264 13.3917 18.7763 13.3438 18.231C13.2857 17.5839 13.266 16.934 13.2847 16.2847C13.2847 16.2466 13.291 16.2073 13.2985 16.1312C13.3338 16.2024 13.3514 16.2356 13.3665 16.2712C13.9017 17.5228 14.3617 18.8037 14.7443 20.1074C14.7928 20.2421 14.7928 20.3889 14.7443 20.5237C14.6322 20.8196 14.7141 21.037 14.9659 21.1377C15.4445 21.3268 15.9331 21.4926 16.4155 21.6731C16.4865 21.7033 16.566 21.7091 16.6408 21.6895C16.7157 21.6698 16.7815 21.6259 16.8273 21.565C16.9085 21.4643 16.9743 21.3526 17.0225 21.2335C17.0537 21.1374 17.0798 21.0399 17.1006 20.9412C17.3185 20.2425 17.5653 19.5499 17.7517 18.8438C17.9785 17.9723 18.2624 17.1158 18.6018 16.2798C18.6201 16.2439 18.6411 16.2094 18.6647 16.1766C18.6761 16.2319 18.6761 16.254 18.6761 16.2761C18.6345 17.59 18.5955 18.8978 18.5501 20.2056C18.5363 20.5949 18.491 20.9829 18.4809 21.3722C18.4721 21.705 18.6207 21.8708 18.9557 21.9002C19.4355 21.9432 19.9191 21.9592 20.4002 21.9973C20.4888 22.0079 20.5784 21.9875 20.653 21.9399C20.7277 21.8922 20.7827 21.8203 20.8082 21.7369C20.8531 21.6305 20.8766 21.5167 20.8775 21.4017C20.88 20.7668 20.8674 20.132 20.8674 19.4971C20.8662 19.2846 20.8687 19.0722 20.8523 18.8622C20.8158 18.3968 20.7264 17.9314 20.7339 17.4685C20.7515 16.2122 20.8044 14.9572 20.8599 13.7022Z" fill="white"></path></svg></div></div></div></div></div><div style="display: flex; align-items: center; flex-direction: row; gap: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none" style="display: block; opacity: 0;"><g clip-path="url(#clip0_38845_9816)"><path d="M7 14C5.14348 14 3.36301 13.2625 2.05025 11.9497C0.737498 10.637 0 8.85652 0 7C0 5.14348 0.737498 3.36301 2.05025 2.05025C3.36301 0.737498 5.14348 0 7 0C8.85652 0 10.637 0.737498 11.9497 2.05025C13.2625 3.36301 14 5.14348 14 7C14 8.85652 13.2625 10.637 11.9497 11.9497C10.637 13.2625 8.85652 14 7 14Z" fill="#B1B1B1" fill-opacity="0.4"></path><path d="M6.11754 7.00052L4.18254 5.06452C4.06786 4.94725 4.00406 4.78948 4.00498 4.62546C4.00589 4.46144 4.07145 4.3044 4.18744 4.18841C4.30342 4.07243 4.46046 4.00687 4.62448 4.00595C4.7885 4.00503 4.94627 4.06884 5.06354 4.18352L6.99954 6.11852L8.93554 4.18352C8.99315 4.1246 9.06188 4.07771 9.13774 4.04554C9.2136 4.01337 9.29508 3.99656 9.37748 3.9961C9.45988 3.99564 9.54155 4.01153 9.61777 4.04285C9.69398 4.07417 9.76323 4.1203 9.82149 4.17857C9.87976 4.23683 9.92589 4.30608 9.95721 4.38229C9.98853 4.45851 10.0044 4.54018 10.004 4.62258C10.0035 4.70497 9.98669 4.78646 9.95452 4.86232C9.92235 4.93818 9.87545 5.00691 9.81654 5.06452L7.88154 7.00052L9.81654 8.93652C9.93122 9.05379 9.99502 9.21155 9.99411 9.37557C9.99319 9.5396 9.92763 9.69664 9.81164 9.81262C9.69566 9.9286 9.53862 9.99417 9.3746 9.99508C9.21058 9.996 9.05281 9.9322 8.93554 9.81752L6.99954 7.88252L5.06354 9.81752C5.00593 9.87643 4.93721 9.92333 4.86135 9.9555C4.78549 9.98767 4.704 10.0045 4.6216 10.0049C4.5392 10.0054 4.45753 9.9895 4.38131 9.95818C4.3051 9.92686 4.23585 9.88073 4.17759 9.82247C4.11932 9.7642 4.0732 9.69496 4.04188 9.61874C4.01056 9.54253 3.99467 9.46086 3.99513 9.37846C3.99559 9.29606 4.01239 9.21457 4.04456 9.13871C4.07673 9.06285 4.12363 8.99413 4.18254 8.93652L6.11754 7.00052Z" fill="white"></path></g><defs><clippath id="clip0_38845_9816"><rect width="14" height="14" fill="white"></rect></clippath></defs></svg><div style="position: relative;"><div class="imt-fb-btn right btn-animate  " dir="ltr" style="opacity: 0.7;"><div class=" " style="position: relative; pointer-events: all; display: inline-block;"><div><div class="imt-fb-btn-content"><svg class="imt-fb-logo-img imt-fb-logo-img-big-bg" width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M0 14C0 6.26801 6.26801 0 14 0C21.732 0 28 6.26801 28 14C28 21.732 21.732 28 14 28C6.26801 28 0 21.732 0 14Z" fill="#ED6D8F"></path><path d="M7.30921 15.6381C7.53044 15.6381 7.70979 15.8175 7.70979 16.0387V19.0088C7.70979 19.934 8.45993 20.684 9.38526 20.684H11.7557C11.9769 20.684 12.1562 20.8634 12.1562 21.0846V22.152C12.1562 22.3732 11.9769 22.5526 11.7557 22.5526H9.38526C7.42782 22.5526 5.84099 20.966 5.84099 19.0088V16.0387C5.84099 15.8175 6.02034 15.6381 6.24157 15.6381H7.30921ZM18.9876 12.6944C19.1515 12.6944 19.2989 12.7943 19.3597 12.9466L22.9711 22.0036C23.076 22.2667 22.8822 22.5526 22.599 22.5526H21.4672C21.3016 22.5526 21.153 22.4506 21.0934 22.2961L20.2724 20.1673C20.2128 20.0128 20.0643 19.9108 19.8986 19.9108H16.7508C16.5852 19.9108 16.4366 20.0128 16.377 20.1673L15.556 22.2961C15.4964 22.4506 15.3478 22.5526 15.1822 22.5526H14.0504C13.7672 22.5526 13.5734 22.2667 13.6783 22.0036L17.2897 12.9466C17.3505 12.7943 17.4979 12.6944 17.6618 12.6944H18.9876ZM18.5116 15.6017C18.4456 15.4308 18.2038 15.4308 18.1378 15.6017L17.3016 17.7699C17.251 17.9011 17.3478 18.0423 17.4885 18.0423H19.1609C19.3016 18.0423 19.3984 17.9012 19.3478 17.7699L18.5116 15.6017ZM9.69589 5.30028C9.79943 4.8999 10.368 4.89991 10.4715 5.30028L11.1086 7.76368C11.3244 8.59845 11.9396 9.27221 12.7513 9.56299L14.9019 10.3334C15.2559 10.4602 15.2559 10.9608 14.9019 11.0876L12.7513 11.8581C11.9396 12.1489 11.3244 12.8226 11.1086 13.6574L10.4715 16.1208C10.368 16.5212 9.79943 16.5212 9.69589 16.1208L9.05884 13.6574C8.84297 12.8226 8.22786 12.1489 7.41615 11.8581L5.26548 11.0876C4.91151 10.9608 4.91151 10.4602 5.26548 10.3334L7.41615 9.56299C8.22786 9.27221 8.84297 8.59844 9.05884 7.76368L9.69589 5.30028ZM18.0064 6.20485C19.9639 6.20485 21.5507 7.79145 21.5507 9.74861V11.281C21.5507 11.5022 21.3713 11.6816 21.1501 11.6816H20.0825C19.8612 11.6816 19.6819 11.5022 19.6819 11.281V9.74861C19.6819 8.82341 18.9318 8.07338 18.0064 8.07338H14.4343C14.2131 8.07338 14.0337 7.89403 14.0337 7.6728V6.60543C14.0337 6.3842 14.2131 6.20486 14.4343 6.20485H18.0064Z" fill="white"></path></svg><svg class="imt-float-ball-translated" width="11" height="11" viewBox="0 0 11 11" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="5.5" cy="5.5" r="5.5" fill="#68CD52"></circle><path d="M1.40857 5.87858L2.24148 5.18962L4.15344 6.64214C4.15344 6.64214 6.33547 4.15566 9.00658 2.48145L9.32541 2.87514C9.32541 2.87514 6.28665 5.55844 4.71735 9.07881L1.40857 5.87858Z" fill="white"></path></svg></div></div></div></div><div title="Close Floating Button" class="imt-fb-close-button btn-animate" style="opacity: 0; pointer-events: none; filter: blur(1px); transition: opacity 110ms cubic-bezier(0.4, 0, 1, 1), filter 110ms cubic-bezier(0.4, 0, 1, 1); will-change: opacity, filter;"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none"><g clip-path="url(#clip0_38845_9816)"><path d="M7 14C5.14348 14 3.36301 13.2625 2.05025 11.9497C0.737498 10.637 0 8.85652 0 7C0 5.14348 0.737498 3.36301 2.05025 2.05025C3.36301 0.737498 5.14348 0 7 0C8.85652 0 10.637 0.737498 11.9497 2.05025C13.2625 3.36301 14 5.14348 14 7C14 8.85652 13.2625 10.637 11.9497 11.9497C10.637 13.2625 8.85652 14 7 14Z" fill="#B1B1B1" fill-opacity="0.4"></path><path d="M6.11754 7.00052L4.18254 5.06452C4.06786 4.94725 4.00406 4.78948 4.00498 4.62546C4.00589 4.46144 4.07145 4.3044 4.18744 4.18841C4.30342 4.07243 4.46046 4.00687 4.62448 4.00595C4.7885 4.00503 4.94627 4.06884 5.06354 4.18352L6.99954 6.11852L8.93554 4.18352C8.99315 4.1246 9.06188 4.07771 9.13774 4.04554C9.2136 4.01337 9.29508 3.99656 9.37748 3.9961C9.45988 3.99564 9.54155 4.01153 9.61777 4.04285C9.69398 4.07417 9.76323 4.1203 9.82149 4.17857C9.87976 4.23683 9.92589 4.30608 9.95721 4.38229C9.98853 4.45851 10.0044 4.54018 10.004 4.62258C10.0035 4.70497 9.98669 4.78646 9.95452 4.86232C9.92235 4.93818 9.87545 5.00691 9.81654 5.06452L7.88154 7.00052L9.81654 8.93652C9.93122 9.05379 9.99502 9.21155 9.99411 9.37557C9.99319 9.5396 9.92763 9.69664 9.81164 9.81262C9.69566 9.9286 9.53862 9.99417 9.3746 9.99508C9.21058 9.996 9.05281 9.9322 8.93554 9.81752L6.99954 7.88252L5.06354 9.81752C5.00593 9.87643 4.93721 9.92333 4.86135 9.9555C4.78549 9.98767 4.704 10.0045 4.6216 10.0049C4.5392 10.0054 4.45753 9.9895 4.38131 9.95818C4.3051 9.92686 4.23585 9.88073 4.17759 9.82247C4.11932 9.7642 4.0732 9.69496 4.04188 9.61874C4.01056 9.54253 3.99467 9.46086 3.99513 9.37846C3.99559 9.29606 4.01239 9.21457 4.04456 9.13871C4.07673 9.06285 4.12363 8.99413 4.18254 8.93652L6.11754 7.00052Z" fill="white"></path></g><defs><clippath id="clip0_38845_9816"><rect width="14" height="14" fill="white"></rect></clippath></defs></svg></div></div><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none" style="display: none; opacity: 0;"><g clip-path="url(#clip0_38845_9816)"><path d="M7 14C5.14348 14 3.36301 13.2625 2.05025 11.9497C0.737498 10.637 0 8.85652 0 7C0 5.14348 0.737498 3.36301 2.05025 2.05025C3.36301 0.737498 5.14348 0 7 0C8.85652 0 10.637 0.737498 11.9497 2.05025C13.2625 3.36301 14 5.14348 14 7C14 8.85652 13.2625 10.637 11.9497 11.9497C10.637 13.2625 8.85652 14 7 14Z" fill="#B1B1B1" fill-opacity="0.4"></path><path d="M6.11754 7.00052L4.18254 5.06452C4.06786 4.94725 4.00406 4.78948 4.00498 4.62546C4.00589 4.46144 4.07145 4.3044 4.18744 4.18841C4.30342 4.07243 4.46046 4.00687 4.62448 4.00595C4.7885 4.00503 4.94627 4.06884 5.06354 4.18352L6.99954 6.11852L8.93554 4.18352C8.99315 4.1246 9.06188 4.07771 9.13774 4.04554C9.2136 4.01337 9.29508 3.99656 9.37748 3.9961C9.45988 3.99564 9.54155 4.01153 9.61777 4.04285C9.69398 4.07417 9.76323 4.1203 9.82149 4.17857C9.87976 4.23683 9.92589 4.30608 9.95721 4.38229C9.98853 4.45851 10.0044 4.54018 10.004 4.62258C10.0035 4.70497 9.98669 4.78646 9.95452 4.86232C9.92235 4.93818 9.87545 5.00691 9.81654 5.06452L7.88154 7.00052L9.81654 8.93652C9.93122 9.05379 9.99502 9.21155 9.99411 9.37557C9.99319 9.5396 9.92763 9.69664 9.81164 9.81262C9.69566 9.9286 9.53862 9.99417 9.3746 9.99508C9.21058 9.996 9.05281 9.9322 8.93554 9.81752L6.99954 7.88252L5.06354 9.81752C5.00593 9.87643 4.93721 9.92333 4.86135 9.9555C4.78549 9.98767 4.704 10.0045 4.6216 10.0049C4.5392 10.0054 4.45753 9.9895 4.38131 9.95818C4.3051 9.92686 4.23585 9.88073 4.17759 9.82247C4.11932 9.7642 4.0732 9.69496 4.04188 9.61874C4.01056 9.54253 3.99467 9.46086 3.99513 9.37846C3.99559 9.29606 4.01239 9.21457 4.04456 9.13871C4.07673 9.06285 4.12363 8.99413 4.18254 8.93652L6.11754 7.00052Z" fill="white"></path></g><defs><clippath id="clip0_38845_9816"><rect width="14" height="14" fill="white"></rect></clippath></defs></svg></div><div class="btn-animate" style="margin-top: 10px; transform: translateX(-5px); opacity: 0; pointer-events: none; filter: blur(1px); transition: opacity 110ms cubic-bezier(0.4, 0, 1, 1), filter 110ms cubic-bezier(0.4, 0, 1, 1); will-change: opacity, filter;"><div class=" btn-animate" style="position: relative; pointer-events: none; display: inline-block;"><div><div class="imt-fb-round-button"><svg class="imt-fb-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" style="width: 24px; height: 24px;"><path d="M17 8.66797H11.375" stroke="#ED6D8F" stroke-linecap="round" stroke-linejoin="round"></path><path d="M12.625 15.332L7 15.332" stroke="#ED6D8F" stroke-linecap="round" stroke-linejoin="round"></path><path d="M15.125 17C16.1605 17 17 16.1605 17 15.125C17 14.0895 16.1605 13.25 15.125 13.25C14.0895 13.25 13.25 14.0895 13.25 15.125C13.25 16.1605 14.0895 17 15.125 17Z" stroke="#ED6D8F" stroke-linecap="round" stroke-linejoin="round"></path><path d="M8.875 10.75C9.91053 10.75 10.75 9.91053 10.75 8.875C10.75 7.83947 9.91053 7 8.875 7C7.83947 7 7 7.83947 7 8.875C7 9.91053 7.83947 10.75 8.875 10.75Z" stroke="#ED6D8F" stroke-linecap="round" stroke-linejoin="round"></path><rect x="3" y="4" width="18" height="16" rx="1.66667" stroke="#ED6D8F"></rect></svg></div></div></div></div><div class="btn-animate" style="margin-top: 10px; transform: translateX(-5px); opacity: 0; pointer-events: none; filter: blur(1px); transition: opacity 110ms cubic-bezier(0.4, 0, 1, 1), filter 110ms cubic-bezier(0.4, 0, 1, 1); will-change: opacity, filter;"><div class=" btn-animate" style="position: relative; pointer-events: none; display: inline-block;"><div><div class="imt-fb-round-button"><svg class="imt-fb-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none"><mask id="mask0_43829_2633" maskUnits="userSpaceOnUse" x="0" y="0" width="20" height="20" style="mask-type: alpha;"><rect width="20" height="20" fill="#D9D9D9"></rect></mask><g mask="url(#mask0_43829_2633)"><path d="M9.99546 12.2609C10.1639 12.2609 10.305 12.2055 10.4188 12.0946C10.5327 11.9838 10.5896 11.8441 10.5896 11.6755C10.5896 11.507 10.5342 11.3659 10.4234 11.2521C10.3124 11.1384 10.1727 11.0815 10.0042 11.0815C9.83574 11.0815 9.69463 11.1369 9.58088 11.2478C9.46699 11.3586 9.41005 11.4982 9.41005 11.6667C9.41005 11.8353 9.46546 11.9765 9.5763 12.0903C9.68727 12.204 9.82699 12.2609 9.99546 12.2609ZM9.99546 10.1936C10.148 10.1936 10.2771 10.1418 10.3828 10.0382C10.4886 9.93443 10.5415 9.80568 10.5415 9.65193V5.20318C10.5415 5.04943 10.49 4.92075 10.3871 4.81713C10.2844 4.71338 10.1567 4.66151 10.0042 4.66151C9.85171 4.66151 9.72261 4.71338 9.61692 4.81713C9.51109 4.92075 9.45817 5.04943 9.45817 5.20318V9.65193C9.45817 9.80568 9.50963 9.93443 9.61255 10.0382C9.71532 10.1418 9.84296 10.1936 9.99546 10.1936ZM5.03192 14.5846L3.55359 16.063C3.34262 16.2739 3.10032 16.3221 2.82671 16.2076C2.55324 16.093 2.4165 15.8864 2.4165 15.5878V3.75776C2.4165 3.38262 2.54602 3.06554 2.80505 2.80651C3.06407 2.54748 3.38116 2.41797 3.7563 2.41797H16.2434C16.6185 2.41797 16.9356 2.54748 17.1946 2.80651C17.4537 3.06554 17.5832 3.38262 17.5832 3.75776V13.2448C17.5832 13.62 17.4537 13.9371 17.1946 14.1961C16.9356 14.4551 16.6185 14.5846 16.2434 14.5846H5.03192ZM4.58317 13.5013H16.2434C16.3075 13.5013 16.3663 13.4746 16.4196 13.4211C16.4731 13.3678 16.4998 13.309 16.4998 13.2448V3.75776C16.4998 3.69359 16.4731 3.63484 16.4196 3.58151C16.3663 3.52804 16.3075 3.5013 16.2434 3.5013H3.7563C3.69213 3.5013 3.63338 3.52804 3.58005 3.58151C3.52657 3.63484 3.49984 3.69359 3.49984 3.75776V14.5928L4.58317 13.5013Z" fill="#ED6D8F"></path></g></svg></div></div></div></div><div hidden="" id="immersive-translate-popup-overlay" class="immersive-translate-popup-overlay"><div class="immersive-translate-popup-wrapper" style="position: fixed; bottom: 30px; right: 65px;"></div></div></div></div></template></div></html>
