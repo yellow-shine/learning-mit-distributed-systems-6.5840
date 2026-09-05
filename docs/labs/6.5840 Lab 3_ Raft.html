@@ -1,0 +1,1439 @@
+<!DOCTYPE html>
+<!-- saved from url=(0052)https://pdos.csail.mit.edu/6.824/labs/lab-raft1.html -->
+<html data-immersive-translate-page-theme="light" imt-state="dual" imt-translation-dir="ltr" imt-trans-position="after" style=""><head><meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<link rel="stylesheet" href="./6.5840 Lab 3_ Raft_files/style.css" type="text/css">
+<script src="./6.5840 Lab 3_ Raft_files/guidance.js"></script>
+<title>6.5840 Lab 3: Raft</title>
+<style data-id="immersive-translate-default-injected-css">:root {
+  --immersive-translate-theme-underline-borderColor: #72ece9;
+  --immersive-translate-theme-nativeUnderline-borderColor: #72ece9;
+  --immersive-translate-theme-nativeDashed-borderColor: #72ece9;
+  --immersive-translate-theme-nativeDotted-borderColor: #72ece9;
+  --immersive-translate-theme-highlight-backgroundColor: #ffff00;
+  --immersive-translate-theme-dashed-borderColor: #59c1bd;
+  --immersive-translate-theme-blockquote-borderColor: #cc3355;
+  --immersive-translate-theme-thinDashed-borderColor: #ff374f;
+  --immersive-translate-theme-dashedBorder-borderColor: #94a3b8;
+  --immersive-translate-theme-dashedBorder-borderRadius: 0;
+  --immersive-translate-theme-solidBorder-borderColor: #94a3b8;
+  --immersive-translate-theme-solidBorder-borderRadius: 0;
+  --immersive-translate-theme-dotted-borderColor: #94a3b8;
+  --immersive-translate-theme-wavy-borderColor: #72ece9;
+  --immersive-translate-theme-dividingLine-borderColor: #94a3b8;
+  --immersive-translate-theme-grey-textColor: #2f4f4f;
+  --immersive-translate-theme-marker-backgroundColor: #fbda41;
+  --immersive-translate-theme-marker-backgroundColor-rgb: 251, 218, 65;
+  --immersive-translate-theme-marker2-backgroundColor: #ffff00;
+  --immersive-translate-theme-background-backgroundColor: #dbafaf;
+  --immersive-translate-theme-background-backgroundColor-rgb: 219, 175, 175;
+  --immersive-translate-theme-background-backgroundOpacity: 12;
+  --immersive-translate-theme-opacity-opacity: 10;
+}
+
+[imt-state="dual"] .immersive-translate-target-translation-pre-whitespace {
+  white-space: pre-wrap !important;
+}
+
+[imt-state="dual"] .immersive-translate-pdf-target-container {
+  position: absolute;
+  background-color: #fff;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+    sans-serif;
+  top: 0;
+  width: 600px;
+  height: 100%;
+  z-index: 2;
+  line-height: 1.3;
+  font-size: 16px;
+}
+[imt-state="dual"] .immersive-translate-target-wrapper[dir="rtl"] {
+  text-align: right;
+}
+
+.immersive-translate-target-wrapper {
+  font-feature-settings: normal;
+}
+
+[imt-state="dual"]
+  .immersive-translate-pdf-target-container
+  .immersive-translate-target-wrapper {
+  color: rgb(0, 0, 0);
+  white-space: normal;
+  position: absolute;
+}
+
+[imt-state="dual"]
+  .immersive-translate-pdf-target-container
+  .immersive-translate-target-wrapper
+  font {
+  color: inherit;
+  white-space: inherit;
+  position: unset;
+}
+
+[imt-state="translation"] .immersive-translate-target-wrapper > br {
+  display: none;
+}
+
+[imt-state="translation"]
+  .immersive-translate-target-translation-block-wrapper {
+  margin: 0 !important;
+}
+
+[imt-state="dual"] .immersive-translate-target-translation-block-wrapper {
+  margin: var(--immersive-translate-translation-spacing, 8px) 0 8px !important;
+  display: inline-block;
+}
+
+.imt-mouse-hover-power-user-compare
+  .immersive-translate-target-translation-block-wrapper {
+  background-color: rgba(226, 60, 124, 0.12);
+  padding: 6px;
+}
+
+[imt-trans-position="before"]
+  .immersive-translate-target-translation-block-wrapper {
+  display: block;
+}
+
+[imt-trans-position="before"]
+  .immersive-translate-target-translation-block-wrapper {
+  margin-top: 0 !important;
+  margin-bottom: var(--immersive-translate-translation-spacing, 8px) !important;
+}
+
+[imt-state="dual"] .immersive-translate-target-translation-pdf-block-wrapper {
+  margin: 0 !important;
+  display: inline-block;
+}
+
+[imt-state="dual"] .immersive-translate-target-translation-theme-grey-inner,
+[imt-state="translation"] .immersive-translate-target-translation-theme-grey-inner,
+[imt-state="translation"]
+  [data-imt-translation-only="1"].immersive-translate-target-inner.immersive-translate-target-translation-theme-grey {
+  color: var(--immersive-translate-theme-grey-textColor);
+}
+
+[imt-state="dual"]
+  .immersive-translate-target-translation-theme-underline-inner {
+  border-bottom: 1px solid
+    var(--immersive-translate-theme-underline-borderColor) !important;
+}
+
+[imt-state="dual"]
+  .immersive-translate-target-translation-theme-nativeUnderline-inner,
+[imt-state="translation"]
+  .immersive-translate-target-translation-theme-nativeUnderline-inner,
+[imt-state="translation"]
+  [data-imt-translation-only="1"].immersive-translate-target-inner.immersive-translate-target-translation-theme-nativeUnderline {
+  text-decoration: underline !important;
+  text-decoration-color: var(
+    --immersive-translate-theme-nativeUnderline-borderColor
+  ) !important;
+}
+
+[imt-state="dual"]
+  .immersive-translate-target-translation-block-wrapper-theme-dashedBorder {
+  border: 1px dashed var(--immersive-translate-theme-dashedBorder-borderColor) !important;
+  border-radius: var(
+    --immersive-translate-theme-dashedBorder-borderRadius
+  ) !important;
+  padding: 6px;
+  margin-top: 2px;
+  display: inline-block;
+}
+
+[imt-state="dual"]
+  .immersive-translate-target-translation-inline-wrapper-theme-dashedBorder {
+  border: 1px dashed var(--immersive-translate-theme-dashedBorder-borderColor) !important;
+  border-radius: var(
+    --immersive-translate-theme-dashedBorder-borderRadius
+  ) !important;
+  padding: 2px;
+}
+
+[imt-state="dual"]
+  .immersive-translate-target-translation-block-wrapper-theme-solidBorder {
+  border: 1px solid var(--immersive-translate-theme-solidBorder-borderColor) !important;
+  border-radius: var(
+    --immersive-translate-theme-solidBorder-borderRadius
+  ) !important;
+  padding: 6px;
+  margin-top: 2px;
+  display: inline-block;
+}
+
+[imt-state="dual"]
+  .immersive-translate-target-translation-inline-wrapper-theme-solidBorder {
+  border: 1px solid var(--immersive-translate-theme-solidBorder-borderColor) !important;
+  border-radius: var(
+    --immersive-translate-theme-solidBorder-borderRadius
+  ) !important;
+  padding: 2px;
+}
+
+[imt-state="dual"]
+  .immersive-translate-target-translation-theme-nativeDashed-inner,
+[imt-state="translation"]
+  .immersive-translate-target-translation-theme-nativeDashed-inner,
+[imt-state="translation"]
+  [data-imt-translation-only="1"].immersive-translate-target-inner.immersive-translate-target-translation-theme-nativeDashed {
+  text-decoration: underline !important;
+  text-decoration-color: var(
+    --immersive-translate-theme-nativeDashed-borderColor
+  ) !important;
+  text-decoration-style: dashed !important;
+}
+
+[imt-state="dual"]
+  .immersive-translate-target-translation-theme-thinDashed-inner {
+  border-bottom: 1px dashed
+    var(--immersive-translate-theme-thinDashed-borderColor) !important;
+}
+
+[imt-state="dual"] .immersive-translate-target-translation-theme-dotted-inner {
+  background-image: linear-gradient(
+    to right,
+    var(--immersive-translate-theme-dotted-borderColor) 30%,
+    rgba(255, 255, 255, 0) 0%
+  );
+  background-position: bottom;
+  background-size: 5px 1px;
+  background-repeat: repeat-x;
+  padding-bottom: 3px;
+}
+
+[imt-state="dual"]
+  .immersive-translate-target-translation-theme-nativeDotted-inner,
+[imt-state="translation"]
+  .immersive-translate-target-translation-theme-nativeDotted-inner,
+[imt-state="translation"]
+  [data-imt-translation-only="1"].immersive-translate-target-inner.immersive-translate-target-translation-theme-nativeDotted {
+  text-decoration: underline !important;
+  text-decoration-color: var(
+    --immersive-translate-theme-nativeDotted-borderColor
+  ) !important;
+  text-decoration-style: dotted !important;
+}
+
+[imt-state="dual"] .immersive-translate-target-translation-theme-wavy-inner,
+[imt-state="translation"] .immersive-translate-target-translation-theme-wavy-inner,
+[imt-state="translation"]
+  [data-imt-translation-only="1"].immersive-translate-target-inner.immersive-translate-target-translation-theme-wavy {
+  text-decoration: underline !important;
+  text-decoration-color: var(
+    --immersive-translate-theme-wavy-borderColor
+  ) !important;
+  text-decoration-style: wavy !important;
+}
+
+[imt-state="dual"] .immersive-translate-target-translation-theme-dashed-inner {
+  background: linear-gradient(
+      to right,
+      var(--immersive-translate-theme-dashed-borderColor) 0%,
+      var(--immersive-translate-theme-dashed-borderColor) 50%,
+      transparent 50%,
+      transparent 100%
+    )
+    repeat-x left bottom;
+  background-size: 8px 2px;
+  padding-bottom: 2px;
+}
+
+[imt-state="dual"]
+  .immersive-translate-target-translation-block-wrapper-theme-dividingLine::before {
+  content: "";
+  display: block;
+  max-width: 80px;
+  width: 10%;
+  border-top: 1px dashed
+    var(--immersive-translate-theme-dividingLine-borderColor);
+  padding-top: 8px;
+}
+
+[imt-state="dual"]
+  .immersive-translate-target-translation-inline-wrapper-theme-dividingLine::before {
+  content: "";
+  border-left: 1px dashed
+    var(--immersive-translate-theme-dividingLine-borderColor);
+  max-height: 16px;
+  height: 16px;
+  padding-left: 8px;
+}
+
+[imt-state="dual"]
+  .immersive-translate-target-translation-theme-highlight-inner,
+[imt-state="translation"]
+  .immersive-translate-target-translation-theme-highlight-inner,
+[imt-state="translation"]
+  [data-imt-translation-only="1"].immersive-translate-target-inner.immersive-translate-target-translation-theme-highlight {
+  background: var(--immersive-translate-theme-highlight-backgroundColor);
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+[imt-state="dual"]
+  .immersive-translate-target-translation-block-wrapper-theme-marker {
+  line-height: 1.5em;
+}
+
+[imt-state="dual"] .immersive-translate-target-translation-theme-marker2-inner {
+  font-weight: bold;
+  text-shadow: 10px 0px 3px
+      var(--immersive-translate-theme-marker2-backgroundColor),
+    16px 3px 9px var(--immersive-translate-theme-marker2-backgroundColor),
+    2px 0px 6px var(--immersive-translate-theme-marker2-backgroundColor),
+    -12px 0px 12px var(--immersive-translate-theme-marker2-backgroundColor) !important;
+}
+
+[imt-state="dual"] .immersive-translate-target-translation-theme-marker-inner {
+  /* TODO: add more texture */
+  background: linear-gradient(
+    to right,
+    rgba(var(--immersive-translate-theme-marker-backgroundColor-rgb), 0.1),
+    rgba(var(--immersive-translate-theme-marker-backgroundColor-rgb), 0.9) 3%,
+    rgba(var(--immersive-translate-theme-marker-backgroundColor-rgb), 0.9) 35%,
+    rgba(var(--immersive-translate-theme-marker-backgroundColor-rgb), 0.9) 70%,
+    rgba(var(--immersive-translate-theme-marker-backgroundColor-rgb), 0.8) 95%,
+    rgba(var(--immersive-translate-theme-marker-backgroundColor-rgb), 0.3)
+  );
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+[imt-state="dual"] .immersive-translate-target-translation-theme-weakening,
+[imt-state="translation"] .immersive-translate-target-translation-theme-weakening,
+[imt-state="translation"]
+  [data-imt-translation-only="1"].immersive-translate-target-inner.immersive-translate-target-translation-theme-weakening {
+  opacity: 0.618 !important;
+}
+
+[imt-state="dual"] .immersive-translate-target-translation-theme-italic,
+[imt-state="translation"] .immersive-translate-target-translation-theme-italic,
+[imt-state="translation"]
+  [data-imt-translation-only="1"].immersive-translate-target-inner.immersive-translate-target-translation-theme-italic {
+  font-style: italic !important;
+}
+
+[imt-state="dual"] .immersive-translate-target-translation-theme-bold,
+[imt-state="translation"] .immersive-translate-target-translation-theme-bold,
+[imt-state="translation"]
+  [data-imt-translation-only="1"].immersive-translate-target-inner.immersive-translate-target-translation-theme-bold {
+  font-weight: bold !important;
+}
+
+[imt-state="dual"]
+  .immersive-translate-target-translation-block-wrapper-theme-paper {
+  margin: 8px 0;
+  box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+  padding: 16px 32px;
+  display: inline-block;
+}
+
+[imt-state="dual"]
+  .immersive-translate-target-translation-block-wrapper-theme-blockquote {
+  border-left: 4px solid var(--immersive-translate-theme-blockquote-borderColor) !important;
+  padding-left: 12px !important;
+  margin-top: 4px;
+  margin-bottom: 4px;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  display: inline-block;
+}
+
+[imt-state="dual"] .immersive-translate-target-translation-theme-mask-inner {
+  filter: blur(5px) !important;
+  transition: filter 0.3s ease !important;
+  border-radius: 10px;
+  display: inline-block;
+}
+
+[data-immersive-translate-root-translation-theme="none"]
+  .immersive-translate-target-translation-theme-mask-inner {
+  filter: none !important;
+}
+
+[data-immersive-translate-root-translation-theme="mask"]
+  .immersive-translate-target-inner {
+  filter: blur(5px) !important;
+  transition: filter 0.3s ease !important;
+  border-radius: 10px;
+  display: inline-block;
+}
+
+/* opacity theme start */
+
+[imt-state="dual"] .immersive-translate-target-translation-theme-opacity-inner {
+  filter: opacity(
+    calc(var(--immersive-translate-theme-opacity-opacity) * 1%)
+  ) !important;
+  transition: filter 0.3s ease !important;
+  border-radius: 10px;
+  display: inline-block;
+}
+
+[data-immersive-translate-root-translation-theme="none"]
+  .immersive-translate-target-translation-theme-opacity-inner {
+  filter: none !important;
+}
+[data-immersive-translate-root-translation-theme="opacity"]
+  .immersive-translate-target-inner,
+[imt-state="dual"]
+  .immersive-translate-target-translation-theme-opacity-inner:hover {
+  filter: opacity(
+    calc(var(--immersive-translate-theme-opacity-opacity) * 1%)
+  ) !important;
+  transition: filter 0.3s ease !important;
+  border-radius: 10px;
+  display: inline-block;
+}
+
+[imt-state="dual"]
+  .immersive-translate-target-translation-theme-opacity-inner:hover {
+  filter: none !important;
+}
+
+[imt-state="dual"]
+  .immersive-translate-target-translation-theme-mask-inner:hover {
+  filter: none !important;
+}
+[data-immersive-translate-root-translation-theme="opacity"]
+  .immersive-translate-target-inner:hover {
+  filter: none !important;
+}
+
+[data-immersive-translate-root-translation-theme="mask"]
+  .immersive-translate-target-inner:hover {
+  filter: none !important;
+}
+
+/* opacity theme end */
+
+/* background theme start */
+[imt-state="dual"]
+  .immersive-translate-target-translation-block-wrapper-theme-background {
+  margin: 8px 0;
+  background: rgba(
+    var(--immersive-translate-theme-background-backgroundColor-rgb),
+    calc(var(--immersive-translate-theme-background-backgroundOpacity) * 1%)
+  );
+  border-radius: 4px;
+  box-shadow: unset !important;
+  padding: 12px;
+  display: inline-block;
+}
+[imt-state="dual"]
+  .immersive-translate-target-translation-theme-background-inner {
+  background: rgba(
+    var(--immersive-translate-theme-background-backgroundColor-rgb),
+    calc(var(--immersive-translate-theme-background-backgroundOpacity) * 1%)
+  );
+  padding-left: 6px;
+  padding-right: 6px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+[imt-state="dual"]
+  .immersive-translate-target-translation-block-wrapper
+  .immersive-translate-target-translation-theme-background-inner {
+  background: unset;
+  padding-left: unset;
+  padding-right: unset;
+}
+/* background theme end */
+
+/* vertical css , please remain it in the last one. */
+.immersive-translate-target-translation-vertical-block-wrapper {
+  margin: 0px 8px !important;
+}
+
+.immersive-translate-text {
+  font-size: 15px !important;
+}
+
+.immersive-translate-error-toast {
+  position: fixed;
+  top: 5%;
+  z-index: 99999999;
+  left: 0;
+  right: 0;
+  margin: auto;
+  max-width: 300px;
+  padding: 16px;
+  border-radius: 12px;
+  background-color: rgba(0, 0, 0, 0.8);
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+@media all and (min-width: 750px) {
+  .immersive-translate-error-toast {
+    max-width: 400px;
+  }
+}
+
+.immersive-translate-clickable-button {
+  cursor: pointer;
+}
+
+.immersive-translate-help-button {
+  cursor: pointer;
+}
+
+.immersive-translate-loading-text:before {
+  content: "...";
+}
+
+/* dark mode for loading */
+
+@media only screen and (prefers-color-scheme: dark) {
+  .immersive-translate-loading {
+    border: 2px rgba(255, 255, 255, 0.25) solid !important;
+    border-top: 2px rgba(255, 255, 255, 1) solid !important;
+  }
+}
+
+.immersive-translate-error-wrapper {
+  position: relative;
+  display: inline-flex;
+  padding: 6px;
+  margin: 0 12px;
+  white-space: nowrap;
+  font-size: 0.9em;
+}
+[lang="zh-CN"] .immersive-translate-error-wrapper {
+  font-size: 0.75em;
+}
+[lang="zh-TW"] .immersive-translate-error-wrapper {
+  font-size: 0.75em;
+}
+
+.immersive-translate-tooltip {
+  position: relative;
+  display: inline-flex;
+  /* little indicater to indicate it's hoverable */
+}
+
+.immersive-translate-tooltip-content {
+  /* here's the magic */
+  position: absolute;
+  z-index: 100000000000;
+
+  left: 50%;
+  bottom: 0;
+  transform: translate(-50%, 110%);
+  line-height: 1;
+  /* and add a small left margin */
+
+  /* basic styles */
+  width: max-content;
+  max-width: 250px;
+  word-wrap: break-word;
+  white-space: pre-line;
+  padding: 10px;
+  border-radius: 10px;
+  background: #000c;
+  color: #fff;
+  text-align: center;
+  font-size: 14px;
+  display: none;
+  /* hide by default */
+}
+
+.immersive-translate-tooltip:hover .immersive-translate-tooltip-content {
+  display: inline-block;
+}
+
+.immersive-translate-tooltip:hover + .immersive-translate-tooltip-content {
+  display: inline-block;
+}
+
+.immersive-translate-tooltip-content-table {
+  left: unset !important;
+  bottom: unset !important;
+  transform: translate(-10%, 50%) !important;
+}
+
+.immersive-translate-tooltip:hover:before {
+  display: inline-block;
+}
+
+.immersive-translate-loading-spinner {
+  vertical-align: middle !important;
+  width: 10px !important;
+  height: 10px !important;
+  display: inline-block !important;
+  margin: 0 4px !important;
+  border: 2px rgba(221, 244, 255, 0.6) solid !important;
+  border-top: 2px rgba(0, 0, 0, 0.375) solid !important;
+  border-left: 2px rgba(0, 0, 0, 0.375) solid !important;
+  border-radius: 50% !important;
+  padding: 0 !important;
+  -webkit-animation: immersive-translate-loading-animation 0.6s infinite linear !important;
+  animation: immersive-translate-loading-animation 0.6s infinite linear !important;
+}
+
+@-webkit-keyframes immersive-translate-loading-animation {
+  from {
+    -webkit-transform: rotate(0deg);
+  }
+
+  to {
+    -webkit-transform: rotate(359deg);
+  }
+}
+
+@keyframes immersive-translate-loading-animation {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(359deg);
+  }
+}
+
+.imt-image-status {
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--bg-2, #fff);
+  font-size: 14px;
+}
+</style><style data-id="immersive-translate-user-custom-style">:root {
+
+.immersive-translate-target-inner { font-family: inherit; }
+
+
+.immersive-translate-target-inner { font-family: inherit; }
+}
+</style><style data-id="immersive-translate-dynamic-injected-css">.immersive-translate-target-wrapper[dir='rtl'] {text-align: right;display:block!important;}
+[dir='rtl'] .immersive-translate-target-wrapper:not([dir]) {text-align:left;direction:ltr;}
+[imt-translation-dir=rtl] [data-imt-translation-only] {text-align:right;}
+.immersive-translate-target-wrapper {word-break:break-word; user-select:text; font-feature-settings:normal;}
+[imt-state=dual] .immersive-translate-target-translation-block-wrapper-theme-dividingLine::before {display:block;}
+[imt-trans-position=before] .immersive-translate-target-translation-block-wrapper {display:block!important;}
+[data-imt-clamp-unlocked] {scrollbar-width: none;-ms-overflow-style: none;}
+[data-imt-clamp-unlocked]::-webkit-scrollbar {display: none;}
+table [data-imt-split-divider] {display: none !important;}
+</style></head>
+<body data-imt-p="1" style="">
+<div align="center">
+<h2 data-imt-p="1"><a href="https://pdos.csail.mit.edu/6.824/index.html">6.5840</a> - Spring 2026<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">6.5840 - 2026 &#24180;&#26149;&#23395;</font></font></font></h2>
+<h1 data-imt-p="1">6.5840 Lab 3: Raft<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">6.5840 &#23454;&#39564; 3&#65306;Raft</font></font></font></h1>
+
+
+<p data-imt-p="1">
+  <b><a href="https://pdos.csail.mit.edu/6.824/labs/collab.html">Collaboration policy</a></b> //
+  <b><a href="https://pdos.csail.mit.edu/6.824/labs/submit.html">Submit lab</a></b> //
+  <b><a href="https://pdos.csail.mit.edu/6.824/labs/go.html">Setup Go</a></b> //
+  <b><a href="https://pdos.csail.mit.edu/6.824/labs/guidance.html">Guidance</a></b> //
+  <b><a href="https://piazza.com/mit/spring2026/65840">Piazza</a></b><font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#21327;&#20316;&#25919;&#31574; // &#25552;&#20132;&#23454;&#39564; // &#23433;&#35013; Go // &#25351;&#21335; // Piazza</font></font></font>
+</p>
+
+</div>
+
+
+<hr>
+
+<h3 data-imt-p="1">Introduction<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><font class="notranslate" data-immersive-translate-translation-element-mark="1">&nbsp;&nbsp;</font><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-inline-wrapper-theme-none immersive-translate-target-translation-inline-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#31616;&#20171;</font></font></font></h3>
+
+<p data-imt-p="1">
+This is the first in a series of labs in which you'll build a
+fault-tolerant key/value storage system. In this
+lab you'll implement Raft, a replicated state machine protocol.
+In the next lab you'll build a key/value service on top of
+Raft. Then you will “shard” your service over
+multiple replicated state machines for higher performance.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#36825;&#26159;&#19968;&#31995;&#21015;&#23454;&#39564;&#20013;&#30340;&#31532;&#19968;&#20010;&#23454;&#39564;&#65292;&#22312;&#36825;&#19968;&#31995;&#21015;&#23454;&#39564;&#20013;&#65292;&#20320;&#23558;&#26500;&#24314;&#19968;&#20010;&#23481;&#38169;&#30340;&#38190;/&#20540;&#23384;&#20648;&#31995;&#32479;&#12290;&#22312;&#26412;&#23454;&#39564;&#20013;&#65292;&#20320;&#23558;&#23454;&#29616; Raft&#65292;&#19968;&#31181;&#22797;&#21046;&#29366;&#24577;&#26426;&#21327;&#35758;&#12290;&#22312;&#19979;&#19968;&#20010;&#23454;&#39564;&#20013;&#65292;&#20320;&#23558;&#22312; Raft &#20043;&#19978;&#26500;&#24314;&#19968;&#20010;&#38190;/&#20540;&#26381;&#21153;&#12290;&#38543;&#21518;&#65292;&#20320;&#23558;&#25226;&#20320;&#30340;&#26381;&#21153;“&#20998;&#29255;”&#21040;&#22810;&#20010;&#22797;&#21046;&#29366;&#24577;&#26426;&#19978;&#65292;&#20197;&#33719;&#24471;&#26356;&#39640;&#30340;&#24615;&#33021;&#12290;</font></font></font></p><p data-imt-p="1">
+A replicated service achieves fault
+tolerance by storing complete copies of its state (i.e., data)
+on multiple replica servers.
+Replication allows
+the service to continue operating even if some of
+its servers experience failures (crashes or a broken or flaky
+network). The challenge is that failures may cause the
+replicas to hold differing copies of the data.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#22797;&#21046;&#26381;&#21153;&#36890;&#36807;&#22312;&#22810;&#20010;&#21103;&#26412;&#26381;&#21153;&#22120;&#19978;&#23384;&#20648;&#20854;&#29366;&#24577;&#65288;&#21363;&#25968;&#25454;&#65289;&#30340;&#23436;&#25972;&#21103;&#26412;&#26469;&#23454;&#29616;&#23481;&#38169;&#12290;&#21363;&#20351;&#20854;&#20013;&#26576;&#20123;&#26381;&#21153;&#22120;&#21457;&#29983;&#25925;&#38556;&#65288;&#22914;&#23849;&#28291;&#65292;&#25110;&#32593;&#32476;&#20013;&#26029;&#12289;&#19981;&#31283;&#23450;&#65289;&#65292;&#22797;&#21046;&#20063;&#33021;&#20351;&#26381;&#21153;&#32487;&#32493;&#36816;&#34892;&#12290;&#25361;&#25112;&#22312;&#20110;&#65292;&#25925;&#38556;&#21487;&#33021;&#23548;&#33268;&#21508;&#20010;&#21103;&#26412;&#25345;&#26377;&#19981;&#19968;&#33268;&#30340;&#25968;&#25454;&#21103;&#26412;&#12290;</font></font></font></p><p data-imt-p="1">
+Raft organizes client requests into a sequence, called
+the log, and ensures that all the replica servers see the same log.
+Each replica executes client requests
+in log order, applying them to its local copy of the service's state.
+Since all the live replicas
+see the same log contents, they all execute the same requests
+in the same order, and thus continue to have identical service
+state. If a server fails but later recovers, Raft takes care of
+bringing its log up to date. Raft will continue to operate as
+long as at least a majority of the servers are alive and can
+talk to each other. If there is no such majority, Raft will
+make no progress, but will pick up where it left off as soon as
+a majority can communicate again.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">Raft &#23558;&#23458;&#25143;&#31471;&#35831;&#27714;&#32452;&#32455;&#25104;&#19968;&#20010;&#31216;&#20026;&#26085;&#24535;&#65288;log&#65289;&#30340;&#24207;&#21015;&#65292;&#24182;&#30830;&#20445;&#25152;&#26377;&#21103;&#26412;&#26381;&#21153;&#22120;&#30475;&#21040;&#30456;&#21516;&#30340;&#26085;&#24535;&#12290;&#27599;&#20010;&#21103;&#26412;&#25353;&#29031;&#26085;&#24535;&#39034;&#24207;&#25191;&#34892;&#23458;&#25143;&#31471;&#35831;&#27714;&#65292;&#23558;&#23427;&#20204;&#24212;&#29992;&#21040;&#26381;&#21153;&#29366;&#24577;&#30340;&#26412;&#22320;&#21103;&#26412;&#19978;&#12290;&#30001;&#20110;&#25152;&#26377;&#23384;&#27963;&#30340;&#21103;&#26412;&#30475;&#21040;&#30340;&#26085;&#24535;&#20869;&#23481;&#30456;&#21516;&#65292;&#23427;&#20204;&#20250;&#20197;&#30456;&#21516;&#30340;&#39034;&#24207;&#25191;&#34892;&#30456;&#21516;&#30340;&#35831;&#27714;&#65292;&#22240;&#27492;&#33021;&#22815;&#25345;&#32493;&#20445;&#25345;&#19968;&#33268;&#30340;&#26381;&#21153;&#29366;&#24577;&#12290;&#22914;&#26524;&#26576;&#20010;&#26381;&#21153;&#22120;&#21457;&#29983;&#25925;&#38556;&#20294;&#38543;&#21518;&#24674;&#22797;&#65292;Raft &#20250;&#36127;&#36131;&#23558;&#20854;&#26085;&#24535;&#26356;&#26032;&#33267;&#26368;&#26032;&#29366;&#24577;&#12290;&#21482;&#35201;&#33267;&#23569;&#26377;&#22810;&#25968;&#26381;&#21153;&#22120;&#23384;&#27963;&#19988;&#33021;&#22815;&#30456;&#20114;&#36890;&#20449;&#65292;Raft &#23601;&#20250;&#25345;&#32493;&#36816;&#34892;&#12290;&#22914;&#26524;&#19981;&#23384;&#22312;&#36825;&#26679;&#30340;&#22810;&#25968;&#65292;Raft &#23558;&#26080;&#27861;&#21462;&#24471;&#36827;&#23637;&#65292;&#20294;&#19968;&#26086;&#22810;&#25968;&#26381;&#21153;&#22120;&#33021;&#22815;&#37325;&#26032;&#36890;&#20449;&#65292;&#23427;&#23601;&#20250;&#20174;&#20013;&#26029;&#22788;&#32487;&#32493;&#36816;&#34892;&#12290;</font></font></font></p><p data-imt-p="1">
+In this lab you'll implement Raft as a Go object type
+with associated methods, meant to be used as a module in a
+larger service. A set of Raft instances talk to each other with
+RPC to maintain replicated logs. Your Raft interface will
+support an indefinite sequence of numbered commands, also
+called log entries. The entries are numbered with <em>index
+numbers</em>. The log entry with a given index will eventually
+be committed. At that point, your Raft should send the log
+entry to the larger service for it to execute.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#22312;&#26412;&#23454;&#39564;&#20013;&#65292;&#20320;&#23558;&#25226; Raft &#23454;&#29616;&#20026;&#19968;&#20010;&#24102;&#26377;&#30456;&#20851;&#26041;&#27861;&#30340; Go &#23545;&#35937;&#31867;&#22411;&#65292;&#26088;&#22312;&#20316;&#20026;&#26356;&#22823;&#26381;&#21153;&#20013;&#30340;&#19968;&#20010;&#27169;&#22359;&#26469;&#20351;&#29992;&#12290;&#19968;&#32452; Raft &#23454;&#20363;&#36890;&#36807; RPC &#30456;&#20114;&#36890;&#20449;&#65292;&#20197;&#32500;&#25252;&#22797;&#21046;&#26085;&#24535;&#12290;&#20320;&#30340; Raft &#25509;&#21475;&#23558;&#25903;&#25345;&#19968;&#20010;&#19981;&#38480;&#38271;&#24230;&#30340;&#32534;&#21495;&#21629;&#20196;&#24207;&#21015;&#65292;&#36825;&#20123;&#21629;&#20196;&#20063;&#31216;&#20026;&#26085;&#24535;&#26465;&#30446;&#12290;&#26465;&#30446;&#20351;&#29992;&#32034;&#24341;&#21495;&#36827;&#34892;&#32534;&#21495;&#12290;&#20855;&#26377;&#32473;&#23450;&#32034;&#24341;&#30340;&#26085;&#24535;&#26465;&#30446;&#26368;&#32456;&#20250;&#34987;&#25552;&#20132;&#12290;&#23626;&#26102;&#65292;&#20320;&#30340; Raft &#24212;&#23558;&#35813;&#26085;&#24535;&#26465;&#30446;&#21457;&#36865;&#32473;&#26356;&#22823;&#30340;&#26381;&#21153;&#21435;&#25191;&#34892;&#12290;</font></font></font></p><p data-imt-p="1">
+You should follow the design in the
+<a href="https://pdos.csail.mit.edu/6.824/papers/raft-extended.pdf">extended Raft paper</a>,
+with particular attention to Figure 2.
+You'll implement most of what's in the paper, including saving
+persistent state and reading it after a node fails and
+then restarts. You will not implement cluster
+membership changes (Section 6).
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#20320;&#24212;&#24403;&#36981;&#24490;&#25193;&#23637;&#29256; Raft &#35770;&#25991;&#20013;&#30340;&#35774;&#35745;&#26469;&#23454;&#29616;&#65292;&#23588;&#20854;&#35201;&#27880;&#24847;&#22270; 2&#12290;&#20320;&#23558;&#23454;&#29616;&#35770;&#25991;&#20013;&#30340;&#22823;&#37096;&#20998;&#20869;&#23481;&#65292;&#21253;&#25324;&#20445;&#23384;&#25345;&#20037;&#21270;&#29366;&#24577;&#65292;&#20197;&#21450;&#22312;&#33410;&#28857;&#21457;&#29983;&#25925;&#38556;&#24182;&#37325;&#21551;&#21518;&#35835;&#21462;&#36825;&#20123;&#29366;&#24577;&#12290;&#20320;&#26080;&#38656;&#23454;&#29616;&#38598;&#32676;&#25104;&#21592;&#21464;&#26356;&#65288;&#31532; 6 &#33410;&#65289;&#12290;</font></font></font></p><p data-imt-p="1">
+This lab is due in four parts. You must submit each part on the
+corresponding due date.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#26412;&#23454;&#39564;&#20998;&#20026;&#22235;&#20010;&#37096;&#20998;&#25552;&#20132;&#12290;&#20320;&#24517;&#39035;&#22312;&#30456;&#24212;&#30340;&#25130;&#27490;&#26085;&#26399;&#25552;&#20132;&#27599;&#19968;&#37096;&#20998;&#12290;</font></font></font></p><h3 data-imt-p="1">Getting Started<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><font class="notranslate" data-immersive-translate-translation-element-mark="1">&nbsp;&nbsp;</font><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-inline-wrapper-theme-none immersive-translate-target-translation-inline-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#24320;&#22987;&#19978;&#25163;</font></font></font></h3>
+
+<p data-imt-p="1">
+If you have done Lab 1, you already have a copy of the lab
+source code.
+If not,
+you can find directions for obtaining the source via git
+in the <a href="https://pdos.csail.mit.edu/6.824/labs/lab-mr.html">Lab 1 instructions</a>.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#22914;&#26524;&#20320;&#24050;&#32463;&#23436;&#25104;&#20102; Lab 1&#65292;&#37027;&#20040;&#20320;&#24050;&#32463;&#26377;&#20102;&#19968;&#20221;&#23454;&#39564;&#28304;&#20195;&#30721;&#30340;&#21103;&#26412;&#12290;&#22914;&#26524;&#27809;&#26377;&#65292;&#20320;&#21487;&#20197;&#22312; Lab 1 &#30340;&#35828;&#26126;&#20013;&#25214;&#21040;&#36890;&#36807; git &#33719;&#21462;&#28304;&#20195;&#30721;&#30340;&#26041;&#27861;&#12290;</font></font></font></p><p data-imt-p="1">
+We supply you with skeleton code <tt>src/raft1/raft.go</tt>. We also
+supply a set of tests, which you should use to drive your
+implementation efforts, and which we'll use to grade your submitted
+lab. The tests are in <tt>src/raft1/raft_test.go</tt>.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#25105;&#20204;&#20026;&#20320;&#25552;&#20379;&#20102;&#39592;&#26550;&#20195;&#30721; <tt>src/raft1/raft.go</tt> &#12290;&#25105;&#20204;&#36824;&#25552;&#20379;&#20102;&#19968;&#32452;&#27979;&#35797;&#65292;&#20320;&#24212;&#35813;&#29992;&#23427;&#20204;&#26469;&#25351;&#23548;&#20320;&#30340;&#23454;&#29616;&#24037;&#20316;&#65292;&#25105;&#20204;&#20063;&#20250;&#29992;&#23427;&#20204;&#26469;&#35780;&#23450;&#20320;&#25552;&#20132;&#30340;&#23454;&#39564;&#12290;&#36825;&#20123;&#27979;&#35797;&#20301;&#20110; <tt>src/raft1/raft_test.go</tt> &#12290;</font></font></font></p><p data-imt-p="1">
+When we grade your submissions, we will run the tests without the <tt>-race</tt> <a href="https://go.dev/blog/race-detector">flag</a>.
+However, you should test with <tt>-race</tt>.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#22312;&#25105;&#20204;&#35780;&#23450;&#20320;&#25552;&#20132;&#30340;&#20869;&#23481;&#26102;&#65292;&#20250;&#22312;&#19981;&#24102; <tt>-race</tt> &#26631;&#24535;&#30340;&#24773;&#20917;&#19979;&#36816;&#34892;&#27979;&#35797;&#12290;&#19981;&#36807;&#65292;&#20320;&#24212;&#35813;&#20351;&#29992; <tt>-race</tt> &#26469;&#36827;&#34892;&#27979;&#35797;&#12290;</font></font></font></p><p data-imt-p="1">
+To get up and running, execute the following commands.
+Don't forget the <tt>git pull</tt> to get the latest software.
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#35201;&#24320;&#22987;&#36816;&#34892;&#65292;&#35831;&#25191;&#34892;&#20197;&#19979;&#21629;&#20196;&#12290;&#21035;&#24536;&#20102;&#21152;&#19978; <tt>git pull</tt> &#20197;&#33719;&#21462;&#26368;&#26032;&#30340;&#36719;&#20214;&#12290;</font></font></font></p><pre data-imt-pre="1" data-imt-p="1">$ cd ~/6.5840
+$ git pull
+...
+$ cd src
+$ make raft1
+go build -race -o main/raft1d main/raft1d.go
+cd raft1 &amp;&amp; go test -v -race  
+=== RUN   TestInitialElection3A
+Test (3A): initial election (reliable network)...
+Fatal: expected one leader, got none
+        /Users/rtm/824-process-raft/src/raft1/test.go:151
+        /Users/rtm/824-process-raft/src/raft1/raft_test.go:36
+info: wrote visualization to /var/folders/x_/vk0xmxwn1sj91m89wsn5b1yh0000gr/T/porcupine-2242138501.html
+--- FAIL: TestInitialElection3A (5.51s)
+...
+$
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-pre-whitespace immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">$ cd ~/6.5840
+$ git pull
+...
+$ cd src
+$ make raft1
+go build -race -o main/raft1d main/raft1d.go
+cd raft1 &amp;&amp; go test -v -race  
+=== RUN   TestInitialElection3A
+&#27979;&#35797; (3A)&#65306;&#21021;&#22987;&#36873;&#20030;&#65288;&#21487;&#38752;&#32593;&#32476;&#65289;...
+&#33268;&#21629;&#38169;&#35823;&#65306;&#39044;&#26399;&#26377;&#19968;&#20010;&#39046;&#23548;&#32773;&#65292;&#23454;&#38469;&#27809;&#26377;
+        /Users/rtm/824-process-raft/src/raft1/test.go:151
+        /Users/rtm/824-process-raft/src/raft1/raft_test.go:36
+info&#65306;&#24050;&#23558;&#21487;&#35270;&#21270;&#20889;&#20837; /var/folders/x_/vk0xmxwn1sj91m89wsn5b1yh0000gr/T/porcupine-2242138501.html
+--- &#22833;&#36133;&#65306;TestInitialElection3A (5.51s)
+...
+$
+</font></font></font></pre>
+
+<h3 data-imt-p="1">The code<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><font class="notranslate" data-immersive-translate-translation-element-mark="1">&nbsp;&nbsp;</font><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-inline-wrapper-theme-none immersive-translate-target-translation-inline-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#20195;&#30721;</font></font></font></h3>
+
+Implement Raft by adding code to
+<tt>raft1/raft.go</tt>. In that file you'll find
+skeleton code, plus examples of how to send and receive
+RPCs.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#36890;&#36807;&#21521; <tt>raft1/raft.go</tt> &#20013;&#28155;&#21152;&#20195;&#30721;&#26469;&#23454;&#29616; Raft&#12290;&#22312;&#35813;&#25991;&#20214;&#20013;&#20320;&#20250;&#21457;&#29616;&#39592;&#26550;&#20195;&#30721;&#65292;&#20197;&#21450;&#22914;&#20309;&#21457;&#36865;&#21644;&#25509;&#25910; RPC &#30340;&#31034;&#20363;&#12290;</font></font></font><p data-imt-p="1">
+Your implementation must support the following interface, which
+the tester and (eventually) your key/value server will use.
+You'll find more details in comments in <tt>raft.go</tt>
+and in <tt>raftapi/raftapi.go</tt>.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#20320;&#30340;&#23454;&#29616;&#24517;&#39035;&#25903;&#25345;&#20197;&#19979;&#25509;&#21475;&#65292;&#27979;&#35797;&#31243;&#24207;&#20197;&#21450;&#65288;&#26368;&#32456;&#65289;&#20320;&#30340;&#38190;/&#20540;&#26381;&#21153;&#22120;&#37117;&#23558;&#20351;&#29992;&#35813;&#25509;&#21475;&#12290;&#20320;&#21487;&#20197;&#22312; <tt>raft.go</tt> &#21644; <tt>raftapi/raftapi.go</tt> &#30340;&#27880;&#37322;&#20013;&#25214;&#21040;&#26356;&#22810;&#35814;&#32454;&#20449;&#24687;&#12290;</font></font></font></p><pre data-imt-pre="1" data-imt-p="1">// create a new Raft server instance:
+rf := Make(peers, me, persister, applyCh)<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-pre-whitespace immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">// &#21019;&#24314;&#19968;&#20010;&#26032;&#30340; Raft &#26381;&#21153;&#22120;&#23454;&#20363;&#65306;rf := Make(peers, me, persister, applyCh)</font></font></font><br data-imt=""><br data-imt="">// start agreement on a new log entry:
+rf.Start(command interface{}) (index, term, isleader)<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-pre-whitespace immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">// &#23545;&#19968;&#20010;&#26032;&#30340;&#26085;&#24535;&#26465;&#30446;&#21457;&#36215;&#19968;&#33268;&#24615;&#20849;&#35782;&#65306;rf.Start(command interface{}) (index, term, isleader)</font></font></font><br data-imt=""><br data-imt="">// ask a Raft for its current term, and whether it thinks it is leader
+rf.GetState() (term, isLeader)<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-pre-whitespace immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">// &#35810;&#38382;&#26576;&#20010; Raft &#20854;&#24403;&#21069;&#20219;&#26399;&#65292;&#20197;&#21450;&#23427;&#26159;&#21542;&#35748;&#20026;&#33258;&#24049;&#26159; leader rf.GetState() (term, isLeader)</font></font></font><br data-imt=""><br data-imt="">// each time a new entry is committed to the log, each Raft peer
+// should send an ApplyMsg to the service (or tester).
+type ApplyMsg<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-pre-whitespace immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">// &#27599;&#24403;&#26377;&#26032;&#30340;&#26085;&#24535;&#26465;&#30446;&#34987;&#25552;&#20132;&#21040;&#26085;&#24535;&#20013;&#26102;&#65292;&#27599;&#20010; Raft &#33410;&#28857;&#37117; // &#24212;&#24403;&#21521;&#26381;&#21153;&#65288;&#25110;&#27979;&#35797;&#31243;&#24207;&#65289;&#21457;&#36865;&#19968;&#20010; ApplyMsg&#12290; type ApplyMsg</font></font></font></pre>
+
+<p data-imt-p="1">
+A service calls <tt>Make(peers,me,…)</tt> to create a
+Raft peer. The peers argument is an array of network identifiers
+of the Raft peers (including this one), for use with RPC. The
+<tt>me</tt> argument is the index of this peer in the peers
+array. <tt>Start(command)</tt> asks Raft to start the processing
+to append the command to the replicated log. <tt>Start()</tt>
+should return immediately, without waiting for the log appends
+to complete. The service expects your implementation to send an
+<tt>ApplyMsg</tt> for each newly committed log entry to the
+<tt>applyCh</tt> channel argument to <tt>Make()</tt>.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#26381;&#21153;&#35843;&#29992; <tt>Make(peers,me,…)</tt> &#26469;&#21019;&#24314;&#19968;&#20010; Raft &#33410;&#28857;&#12290;peers &#21442;&#25968;&#26159;&#21508;&#20010; Raft &#33410;&#28857;&#65288;&#21253;&#25324;&#26412;&#33410;&#28857;&#22312;&#20869;&#65289;&#30340;&#32593;&#32476;&#26631;&#35782;&#31526;&#25968;&#32452;&#65292;&#29992;&#20110; RPC &#36890;&#20449;&#12290; <tt>me</tt> &#21442;&#25968;&#26159;&#26412;&#33410;&#28857;&#22312; peers &#25968;&#32452;&#20013;&#30340;&#32034;&#24341;&#12290; <tt>Start(command)</tt> &#35831;&#27714; Raft &#24320;&#22987;&#22788;&#29702;&#65292;&#23558;&#35813;&#21629;&#20196;&#36861;&#21152;&#21040;&#22797;&#21046;&#26085;&#24535;&#20013;&#12290; <tt>Start()</tt> &#24212;&#24403;&#31435;&#21363;&#36820;&#22238;&#65292;&#26080;&#38656;&#31561;&#24453;&#26085;&#24535;&#36861;&#21152;&#23436;&#25104;&#12290;&#26381;&#21153;&#26399;&#26395;&#20320;&#30340;&#23454;&#29616;&#38024;&#23545;&#27599;&#20010;&#26032;&#25552;&#20132;&#30340;&#26085;&#24535;&#26465;&#30446;&#65292;&#21521; <tt>Make()</tt> &#30340; <tt>applyCh</tt> &#36890;&#36947;&#21442;&#25968;&#21457;&#36865;&#19968;&#20010; <tt>ApplyMsg</tt> &#12290;</font></font></font></p><p data-imt-p="1">
+<tt>raft.go</tt> contains example code that sends an RPC
+(<tt>sendRequestVote()</tt>) and that handles an incoming RPC
+(<tt>RequestVote()</tt>).
+Your Raft peers should exchange RPCs using the labrpc Go
+package (source in <tt>src/labrpc</tt>).
+The tester can tell <tt>labrpc</tt> to delay RPCs,
+re-order them, and discard them to simulate various network failures.
+While you can temporarily modify <tt>labrpc</tt>,
+make sure your Raft works with the original <tt>labrpc</tt>,
+since that's what we'll use to test and grade your lab.
+Your Raft instances must interact only through RPC; for example,
+they are not allowed to communicate using shared Go variables
+or files.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1"> <tt>raft.go</tt> &#21253;&#21547;&#20102;&#21457;&#36865; RPC&#65288; <tt>sendRequestVote()</tt> &#65289;&#21644;&#22788;&#29702;&#20256;&#20837; RPC&#65288; <tt>RequestVote()</tt> &#65289;&#30340;&#31034;&#20363;&#20195;&#30721;&#12290;&#20320;&#30340; Raft &#33410;&#28857;&#24212;&#20351;&#29992; labrpc Go &#21253;&#65288;&#28304;&#30721;&#20301;&#20110; <tt>src/labrpc</tt> &#65289;&#26469;&#20132;&#25442; RPC&#12290;&#27979;&#35797;&#31243;&#24207;&#21487;&#20197;&#35753; <tt>labrpc</tt> &#24310;&#36831; RPC&#12289;&#23545;&#20854;&#37325;&#26032;&#25490;&#24207;&#24182;&#20002;&#24323;&#23427;&#20204;&#65292;&#20197;&#27169;&#25311;&#21508;&#31181;&#32593;&#32476;&#25925;&#38556;&#12290;&#34429;&#28982;&#20320;&#21487;&#20197;&#20020;&#26102;&#20462;&#25913; <tt>labrpc</tt> &#65292;&#20294;&#35831;&#30830;&#20445;&#20320;&#30340; Raft &#33021;&#22312;&#21407;&#22987;&#30340; <tt>labrpc</tt> &#19979;&#27491;&#24120;&#24037;&#20316;&#65292;&#22240;&#20026;&#25105;&#20204;&#23558;&#20351;&#29992;&#21407;&#22987;&#25991;&#20214;&#26469;&#27979;&#35797;&#21644;&#35780;&#20998;&#20320;&#30340;&#23454;&#39564;&#12290;&#20320;&#30340; Raft &#23454;&#20363;&#21482;&#33021;&#36890;&#36807; RPC &#36827;&#34892;&#20132;&#20114;&#65307;&#20363;&#22914;&#65292;&#19981;&#20801;&#35768;&#20351;&#29992;&#20849;&#20139;&#30340; Go &#21464;&#37327;&#25110;&#25991;&#20214;&#36827;&#34892;&#36890;&#20449;&#12290;</font></font></font></p><p data-imt-p="1">
+Subsequent labs build on this lab, so it is important to give
+yourself enough time to write solid code.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#21518;&#32493;&#30340;&#23454;&#39564;&#37117;&#24314;&#31435;&#22312;&#26412;&#23454;&#39564;&#30340;&#22522;&#30784;&#20043;&#19978;&#65292;&#22240;&#27492;&#32473;&#33258;&#24049;&#30041;&#20986;&#36275;&#22815;&#30340;&#26102;&#38388;&#26469;&#32534;&#20889;&#20581;&#22766;&#30340;&#20195;&#30721;&#38750;&#24120;&#37325;&#35201;&#12290;</font></font></font></p><h3 data-imt-p="1">Part 3A: leader election <script>g("moderate")</script>(<a class="moderate" href="https://pdos.csail.mit.edu/6.824/labs/guidance.html">moderate</a>)<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">Part 3A&#65306;&#39046;&#23548;&#32773;&#36873;&#20030;&#65288;&#20013;&#31561;&#38590;&#24230;&#65289;</font></font></font></h3>
+
+<p class="todo" data-imt-p="1">
+Implement Raft leader election and heartbeats (<tt>AppendEntries</tt> RPCs with no
+log entries). The goal for Part 3A is for a
+single leader to be elected, for the leader to remain the leader
+if there are no failures, and for a new leader to take over if the
+old leader fails or if packets to/from the old leader are lost.
+Run <tt>make RUN="-run 3A" raft1</tt> in the <tt>src</tt>
+directory to test your 3A code.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#23454;&#29616; Raft &#30340;&#39046;&#23548;&#32773;&#36873;&#20030;&#21644;&#24515;&#36339;&#26426;&#21046;&#65288; <tt>AppendEntries</tt> &#19981;&#21547;&#26085;&#24535;&#26465;&#30446;&#30340; RPC&#65289;&#12290;Part 3A &#30340;&#30446;&#26631;&#26159;&#36873;&#20030;&#20986;&#21807;&#19968;&#30340;&#39046;&#23548;&#32773;&#65292;&#22312;&#27809;&#26377;&#25925;&#38556;&#30340;&#24773;&#20917;&#19979;&#39046;&#23548;&#32773;&#20445;&#25345;&#20854;&#39046;&#23548;&#22320;&#20301;&#65292;&#24403;&#26087;&#39046;&#23548;&#32773;&#22833;&#25928;&#25110;&#19982;&#26087;&#39046;&#23548;&#32773;&#20043;&#38388;&#25910;&#21457;&#30340;&#25968;&#25454;&#21253;&#20002;&#22833;&#26102;&#65292;&#30001;&#26032;&#30340;&#39046;&#23548;&#32773;&#25509;&#31649;&#12290;&#22312; <tt>src</tt> &#30446;&#24405;&#19979;&#36816;&#34892; <tt>make RUN="-run 3A" raft1</tt> &#26469;&#27979;&#35797;&#20320;&#30340; 3A &#20195;&#30721;&#12290;</font></font></font></p><ul class="hints">
+
+<li data-imt-p="1">Follow the paper's Figure 2. At this point you care about sending
+and receiving RequestVote RPCs, the Rules for Servers that relate to
+elections, and the State related to leader election,
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#25353;&#29031;&#35770;&#25991;&#20013;&#30340;&#22270; 2&#65288;Figure 2&#65289;&#36827;&#34892;&#12290;&#27492;&#26102;&#20320;&#38656;&#35201;&#20851;&#27880;&#30340;&#26159;&#21457;&#36865;&#21644;&#25509;&#25910; RequestVote RPC&#12289;&#19982;&#36873;&#20030;&#30456;&#20851;&#30340;&#26381;&#21153;&#22120;&#35268;&#21017;&#65288;Rules for Servers&#65289;&#65292;&#20197;&#21450;&#19982;&#39046;&#23548;&#32773;&#36873;&#20030;&#30456;&#20851;&#30340;&#29366;&#24577;&#65288;State&#65289;&#65292;</font></font></font></li><li data-imt-p="1">
+Add the Figure 2 state for leader election
+to the <tt>Raft</tt> struct in <tt>raft.go</tt>.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#23558;&#22270; 2 &#20013;&#19982;&#39046;&#23548;&#32773;&#36873;&#20030;&#30456;&#20851;&#30340;&#29366;&#24577;&#28155;&#21152;&#21040; <tt>raft.go</tt> &#20013;&#30340; <tt>Raft</tt> &#32467;&#26500;&#20307;&#37324;&#12290;</font></font></font></li><li data-imt-p="1">
+Fill in the <tt>RequestVoteArgs</tt> and
+<tt>RequestVoteReply</tt> structs. Modify
+<tt>Make()</tt> to create a background goroutine that will kick off leader
+ election periodically by sending out <tt>RequestVote</tt> RPCs when it hasn't
+ heard from another peer for a while.
+ Implement
+ the <tt>RequestVote()</tt> RPC handler so that servers will vote for one
+ another.
+
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#22635;&#20889; <tt>RequestVoteArgs</tt> &#21644; <tt>RequestVoteReply</tt> &#32467;&#26500;&#20307;&#12290;&#20462;&#25913; <tt>Make()</tt> &#65292;&#21019;&#24314;&#19968;&#20010;&#21518;&#21488; goroutine&#65292;&#24403;&#19968;&#27573;&#26102;&#38388;&#27809;&#26377;&#25910;&#21040;&#20854;&#20182;&#33410;&#28857;&#30340;&#28040;&#24687;&#26102;&#65292;&#23427;&#20250;&#23450;&#26399;&#36890;&#36807;&#21457;&#36865; <tt>RequestVote</tt> RPC &#26469;&#21457;&#36215;&#39046;&#23548;&#32773;&#36873;&#20030;&#12290;&#23454;&#29616; <tt>RequestVote()</tt> RPC &#22788;&#29702;&#31243;&#24207;&#65292;&#20351;&#26381;&#21153;&#22120;&#20043;&#38388;&#33021;&#22815;&#20114;&#30456;&#25237;&#31080;&#12290;</font></font></font></li><li data-imt-p="1">
+To implement heartbeats, define an
+<tt>AppendEntries</tt> RPC struct (though you may not
+need all the arguments yet), and have the leader send
+them out periodically. Write an
+<tt>AppendEntries</tt> RPC handler method.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#20026;&#23454;&#29616;&#24515;&#36339;&#26426;&#21046;&#65292;&#23450;&#20041;&#19968;&#20010; <tt>AppendEntries</tt> RPC &#32467;&#26500;&#20307;&#65288;&#23613;&#31649;&#30446;&#21069;&#21487;&#33021;&#36824;&#29992;&#19981;&#21040;&#25152;&#26377;&#21442;&#25968;&#65289;&#65292;&#24182;&#35753;&#39046;&#23548;&#32773;&#23450;&#26399;&#21457;&#36865;&#23427;&#20204;&#12290;&#32534;&#20889;&#19968;&#20010; <tt>AppendEntries</tt> RPC &#22788;&#29702;&#31243;&#24207;&#26041;&#27861;&#12290;</font></font></font></li><li data-imt-p="1">
+The tester requires that the leader send heartbeat RPCs no more than
+ten times per second.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#27979;&#35797;&#22120;&#35201;&#27714;&#39046;&#23548;&#32773;&#65288;leader&#65289;&#27599;&#31186;&#21457;&#36865;&#30340;&#24515;&#36339; RPC &#19981;&#24471;&#36229;&#36807;&#21313;&#27425;&#12290;</font></font></font></li><li data-imt-p="1">
+The tester requires your Raft to elect a new leader within five
+seconds of the failure of the old leader (if a majority of peers can
+still communicate).
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#27979;&#35797;&#22120;&#35201;&#27714;&#20320;&#30340; Raft &#22312;&#26087;&#39046;&#23548;&#32773;&#22833;&#25928;&#21518;&#30340;&#20116;&#31186;&#20869;&#36873;&#20986;&#19968;&#20301;&#26032;&#39046;&#23548;&#32773;&#65288;&#21069;&#25552;&#26159;&#22823;&#22810;&#25968;&#33410;&#28857;&#20043;&#38388;&#20173;&#33021;&#36890;&#20449;&#65289;&#12290;</font></font></font></li><li data-imt-p="1">
+The paper's Section 5.2 mentions election timeouts in the range of 150
+to 300 milliseconds. Such a range only makes sense if the leader
+sends heartbeats considerably more often than once per 150
+milliseconds (e.g., once per 10 milliseconds). Because the tester limits you tens of heartbeats per
+second, you will have to use an election timeout larger
+than the paper's 150 to 300 milliseconds, but not too large, because then you
+may fail to elect a leader within five seconds.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#35770;&#25991;&#30340; 5.2 &#33410;&#25552;&#21040;&#30340;&#36873;&#20030;&#36229;&#26102;&#26102;&#38388;&#33539;&#22260;&#20026; 150 &#21040; 300 &#27627;&#31186;&#12290;&#21482;&#26377;&#24403;&#39046;&#23548;&#32773;&#21457;&#36865;&#24515;&#36339;&#30340;&#39057;&#29575;&#36828;&#39640;&#20110;&#27599; 150 &#27627;&#31186;&#19968;&#27425;&#65288;&#20363;&#22914;&#27599; 10 &#27627;&#31186;&#19968;&#27425;&#65289;&#26102;&#65292;&#36825;&#26679;&#30340;&#33539;&#22260;&#25165;&#26377;&#24847;&#20041;&#12290;&#30001;&#20110;&#27979;&#35797;&#22120;&#23558;&#20320;&#38480;&#21046;&#22312;&#27599;&#31186;&#20960;&#21313;&#27425;&#24515;&#36339;&#65292;&#20320;&#24517;&#39035;&#20351;&#29992;&#27604;&#35770;&#25991;&#20013; 150 &#21040; 300 &#27627;&#31186;&#26356;&#22823;&#30340;&#36873;&#20030;&#36229;&#26102;&#26102;&#38388;&#65292;&#20294;&#20063;&#19981;&#33021;&#22826;&#22823;&#65292;&#21542;&#21017;&#20320;&#21487;&#33021;&#26080;&#27861;&#22312;&#20116;&#31186;&#20869;&#36873;&#20986;&#39046;&#23548;&#32773;&#12290;</font></font></font></li><li data-imt-p="1">
+You may find Go's
+<a href="https://golang.org/pkg/math/rand/">rand</a>
+useful.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#20320;&#21487;&#33021;&#20250;&#21457;&#29616; Go &#35821;&#35328;&#30340; rand &#24456;&#26377;&#29992;&#12290;</font></font></font></li><li data-imt-p="1">
+You'll need to write code that takes actions periodically or
+after delays in time. The easiest way to do this is to create
+a goroutine with a loop that calls
+<a href="https://golang.org/pkg/time/#Sleep">time.Sleep()</a>;
+see the <tt>ticker()</tt> goroutine that <tt>Make()</tt>
+creates for this purpose.
+Don't use Go's <tt>time.Timer</tt> or <tt>time.Ticker</tt>, which
+are difficult to use correctly.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#20320;&#38656;&#35201;&#32534;&#20889;&#33021;&#22815;&#23450;&#26399;&#25110;&#22312;&#26102;&#38388;&#24310;&#36831;&#21518;&#25191;&#34892;&#25805;&#20316;&#30340;&#20195;&#30721;&#12290;&#26368;&#31616;&#21333;&#30340;&#26041;&#27861;&#26159;&#21019;&#24314;&#19968;&#20010; goroutine&#65292;&#22312;&#20854;&#20013;&#24490;&#29615;&#35843;&#29992; time.Sleep()&#65307;&#21442;&#35265; <tt>Make()</tt> &#20026;&#27492;&#30446;&#30340;&#21019;&#24314;&#30340; <tt>ticker()</tt> goroutine&#12290;&#19981;&#35201;&#20351;&#29992; Go &#30340; <tt>time.Timer</tt> &#25110; <tt>time.Ticker</tt> &#65292;&#23427;&#20204;&#24456;&#38590;&#34987;&#27491;&#30830;&#20351;&#29992;&#12290;</font></font></font></li><li data-imt-p="1">
+If your code has trouble passing the tests,
+read the paper's Figure 2 again; the full logic for leader
+election is spread over multiple parts of the figure.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#22914;&#26524;&#20320;&#30340;&#20195;&#30721;&#38590;&#20197;&#36890;&#36807;&#27979;&#35797;&#65292;&#35831;&#37325;&#26032;&#38405;&#35835;&#35770;&#25991;&#20013;&#30340;&#22270; 2&#65307;&#39046;&#23548;&#32773;&#36873;&#20030;&#30340;&#23436;&#25972;&#36923;&#36753;&#20998;&#24067;&#22312;&#22270;&#30340;&#22810;&#20010;&#37096;&#20998;&#20013;&#12290;</font></font></font></li><li data-imt-p="1">
+Don't forget to implement <tt>GetState()</tt>.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#19981;&#35201;&#24536;&#35760;&#23454;&#29616; <tt>GetState()</tt> &#12290;</font></font></font></li><li data-imt-p="1">Go RPC sends only struct fields whose names start with capital letters.
+  Sub-structures must also have capitalized field names (e.g. fields of log records
+  in an array). The <tt>labgob</tt> package will warn you about this;
+  don't ignore the warnings.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">Go RPC &#21482;&#20250;&#21457;&#36865;&#21517;&#31216;&#20197;&#22823;&#20889;&#23383;&#27597;&#24320;&#22836;&#30340;&#32467;&#26500;&#20307;&#23383;&#27573;&#12290;&#23376;&#32467;&#26500;&#20307;&#30340;&#23383;&#27573;&#21517;&#20063;&#24517;&#39035;&#20197;&#22823;&#20889;&#23383;&#27597;&#24320;&#22836;&#65288;&#20363;&#22914;&#25968;&#32452;&#20013;&#26085;&#24535;&#35760;&#24405;&#30340;&#23383;&#27573;&#65289;&#12290; <tt>labgob</tt> &#21253;&#20250;&#23601;&#27492;&#38382;&#39064;&#21521;&#20320;&#21457;&#20986;&#35686;&#21578;&#65307;&#19981;&#35201;&#24573;&#30053;&#36825;&#20123;&#35686;&#21578;&#12290;</font></font></font></li><li data-imt-p="1">
+The most challenging part of this lab may be the debugging. Refer to
+the <a href="https://pdos.csail.mit.edu/6.824/labs/guidance.html">Guidance</a> page for debugging tips.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#26412;&#23454;&#39564;&#20013;&#26368;&#20855;&#25361;&#25112;&#24615;&#30340;&#37096;&#20998;&#21487;&#33021;&#26159;&#35843;&#35797;&#12290;&#35843;&#35797;&#25216;&#24039;&#35831;&#21442;&#38405; Guidance&#65288;&#25351;&#21335;&#65289;&#39029;&#38754;&#12290;</font></font></font></li><li data-imt-p="1">
+If you fail a test, the tester produces a file that visualizes a timeline with
+events marked along it, including network partitions, crashed servers, and
+checks performed. Here's an <a href="https://pdos.csail.mit.edu/6.824/labs/vis.html">example of the
+visualization</a>. Further, you can add your own annotations by writing, for
+example,
+<tt>tester.Annotate("Server 0", "short description", "details")</tt>.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#22914;&#26524;&#26576;&#39033;&#27979;&#35797;&#26410;&#36890;&#36807;&#65292;&#27979;&#35797;&#31243;&#24207;&#20250;&#29983;&#25104;&#19968;&#20010;&#25991;&#20214;&#65292;&#23558;&#26102;&#38388;&#32447;&#21487;&#35270;&#21270;&#24182;&#22312;&#20854;&#19978;&#26631;&#27880;&#21508;&#31181;&#20107;&#20214;&#65292;&#21253;&#25324;&#32593;&#32476;&#20998;&#21306;&#12289;&#23849;&#28291;&#30340;&#26381;&#21153;&#22120;&#20197;&#21450;&#25152;&#25191;&#34892;&#30340;&#26816;&#26597;&#12290;&#36825;&#37324;&#26377;&#19968;&#20010;&#21487;&#35270;&#21270;&#30340;&#31034;&#20363;&#12290;&#27492;&#22806;&#65292;&#20320;&#36824;&#21487;&#20197;&#36890;&#36807;&#32534;&#20889;&#20363;&#22914; <tt>tester.Annotate("Server 0", "short description", "details")</tt> &#26469;&#28155;&#21152;&#33258;&#24049;&#30340;&#27880;&#37322;&#12290;</font></font></font></li></ul>
+
+
+<p data-imt-p="1">
+Be sure you pass the 3A tests before submitting Part 3A, so that
+you see something like this:
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#22312;&#25552;&#20132; Part 3A &#20043;&#21069;&#65292;&#35831;&#21153;&#24517;&#20808;&#36890;&#36807; 3A &#27979;&#35797;&#65292;&#36825;&#26679;&#20320;&#23601;&#20250;&#30475;&#21040;&#31867;&#20284;&#36825;&#26679;&#30340;&#36755;&#20986;&#65306;</font></font></font></p><pre data-imt-pre="1" data-imt-p="1">$ make RUN="-run 3A" raft1
+go build -race -o main/raft1d main/raft1d.go
+cd raft1 &amp;&amp; go test -v -race -run 3A 
+=== RUN   TestInitialElection3A
+Test (3A): initial election (reliable network)...
+  ... Passed --  time  3.5s #peers 3 #RPCs    32 #Ops    0
+--- PASS: TestInitialElection3A (3.84s)
+=== RUN   TestReElection3A
+Test (3A): election after network failure (reliable network)...
+  ... Passed --  time  6.2s #peers 3 #RPCs    68 #Ops    0
+--- PASS: TestReElection3A (6.54s)
+=== RUN   TestManyElections3A
+Test (3A): multiple elections (reliable network)...
+  ... Passed --  time  9.8s #peers 7 #RPCs   684 #Ops    0
+--- PASS: TestManyElections3A (10.68s)
+PASS
+ok      6.5840/raft1    22.095s
+$
+<font data-immersive-translate-error-id="43" class="notranslate immersive-translate-target-wrapper immersive-translate-target-wrapper-error" translate="no" lang="zh-CN"><a href="javascript:void(0)"><font class="immersive-translate-error imt-notranslate notranslate"><font class="immersive-translate-error-wrapper"><font class="immersive-translate-clickable-button notranslate" title="Retry All" style="display: flex; flex-direction: row; align-items: center;"><svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: inline; width: 1em; height: 1em; pointer-events: none;"><path d="M35.9387 5.48805C35.9166 4.60421 35.2434 4.04719 34.279 4.0675C33.3131 4.0878 32.8154 4.67712 32.6567 5.56132C32.5745 6.01985 32.601 6.49957 32.5962 6.96997C32.5881 7.77251 32.594 8.5752 32.594 9.3779C32.4685 9.43478 32.343 9.4917 32.2175 9.54866C31.7961 9.14366 31.3817 8.73102 30.9521 8.33488C27.0799 4.76502 22.4856 3.43605 17.3405 4.22591C10.0761 5.34107 4.69388 11.3891 4.06231 18.939C3.46983 26.0213 8.03881 32.8643 14.897 35.1663C21.8348 37.495 29.5543 34.7845 33.4563 28.6429C33.7074 28.2475 33.9685 27.8417 34.1218 27.4045C34.4194 26.5555 34.2699 25.765 33.4312 25.3113C32.6231 24.8743 31.8573 25.0498 31.2835 25.7915C30.9966 26.1625 30.7785 26.5856 30.5106 26.9724C28.0914 30.4658 24.7682 32.3693 20.5158 32.5766C14.8218 32.8541 9.60215 29.1608 7.94272 23.717C6.22884 18.0946 8.59939 12.0366 13.6698 9.08126C18.5986 6.20837 24.9262 7.03281 28.9148 11.0837C29.2069 11.3803 29.4036 11.7708 29.8772 12.4519C28.32 12.4519 27.1212 12.3885 25.9323 12.4704C24.8345 12.5461 24.253 13.1995 24.262 14.1166C24.2708 15.0096 24.8931 15.7485 25.9495 15.7745C28.7068 15.8424 31.4671 15.8177 34.2259 15.7884C35.1348 15.7787 35.8872 15.2584 35.9148 14.3603C36.0054 11.4048 36.0127 8.44397 35.9387 5.48805Z" fill="#428ADF"></path></svg><span style="color: rgb(66, 138, 223); text-decoration-line: underline; text-underline-offset: 0.2em; margin-left: 0.2em; pointer-events: none;">Retry</span></font>&nbsp;&nbsp;<font class="immersive-translate-help-button notranslate" title="Click to get the error details: Request timeout after 101000ms" data-immersive-translate-tooltip-text="%7B%22type%22%3A%22network%22%2C%22title%22%3A%22%5Bopencode-go%5D%20Third-party%20API%20translation%20service%20error%22%2C%22errMsg%22%3A%22We%20recommend%20upgrading%20to%20Pro%20for%20faster%2C%20more%20stable%20AI%20translation%20with%20OpenAI%2C%20DeepSeek%2C%20and%20more.%3Cbr%2F%3E%3Cbr%2F%3EError%20reason%3A%20Request%20timeout%20after%20101000ms%22%2C%22action%22%3A%22changeService%22%2C%22immediateShow%22%3Atrue%2C%22translationService%22%3A%22opencode-go%22%2C%22errCode%22%3A-999%2C%22errRawMsg%22%3A%22Request%20timeout%20after%20101000ms%22%2C%22usageScene%22%3A%22web_page%22%7D" data-immersive-translate-action="toast-error" style="display: flex; flex-direction: row; align-items: center;"><svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: inline; width: 1em; height: 1em; pointer-events: none;"><path fill-rule="evenodd" clip-rule="evenodd" d="M20.5607 2.5191C10.735 2.05516 2.46528 10.1045 2.50011 20.0984C2.54469 32.8837 15.9794 41.3025 27.521 35.772C28.0597 35.5138 28.6042 35.2357 29.0745 34.8742C29.9064 34.2347 30.0797 33.3404 29.5712 32.5989C29.0382 31.8217 28.2936 31.6838 27.4596 32.0227C27.2265 32.1174 27.0066 32.2437 26.7865 32.3701C26.6008 32.4767 26.415 32.5833 26.2211 32.6712C20.8005 35.1282 15.6165 34.6504 11.0342 30.8857C6.38506 27.0662 4.83815 21.9885 6.36608 16.1605C8.23236 9.04216 15.6457 4.59129 22.7912 6.13629C30.3201 7.76418 35.1917 14.6886 33.9006 22.1467C33.6763 23.4426 33.1697 24.693 32.665 25.9388C32.4936 26.3618 32.3223 26.7846 32.1625 27.2081C31.7321 28.3488 31.8755 29.1499 32.727 29.6338C33.5625 30.1085 34.3839 29.8271 35.0848 28.8121C35.2031 28.6407 35.3005 28.4544 35.3977 28.2685C35.4242 28.2179 35.4507 28.1672 35.4776 28.1169C36.5263 26.154 37.166 24.0544 37.3992 21.8528C38.4715 11.7296 30.8594 3.00541 20.5607 2.5191ZM22.2324 19.4482C22.6221 17.6294 21.6934 16.7853 19.8682 17.1885C19.4795 17.2744 19.0887 17.3789 18.7223 17.531C17.5055 18.036 17.1067 18.9307 17.8422 20.0563C18.3665 20.8586 18.2472 21.5161 18.0255 22.2965L17.9039 22.7239C17.5079 24.1148 17.1115 25.5072 16.7935 26.9165C16.4841 28.2873 17.2241 29.1723 18.6198 29.1593C18.6749 29.1502 18.7366 29.1408 18.8028 29.1307C18.9623 29.1063 19.1482 29.078 19.332 29.0394C21.5543 28.5732 21.9094 27.8227 20.9844 25.759C20.8192 25.3904 20.8406 24.873 20.9389 24.4633C21.1123 23.7404 21.3092 23.0227 21.5061 22.3052C21.7664 21.3567 22.0267 20.4083 22.2324 19.4482ZM21.2918 10.7674C22.3383 10.7322 23.3464 11.7297 23.3245 12.7787C23.3035 13.7817 22.4311 14.6541 21.4139 14.6892C20.3685 14.7252 19.5018 13.9485 19.4202 12.9025C19.3341 11.798 20.2055 10.8041 21.2918 10.7674Z" fill="#428ADF"></path></svg><span style="color: rgb(66, 138, 223); text-decoration-line: underline; text-underline-offset: 0.2em; margin-left: 0.2em; pointer-events: none;">Reason</span></font></font></font></a></font></pre>
+
+<p data-imt-p="1">
+Each "Passed" line contains five numbers; these are the time that the
+test took in seconds, the number of Raft peers, the
+number of RPCs sent during the test, the total number of bytes in the
+RPC messages, and the number of log entries
+that Raft reports were committed. Your numbers will differ from those
+shown here. You can ignore the numbers if you like, but they may help
+you sanity-check the number of RPCs that your implementation sends.
+For all of labs 3, 4, and 5, the grading script will fail your
+solution if it takes more than 600 seconds for all of the tests,
+or if any individual test takes more than 120
+seconds.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#27599;&#19968;&#34892; "Passed" &#37117;&#21253;&#21547;&#20116;&#20010;&#25968;&#23383;&#65307;&#23427;&#20204;&#20998;&#21035;&#26159;&#65306;&#27979;&#35797;&#32791;&#26102;&#65288;&#20197;&#31186;&#20026;&#21333;&#20301;&#65289;&#12289;Raft &#33410;&#28857;&#65288;peer&#65289;&#30340;&#25968;&#37327;&#12289;&#27979;&#35797;&#26399;&#38388;&#21457;&#36865;&#30340; RPC &#25968;&#37327;&#12289;RPC &#28040;&#24687;&#30340;&#24635;&#23383;&#33410;&#25968;&#65292;&#20197;&#21450; Raft &#25253;&#21578;&#24050;&#25552;&#20132;&#30340;&#26085;&#24535;&#26465;&#30446;&#25968;&#37327;&#12290;&#20320;&#30340;&#25968;&#23383;&#20250;&#19982;&#27492;&#22788;&#26174;&#31034;&#30340;&#19981;&#21516;&#12290;&#20320;&#21487;&#20197;&#36873;&#25321;&#24573;&#30053;&#36825;&#20123;&#25968;&#23383;&#65292;&#20294;&#23427;&#20204;&#25110;&#35768;&#26377;&#21161;&#20110;&#20320;&#23545;&#33258;&#24049;&#23454;&#29616;&#25152;&#21457;&#36865;&#30340; RPC &#25968;&#37327;&#36827;&#34892;&#21512;&#29702;&#24615;&#26816;&#26597;&#12290;&#23545;&#20110;&#23454;&#39564; 3&#12289;4 &#21644; 5&#65292;&#22914;&#26524;&#25152;&#26377;&#27979;&#35797;&#24635;&#20849;&#32791;&#26102;&#36229;&#36807; 600 &#31186;&#65292;&#25110;&#20219;&#20309;&#21333;&#20010;&#27979;&#35797;&#32791;&#26102;&#36229;&#36807; 120 &#31186;&#65292;&#35780;&#20998;&#33050;&#26412;&#23558;&#21028;&#23450;&#20320;&#30340;&#35299;&#20915;&#26041;&#26696;&#19981;&#36890;&#36807;&#12290;</font></font></font></p><p data-imt-p="1">
+When we grade your submissions, we will run the tests without
+the <a href="https://go.dev/blog/race-detector"><tt>-race</tt></a>
+flag. However, you should make sure that your code consistently
+passes the tests with the <tt>-race</tt> flag.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#24403;&#25105;&#20204;&#23545;&#20320;&#30340;&#25552;&#20132;&#36827;&#34892;&#35780;&#20998;&#26102;&#65292;&#23558;&#22312;&#19981;&#24102; <tt>-race</tt> &#26631;&#24535;&#30340;&#24773;&#20917;&#19979;&#36816;&#34892;&#27979;&#35797;&#12290;&#19981;&#36807;&#65292;&#20320;&#24212;&#24403;&#30830;&#20445;&#20320;&#30340;&#20195;&#30721;&#22312;&#24102; <tt>-race</tt> &#26631;&#24535;&#30340;&#24773;&#20917;&#19979;&#20063;&#33021;&#22987;&#32456;&#22914;&#19968;&#22320;&#36890;&#36807;&#27979;&#35797;&#12290;</font></font></font></p><h3 data-imt-p="1">Part 3B: log <script>g("hard")</script>(<a class="hard" href="https://pdos.csail.mit.edu/6.824/labs/guidance.html">hard</a>)<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#31532; 3B &#37096;&#20998;&#65306;&#26085;&#24535;&#65288;&#36739;&#38590;&#65289;</font></font></font></h3>
+
+<p class="todo" data-imt-p="1">
+Implement the leader and follower code to append new log entries,
+so that <tt>make RUN="-run 3B" raft1</tt> passes all tests.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#23454;&#29616; leader &#21644; follower &#36861;&#21152;&#26032;&#26085;&#24535;&#26465;&#30446;&#30340;&#20195;&#30721;&#65292;&#20351; <tt>make RUN="-run 3B" raft1</tt> &#36890;&#36807;&#25152;&#26377;&#27979;&#35797;&#12290;</font></font></font></p><ul class="hints">
+
+<li data-imt-p="1">
+Run <tt>git pull</tt> to get the latest lab software.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#36816;&#34892; <tt>git pull</tt> &#20197;&#33719;&#21462;&#26368;&#26032;&#30340;&#23454;&#39564;&#36719;&#20214;&#12290;</font></font></font></li><li data-imt-p="1">
+The Raft paper views the log as 1-indexed, but we suggest that you implement
+it as 0-indexed, starting
+with a dummy entry at index=0 that has term 0. That allows the very
+first AppendEntries RPC to contain 0 as PrevLogIndex, and be a valid index into
+the log.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">Raft &#35770;&#25991;&#23558;&#26085;&#24535;&#35270;&#20026;&#20174; 1 &#24320;&#22987;&#32034;&#24341;&#65292;&#20294;&#25105;&#20204;&#24314;&#35758;&#20320;&#23558;&#20854;&#23454;&#29616;&#20026;&#20174; 0 &#24320;&#22987;&#32034;&#24341;&#65292;&#21363;&#22312; index=0 &#22788;&#25918;&#32622;&#19968;&#20010; term &#20026; 0 &#30340;&#21713;&#26465;&#30446;&#65288;dummy entry&#65289;&#20316;&#20026;&#36215;&#22987;&#12290;&#36825;&#26679;&#65292;&#31532;&#19968;&#20010; AppendEntries RPC &#23601;&#21487;&#20197;&#21253;&#21547; 0 &#20316;&#20026; PrevLogIndex&#65292;&#24182;&#19988;&#23427;&#26159;&#26085;&#24535;&#20013;&#30340;&#19968;&#20010;&#26377;&#25928;&#32034;&#24341;&#12290;</font></font></font></li><li data-imt-p="1">
+Your first goal should be to pass <tt>TestBasicAgree3B()</tt>.
+Start by implementing <tt>Start()</tt>, then write the code
+to send and receive new log entries via <tt>AppendEntries</tt> RPCs,
+following Figure 2. Send each newly committed entry
+on <tt>applyCh</tt> on each peer.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#20320;&#30340;&#39318;&#35201;&#30446;&#26631;&#24212;&#35813;&#26159;&#36890;&#36807; <tt>TestBasicAgree3B()</tt> &#12290;&#39318;&#20808;&#23454;&#29616; <tt>Start()</tt> &#65292;&#28982;&#21518;&#25353;&#29031;&#22270; 2 &#32534;&#20889;&#36890;&#36807; <tt>AppendEntries</tt> RPC &#21457;&#36865;&#21644;&#25509;&#25910;&#26032;&#26085;&#24535;&#26465;&#30446;&#30340;&#20195;&#30721;&#12290;&#22312;&#27599;&#20010; peer &#19978;&#36890;&#36807; <tt>applyCh</tt> &#21457;&#36865;&#27599;&#20010;&#26032;&#25552;&#20132;&#30340;&#26465;&#30446;&#12290;</font></font></font></li><li data-imt-p="1">
+You will need to implement the election
+restriction (section 5.4.1 in the paper).
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#20320;&#38656;&#35201;&#23454;&#29616;&#36873;&#20030;&#38480;&#21046;&#65288;&#35770;&#25991;&#20013;&#30340; 5.4.1 &#33410;&#65289;&#12290;</font></font></font></li><li data-imt-p="1">
+Your code may have loops that repeatedly check for certain events.
+Don't have these loops
+execute continuously without pausing, since that
+will slow your implementation enough that it fails tests.
+Use Go's
+<a href="https://golang.org/pkg/sync/#Cond">condition variables</a>,
+or insert a
+<tt>time.Sleep(10 * time.Millisecond)</tt> in each loop iteration.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#20320;&#30340;&#20195;&#30721;&#20013;&#21487;&#33021;&#20250;&#26377;&#21453;&#22797;&#26816;&#26597;&#26576;&#20123;&#20107;&#20214;&#30340;&#24490;&#29615;&#12290;&#19981;&#35201;&#35753;&#36825;&#20123;&#24490;&#29615;&#19981;&#26242;&#20572;&#22320;&#25345;&#32493;&#36816;&#34892;&#65292;&#22240;&#20026;&#36825;&#20250;&#20351;&#20320;&#30340;&#23454;&#29616;&#21464;&#24471;&#22826;&#24930;&#32780;&#26080;&#27861;&#36890;&#36807;&#27979;&#35797;&#12290;&#35831;&#20351;&#29992; Go &#30340;&#26465;&#20214;&#21464;&#37327;&#65292;&#25110;&#22312;&#27599;&#27425;&#24490;&#29615;&#36845;&#20195;&#20013;&#25554;&#20837;&#19968;&#20010; <tt>time.Sleep(10 * time.Millisecond)</tt> &#12290;</font></font></font></li><li data-imt-p="1">Do yourself a favor for future labs and write (or re-write) code
+that's clean and clear.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#20026;&#20102;&#21518;&#32493;&#23454;&#39564;&#30528;&#24819;&#65292;&#35831;&#32534;&#20889;&#65288;&#25110;&#37325;&#20889;&#65289;&#25972;&#27905;&#28165;&#26224;&#30340;&#20195;&#30721;&#12290;</font></font></font></li><li data-imt-p="1">If you fail a test, look at
+  <tt>raft_test.go</tt> and trace the test code from there to
+  understand what's being tested.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#22914;&#26524;&#20320;&#30340;&#27979;&#35797;&#22833;&#36133;&#20102;&#65292;&#35831;&#26597;&#30475; <tt>raft_test.go</tt> &#65292;&#24182;&#20174;&#37027;&#37324;&#36861;&#36394;&#27979;&#35797;&#20195;&#30721;&#65292;&#20197;&#20102;&#35299;&#25152;&#27979;&#35797;&#30340;&#20869;&#23481;&#12290;</font></font></font></li></ul>
+
+<p data-imt-p="1">
+The tests for upcoming labs may fail your code if it runs too slowly.
+You can check how much real time and CPU time your solution uses with
+the time command. Here's typical output:
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#22914;&#26524;&#20195;&#30721;&#36816;&#34892;&#24471;&#22826;&#24930;&#65292;&#21518;&#32493;&#23454;&#39564;&#30340;&#27979;&#35797;&#21487;&#33021;&#20250;&#20351;&#20320;&#30340;&#20195;&#30721;&#26080;&#27861;&#36890;&#36807;&#12290;&#20320;&#21487;&#20197;&#20351;&#29992; time &#21629;&#20196;&#26469;&#26597;&#30475;&#20320;&#30340;&#35299;&#20915;&#26041;&#26696;&#21344;&#29992;&#20102;&#22810;&#23569;&#23454;&#38469;&#26102;&#38388;&#21644; CPU &#26102;&#38388;&#12290;&#20197;&#19979;&#26159;&#20856;&#22411;&#30340;&#36755;&#20986;&#65306;</font></font></font></p><pre data-imt-pre="1" data-imt-p="1">$ make RUN="-run 3B" raft1
+go build -race -o main/raft1d main/raft1d.go
+cd raft1 &amp;&amp; go test -v -race -run 3B 
+=== RUN   TestBasicAgree3B
+Test (3B): basic agreement (reliable network)...
+  ... Passed --  time  1.6s #peers 3 #RPCs    18 #Ops    3
+--- PASS: TestBasicAgree3B (1.96s)
+=== RUN   TestRPCBytes3B
+Test (3B): RPC byte count (reliable network)...
+  ... Passed --  time  3.3s #peers 3 #RPCs    50 #Ops   11
+--- PASS: TestRPCBytes3B (3.71s)
+=== RUN   TestFollowerFailure3B
+Test (3B): test progressive failure of followers (reliable network)...
+  ... Passed --  time  5.4s #peers 3 #RPCs    58 #Ops    3
+--- PASS: TestFollowerFailure3B (5.77s)
+=== RUN   TestLeaderFailure3B
+Test (3B): test failure of leaders (reliable network)...
+  ... Passed --  time  6.5s #peers 3 #RPCs   110 #Ops    3
+--- PASS: TestLeaderFailure3B (6.89s)
+=== RUN   TestFailAgree3B
+Test (3B): agreement after follower reconnects (reliable network)...
+  ... Passed --  time  6.0s #peers 3 #RPCs    61 #Ops    7
+--- PASS: TestFailAgree3B (6.37s)
+=== RUN   TestFailNoAgree3B
+Test (3B): no agreement if too many followers disconnect (reliable network)...
+  ... Passed --  time  4.0s #peers 5 #RPCs   107 #Ops    2
+--- PASS: TestFailNoAgree3B (4.55s)
+=== RUN   TestConcurrentStarts3B
+Test (3B): concurrent Start()s (reliable network)...
+  ... Passed --  time  1.4s #peers 3 #RPCs    12 #Ops    0
+--- PASS: TestConcurrentStarts3B (1.75s)
+=== RUN   TestRejoin3B
+Test (3B): rejoin of partitioned leader (reliable network)...
+  ... Passed --  time  7.8s #peers 3 #RPCs   120 #Ops    4
+--- PASS: TestRejoin3B (8.15s)
+=== RUN   TestBackup3B
+Test (3B): leader backs up quickly over incorrect follower logs (reliable network)...
+  ... Passed --  time 27.7s #peers 5 #RPCs  1370 #Ops  102
+--- PASS: TestBackup3B (28.27s)
+=== RUN   TestCount3B
+Test (3B): RPC counts aren't too high (reliable network)...
+  ... Passed --  time  2.7s #peers 3 #RPCs    32 #Ops    0
+--- PASS: TestCount3B (3.05s)
+PASS
+ok      6.5840/raft1    71.716s
+$
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-pre-whitespace immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">$ make RUN="-run 3B" raft1
+go build -race -o main/raft1d main/raft1d.go
+cd raft1 &amp;&amp; go test -v -race -run 3B
+=== RUN   TestBasicAgree3B
+&#27979;&#35797; (3B)&#65306;&#22522;&#26412;&#20849;&#35782;&#65288;&#21487;&#38752;&#32593;&#32476;&#65289;...
+... &#36890;&#36807; --  &#26102;&#38388;  1.6s #&#33410;&#28857; 3 #RPC    18 #&#25805;&#20316;    3
+--- PASS: TestBasicAgree3B (1.96s)
+=== RUN   TestRPCBytes3B
+&#27979;&#35797; (3B)&#65306;RPC &#23383;&#33410;&#25968;&#65288;&#21487;&#38752;&#32593;&#32476;&#65289;...
+... Passed --  time  3.3s #peers 3 #RPCs    50 #Ops   11
+--- PASS: TestRPCBytes3B (3.71s)
+=== RUN   TestFollowerFailure3B
+&#27979;&#35797;&#65288;3B&#65289;&#65306;&#27979;&#35797;&#36319;&#38543;&#32773;&#30340;&#28176;&#36827;&#24335;&#25925;&#38556;&#65288;&#21487;&#38752;&#32593;&#32476;&#65289;...
+... Passed --  time  5.4s #peers 3 #RPCs    58 #Ops    3
+--- PASS: TestFollowerFailure3B (5.77s)
+=== RUN   TestLeaderFailure3B
+&#27979;&#35797; (3B)&#65306;&#27979;&#35797;&#39046;&#23548;&#32773;&#25925;&#38556;&#65288;&#21487;&#38752;&#32593;&#32476;&#65289;...
+...&#36890;&#36807; --  &#26102;&#38388; 6.5s #&#33410;&#28857; 3 #RPC 110 #&#25805;&#20316; 3
+--- PASS: TestLeaderFailure3B (6.89s)
+=== RUN   TestFailAgree3B
+&#27979;&#35797; (3B)&#65306;&#36319;&#38543;&#32773;&#37325;&#26032;&#36830;&#25509;&#21518;&#36798;&#25104;&#20849;&#35782;&#65288;&#21487;&#38752;&#32593;&#32476;&#65289;...
+... &#36890;&#36807; --  &#32791;&#26102;  6.0s #&#33410;&#28857; 3 #RPC    61 #&#25805;&#20316;    7
+--- PASS: TestFailAgree3B (6.37s)
+=== RUN   TestFailNoAgree3B
+&#27979;&#35797; (3B)&#65306;&#33509;&#36807;&#22810;&#36319;&#38543;&#32773;&#26029;&#24320;&#36830;&#25509;&#65288;&#21487;&#38752;&#32593;&#32476;&#65289;&#65292;&#21017;&#26080;&#27861;&#36798;&#25104;&#19968;&#33268;...
+... Passed --  time  4.0s #peers 5 #RPCs   107 #Ops    2
+--- PASS: TestFailNoAgree3B (4.55s)
+=== RUN   TestConcurrentStarts3B
+&#27979;&#35797; (3B)&#65306;&#24182;&#21457;&#30340; Start() &#35843;&#29992;&#65288;&#21487;&#38752;&#32593;&#32476;&#65289;...
+... &#36890;&#36807; --  time  1.4s #peers 3 #RPCs    12 #Ops    0
+--- PASS: TestConcurrentStarts3B (1.75s)
+=== RUN   TestRejoin3B
+&#27979;&#35797; (3B)&#65306;&#34987;&#20998;&#21306;&#30340;&#39046;&#23548;&#32773;&#37325;&#26032;&#21152;&#20837;&#65288;&#21487;&#38752;&#32593;&#32476;&#65289;...
+... &#36890;&#36807; --  &#32791;&#26102;  7.8 &#31186; #&#33410;&#28857; 3 #RPC  120 #&#25805;&#20316;  4
+--- PASS: TestRejoin3B (8.15s)
+=== RUN   TestBackup3B
+&#27979;&#35797; (3B)&#65306;leader &#22312; follower &#26085;&#24535;&#19981;&#27491;&#30830;&#26102;&#24555;&#36895;&#22238;&#36864;&#65288;&#21487;&#38752;&#32593;&#32476;&#65289;...
+... &#36890;&#36807; --  time 27.7s #peers 5 #RPCs  1370 #Ops  102
+--- PASS: TestBackup3B (28.27s)
+=== RUN   TestCount3B
+&#27979;&#35797; (3B)&#65306;RPC &#35745;&#25968;&#19981;&#20250;&#22826;&#39640;&#65288;&#21487;&#38752;&#32593;&#32476;&#65289;...
+... &#36890;&#36807; --  &#26102;&#38388;  2.7s #&#33410;&#28857;&#25968; 3 #RPC &#27425;&#25968;    32 #&#25805;&#20316;&#25968;    0
+--- PASS: TestCount3B (3.05s)
+PASS
+ok      6.5840/raft1    71.716s
+$
+</font></font></font></pre>
+
+The "ok 6.5840/raft 71.716s" means that Go measured the time taken for the 3B
+tests to be 71.716 seconds of real (wall-clock) time.
+If your solution uses much more than a few minutes of real time
+for the 3B tests, you may run
+into trouble later on. Look for time spent sleeping or waiting for RPC
+timeouts, loops that run without sleeping or waiting for conditions or
+channel messages, or large numbers of RPCs sent.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">"ok 6.5840/raft 71.716s"&#34920;&#31034; Go &#27979;&#24471; 3B &#27979;&#35797;&#25152;&#32791;&#36153;&#30340;&#23454;&#38469;&#65288;&#22681;&#19978;&#26102;&#38047;&#65289;&#26102;&#38388;&#20026; 71.716 &#31186;&#12290;&#22914;&#26524;&#20320;&#30340;&#35299;&#20915;&#26041;&#26696;&#22312; 3B &#27979;&#35797;&#20013;&#32791;&#36153;&#30340;&#23454;&#38469;&#26102;&#38388;&#36828;&#36229;&#20960;&#20998;&#38047;&#65292;&#37027;&#20040;&#20043;&#21518;&#21487;&#33021;&#20250;&#36935;&#21040;&#40635;&#28902;&#12290;&#35831;&#30041;&#24847;&#26159;&#21542;&#23384;&#22312;&#26102;&#38388;&#32791;&#36153;&#22312;&#20241;&#30496;&#25110;&#31561;&#24453; RPC &#36229;&#26102;&#19978;&#65292;&#26159;&#21542;&#23384;&#22312;&#26082;&#19981;&#20241;&#30496;&#20063;&#19981;&#31561;&#24453;&#26465;&#20214;&#25110;&#36890;&#36947;&#28040;&#24687;&#23601;&#19968;&#30452;&#36816;&#34892;&#30340;&#24490;&#29615;&#65292;&#25110;&#32773;&#26159;&#21542;&#21457;&#36865;&#20102;&#22823;&#37327;&#30340; RPC&#12290;</font></font></font><h3 data-imt-p="1">Part 3C: persistence <script>g("hard")</script>(<a class="hard" href="https://pdos.csail.mit.edu/6.824/labs/guidance.html">hard</a>)<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">Part 3C&#65306;&#25345;&#20037;&#21270;&#65288;&#38590;&#65289;</font></font></font></h3>
+
+<p data-imt-p="1">
+If a Raft-based server reboots it should resume service
+where it left off. This requires
+that Raft keep persistent state that survives a reboot. The
+paper's Figure 2 mentions which state should be persistent.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#22914;&#26524;&#19968;&#20010;&#22522;&#20110; Raft &#30340;&#26381;&#21153;&#22120;&#37325;&#21551;&#65292;&#23427;&#24212;&#24403;&#20174;&#20013;&#26029;&#30340;&#22320;&#26041;&#24674;&#22797;&#26381;&#21153;&#12290;&#36825;&#23601;&#35201;&#27714; Raft &#20445;&#23384;&#33021;&#22815;&#22312;&#37325;&#21551;&#21518;&#23384;&#30041;&#30340;&#25345;&#20037;&#21270;&#29366;&#24577;&#12290;&#35770;&#25991;&#30340;&#22270; 2 &#25552;&#21040;&#20102;&#21738;&#20123;&#29366;&#24577;&#24212;&#24403;&#34987;&#25345;&#20037;&#21270;&#12290;</font></font></font></p><p data-imt-p="1">
+A real implementation would write
+Raft's persistent state to disk each time it changed, and would read the
+state from
+disk when restarting after a reboot. Your implementation won't use
+the disk; instead, it will save and restore persistent state
+from a <tt>Persister</tt> object (see <tt>tester1/persister.go</tt>).
+Whoever calls <tt>Raft.Make()</tt> supplies a <tt>Persister</tt>
+that initially holds Raft's most recently persisted state (if
+any). Raft should initialize its state from that
+<tt>Persister</tt>, and should use it to save its persistent
+state each time the state changes. Use the <tt>Persister</tt>'s
+<tt>ReadRaftState()</tt> and <tt>Save()</tt> methods.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#19968;&#20010;&#30495;&#23454;&#30340;&#23454;&#29616;&#20250;&#22312; Raft &#30340;&#25345;&#20037;&#21270;&#29366;&#24577;&#27599;&#27425;&#21457;&#29983;&#25913;&#21464;&#26102;&#23558;&#20854;&#20889;&#20837;&#30913;&#30424;&#65292;&#24182;&#22312;&#37325;&#21551;&#21518;&#37325;&#26032;&#21551;&#21160;&#26102;&#20174;&#30913;&#30424;&#35835;&#21462;&#35813;&#29366;&#24577;&#12290;&#20320;&#30340;&#23454;&#29616;&#19981;&#20250;&#20351;&#29992;&#30913;&#30424;&#65307;&#30456;&#21453;&#65292;&#23427;&#23558;&#36890;&#36807;&#19968;&#20010; <tt>Persister</tt> &#23545;&#35937;&#26469;&#20445;&#23384;&#21644;&#24674;&#22797;&#25345;&#20037;&#21270;&#29366;&#24577;&#65288;&#21442;&#35265; <tt>tester1/persister.go</tt> &#65289;&#12290;&#35843;&#29992; <tt>Raft.Make()</tt> &#30340;&#19968;&#26041;&#20250;&#25552;&#20379;&#19968;&#20010; <tt>Persister</tt> &#65292;&#20854;&#20013;&#26368;&#21021;&#20445;&#23384;&#30528; Raft &#26368;&#36817;&#19968;&#27425;&#25345;&#20037;&#21270;&#30340;&#29366;&#24577;&#65288;&#22914;&#26524;&#26377;&#30340;&#35805;&#65289;&#12290;Raft &#24212;&#24403;&#20174;&#35813; <tt>Persister</tt> &#21021;&#22987;&#21270;&#33258;&#24049;&#30340;&#29366;&#24577;&#65292;&#24182;&#22312;&#27599;&#27425;&#29366;&#24577;&#21457;&#29983;&#25913;&#21464;&#26102;&#20351;&#29992;&#23427;&#26469;&#20445;&#23384;&#33258;&#24049;&#30340;&#25345;&#20037;&#21270;&#29366;&#24577;&#12290;&#35831;&#20351;&#29992; <tt>Persister</tt> &#30340; <tt>ReadRaftState()</tt> &#21644; <tt>Save()</tt> &#26041;&#27861;&#12290;</font></font></font></p><p class="todo" data-imt-p="1">
+Complete the functions
+<tt>persist()</tt>
+and
+<tt>readPersist()</tt> in <tt>raft.go</tt>
+by adding code to save and restore persistent state. You will need to encode
+(or "serialize") the state as an array of bytes in order to pass it to
+the <tt>Persister</tt>. Use the <tt>labgob</tt> encoder;
+see the comments in <tt>persist()</tt> and <tt>readPersist()</tt>.
+<tt>labgob</tt> is like Go's <tt>gob</tt> encoder but
+prints error messages if
+you try to encode structures with lower-case field names.
+For now, pass <tt>nil</tt> as the second argument to <tt>persister.Save()</tt>.
+Insert calls to <tt>persist()</tt> at the points where
+your implementation changes persistent state.
+Once you've done this,
+and if the rest of your implementation is correct,
+you should pass all of the 3C tests.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#36890;&#36807;&#28155;&#21152;&#20445;&#23384;&#21644;&#24674;&#22797;&#25345;&#20037;&#21270;&#29366;&#24577;&#30340;&#20195;&#30721;&#65292;&#23436;&#25104; <tt>raft.go</tt> &#20013;&#30340; <tt>persist()</tt> &#21644; <tt>readPersist()</tt> &#20989;&#25968;&#12290;&#20320;&#38656;&#35201;&#23558;&#29366;&#24577;&#32534;&#30721;&#65288;&#25110;“&#24207;&#21015;&#21270;”&#65289;&#20026;&#23383;&#33410;&#25968;&#32452;&#65292;&#20197;&#20415;&#23558;&#20854;&#20256;&#36882;&#32473; <tt>Persister</tt> &#12290;&#35831;&#20351;&#29992; <tt>labgob</tt> &#32534;&#30721;&#22120;&#65307;&#21442;&#35265; <tt>persist()</tt> &#21644; <tt>readPersist()</tt> &#20013;&#30340;&#27880;&#37322;&#12290; <tt>labgob</tt> &#31867;&#20284;&#20110; Go &#30340; <tt>gob</tt> &#32534;&#30721;&#22120;&#65292;&#20294;&#22914;&#26524;&#20320;&#23581;&#35797;&#23545;&#21253;&#21547;&#23567;&#20889;&#23383;&#27573;&#21517;&#30340;&#32467;&#26500;&#20307;&#36827;&#34892;&#32534;&#30721;&#65292;&#23427;&#20250;&#25171;&#21360;&#38169;&#35823;&#28040;&#24687;&#12290;&#30446;&#21069;&#65292;&#35831;&#23558; <tt>nil</tt> &#20316;&#20026;&#31532;&#20108;&#20010;&#21442;&#25968;&#20256;&#36882;&#32473; <tt>persister.Save()</tt> &#12290;&#22312;&#20320;&#30340;&#23454;&#29616;&#26356;&#25913;&#25345;&#20037;&#21270;&#29366;&#24577;&#30340;&#20301;&#32622;&#25554;&#20837;&#23545; <tt>persist()</tt> &#30340;&#35843;&#29992;&#12290;&#23436;&#25104;&#36825;&#20123;&#20043;&#21518;&#65292;&#22914;&#26524;&#20320;&#30340;&#23454;&#29616;&#20854;&#20313;&#37096;&#20998;&#26159;&#27491;&#30830;&#30340;&#65292;&#20320;&#24212;&#35813;&#33021;&#36890;&#36807;&#20840;&#37096; 3C &#27979;&#35797;&#12290;</font></font></font></p><p data-imt-p="1">
+You will probably need the optimization that backs up
+nextIndex by more than one entry
+at a time. Look at the <a href="https://pdos.csail.mit.edu/6.824/papers/raft-extended.pdf">extended Raft paper</a> starting at
+the bottom of page 7 and top of page 8 (marked by a gray line).
+The paper is vague about the details; you will need to fill in the gaps.
+One possibility is to have a rejection message include:
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#20320;&#21487;&#33021;&#38656;&#35201;&#23454;&#29616;&#19968;&#31181;&#20248;&#21270;&#65292;&#21363;&#27599;&#27425;&#23558; nextIndex &#22238;&#36864;&#22810;&#20010;&#26465;&#30446;&#12290;&#35831;&#21442;&#32771;&#25193;&#23637;&#29256; Raft &#35770;&#25991;&#20013;&#20174;&#31532; 7 &#39029;&#24213;&#37096;&#21040;&#31532; 8 &#39029;&#39030;&#37096;&#30340;&#37096;&#20998;&#65288;&#20197;&#28784;&#33394;&#32447;&#26465;&#26631;&#35760;&#65289;&#12290;&#35770;&#25991;&#23545;&#32454;&#33410;&#30340;&#25551;&#36848;&#27604;&#36739;&#27169;&#31946;&#65292;&#20320;&#38656;&#35201;&#33258;&#34892;&#22635;&#34917;&#20854;&#20013;&#30340;&#31354;&#30333;&#12290;&#19968;&#31181;&#21487;&#34892;&#30340;&#20570;&#27861;&#26159;&#35753;&#25298;&#32477;&#28040;&#24687;&#21253;&#21547;&#20197;&#19979;&#20869;&#23481;&#65306;</font></font></font></p><pre data-imt-pre="1" data-imt-p="1">    XTerm:  term in the conflicting entry (if any)
+    XIndex: index of first entry with that term (if any)
+    XLen:   log length
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-pre-whitespace immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">XTerm&#65306;&#20914;&#31361;&#26465;&#30446;&#20013;&#30340;&#20219;&#26399;&#65288;&#22914;&#26524;&#26377;&#65289;
+XIndex&#65306;&#35813;&#20219;&#26399;&#20013;&#31532;&#19968;&#20010;&#26465;&#30446;&#30340;&#32034;&#24341;&#65288;&#22914;&#26524;&#26377;&#65289;
+XLen&#65306;&#26085;&#24535;&#38271;&#24230;
+</font></font></font></pre>
+
+Then the leader's logic can be something like:
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#37027;&#20040; Leader &#30340;&#36923;&#36753;&#21487;&#20197;&#26159;&#36825;&#26679;&#30340;&#65306;</font></font></font><pre data-imt-pre="1" data-imt-p="1">  Case 1: leader doesn't have XTerm:
+    nextIndex = XIndex
+  Case 2: leader has XTerm:
+    nextIndex = (index of leader's last entry for XTerm) + 1
+  Case 3: follower's log is too short:
+    nextIndex = XLen
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-pre-whitespace immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#24773;&#20917; 1&#65306;&#39046;&#23548;&#32773;&#27809;&#26377; XTerm&#65306;
+nextIndex = XIndex
+&#24773;&#20917; 2&#65306;&#39046;&#23548;&#32773;&#26085;&#24535;&#20013;&#23384;&#22312; XTerm &#20219;&#26399;&#30340;&#26465;&#30446;&#65306;
+nextIndex = (&#39046;&#23548;&#32773;&#26085;&#24535;&#20013; XTerm &#20219;&#26399;&#26368;&#21518;&#19968;&#26465;&#26465;&#30446;&#30340;&#32034;&#24341;) + 1
+&#24773;&#20917; 3&#65306;&#36319;&#38543;&#32773;&#30340;&#26085;&#24535;&#22826;&#30701;&#65306;
+nextIndex = XLen
+</font></font></font></pre>
+
+A few other hints:
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#21478;&#22806;&#20960;&#28857;&#25552;&#31034;&#65306;</font></font></font><ul class="hints">
+
+<li data-imt-p="1">
+Run <tt>git pull</tt> to get the latest lab software.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#36816;&#34892; <tt>git pull</tt> &#20197;&#33719;&#21462;&#26368;&#26032;&#30340;&#23454;&#39564;&#36719;&#20214;&#12290;</font></font></font></li><li data-imt-p="1">
+The 3C tests are more demanding than those for 3A or 3B, and failures
+may be caused by problems in your code for 3A or 3B.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">3C &#27979;&#35797;&#27604; 3A &#25110; 3B &#30340;&#27979;&#35797;&#35201;&#27714;&#26356;&#39640;&#65292;&#27979;&#35797;&#22833;&#36133;&#21487;&#33021;&#26159;&#30001;&#20320;&#22312; 3A &#25110; 3B &#37096;&#20998;&#20195;&#30721;&#20013;&#30340;&#38382;&#39064;&#23548;&#33268;&#30340;&#12290;</font></font></font></li></ul>
+
+<p data-imt-p="1">
+Your code should pass all the 3C tests (as shown below), as well as
+the 3A and 3B tests.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#20320;&#30340;&#20195;&#30721;&#24212;&#35813;&#36890;&#36807;&#25152;&#26377; 3C &#27979;&#35797;&#65288;&#22914;&#19979;&#25152;&#31034;&#65289;&#65292;&#20197;&#21450; 3A &#21644; 3B &#27979;&#35797;&#12290;</font></font></font></p><pre data-imt-pre="1" data-imt-p="1">$ make RUN="-run 3C" raft1
+go build -race -o main/raft1d main/raft1d.go
+cd raft1 &amp;&amp; go test -v -race -run 3C 
+=== RUN   TestPersist13C
+Test (3C): basic persistence (reliable network)...
+  ... Passed --  time  7.6s #peers 3 #RPCs    58 #Ops    6
+--- PASS: TestPersist13C (7.99s)
+=== RUN   TestPersist23C
+Test (3C): more persistence (reliable network)...
+  ... Passed --  time 21.6s #peers 5 #RPCs   287 #Ops   16
+--- PASS: TestPersist23C (22.17s)
+=== RUN   TestPersist33C
+Test (3C): partitioned leader and one follower crash, leader restarts (reliable network)...
+  ... Passed --  time  3.8s #peers 3 #RPCs    30 #Ops    4
+--- PASS: TestPersist33C (4.11s)
+=== RUN   TestFigure83C
+Test (3C): Figure 8 (reliable network)...
+  ... Passed --  time 48.5s #peers 5 #RPCs   499 #Ops    2
+--- PASS: TestFigure83C (49.08s)
+=== RUN   TestUnreliableAgree3C
+Test (3C): unreliable agreement (unreliable network)...
+  ... Passed --  time  5.1s #peers 5 #RPCs   288 #Ops  246
+--- PASS: TestUnreliableAgree3C (5.68s)
+=== RUN   TestFigure8Unreliable3C
+Test (3C): Figure 8 (unreliable) (unreliable network)...
+  ... Passed --  time 53.6s #peers 5 #RPCs  3200 #Ops    2
+--- PASS: TestFigure8Unreliable3C (54.19s)
+=== RUN   TestReliableChurn3C
+Test (3C): churn (reliable network)...
+  ... Passed --  time 18.2s #peers 5 #RPCs  1701 #Ops    1
+--- PASS: TestReliableChurn3C (18.80s)
+=== RUN   TestUnreliableChurn3C
+Test (3C): unreliable churn (unreliable network)...
+  ... Passed --  time 17.3s #peers 5 #RPCs  1253 #Ops    1
+--- PASS: TestUnreliableChurn3C (17.92s)
+PASS
+ok      6.5840/raft1    180.983s
+$
+<font class="notranslate immersive-translate-target-wrapper" translate="no" lang="zh-CN" data-immersive-translate-loading-id="" id="71" style="">&nbsp; <font class="immersive-translate-loading-spinner notranslate"></font></font></pre>
+
+<p data-imt-p="1">It is a good idea to run the tests multiple times before submitting.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#22312;&#25552;&#20132;&#20043;&#21069;&#22810;&#27425;&#36816;&#34892;&#27979;&#35797;&#26159;&#19968;&#20010;&#22909;&#20027;&#24847;&#12290;</font></font></font></p><h3 data-imt-p="1">Part 3D: log compaction <script>g("hard")</script>(<a class="hard" href="https://pdos.csail.mit.edu/6.824/labs/guidance.html">hard</a>)<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">Part 3D&#65306;&#26085;&#24535;&#21387;&#32553;&#65288;&#38590;&#65289;</font></font></font></h3>
+
+<p data-imt-p="1">
+As things stand now, a rebooting server replays the
+complete Raft log in order to restore its state. However, it's not
+practical for a long-running service to remember the complete Raft log
+forever. Instead, you'll modify Raft to cooperate with services that
+persistently store a "snapshot" of their state from time to time, at
+which point Raft discards log entries that precede the snapshot. The
+result is a smaller amount of persistent data and faster restart.
+However, it's now possible for a follower to fall so far behind that
+the leader has discarded the log entries it needs to catch up; the
+leader must then send a snapshot plus the log starting at the time of
+the snapshot. Section 7 of the
+<a href="https://pdos.csail.mit.edu/6.824/papers/raft-extended.pdf">extended Raft paper</a>
+outlines the scheme; you will have to design the details.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#23601;&#30446;&#21069;&#30340;&#24773;&#20917;&#32780;&#35328;&#65292;&#26381;&#21153;&#22120;&#37325;&#21551;&#21518;&#38656;&#35201;&#37325;&#25918;&#23436;&#25972;&#30340; Raft &#26085;&#24535;&#25165;&#33021;&#24674;&#22797;&#20854;&#29366;&#24577;&#12290;&#28982;&#32780;&#65292;&#23545;&#20110;&#19968;&#20010;&#38271;&#26399;&#36816;&#34892;&#30340;&#26381;&#21153;&#26469;&#35828;&#65292;&#27704;&#36828;&#20445;&#23384;&#23436;&#25972;&#30340; Raft &#26085;&#24535;&#24182;&#19981;&#29616;&#23454;&#12290;&#22240;&#27492;&#65292;&#20320;&#38656;&#35201;&#20462;&#25913; Raft&#65292;&#20351;&#20854;&#33021;&#22815;&#19982;&#37027;&#20123;&#20250;&#19981;&#23450;&#26399;&#22320;&#23558;&#33258;&#36523;&#29366;&#24577;&#30340;“&#24555;&#29031;”&#65288;snapshot&#65289;&#25345;&#20037;&#21270;&#23384;&#20648;&#30340;&#26381;&#21153;&#36827;&#34892;&#21327;&#20316;&#65292;&#27492;&#26102; Raft &#20250;&#20002;&#24323;&#20301;&#20110;&#24555;&#29031;&#20043;&#21069;&#30340;&#26085;&#24535;&#26465;&#30446;&#12290;&#20854;&#32467;&#26524;&#26159;&#25345;&#20037;&#21270;&#30340;&#25968;&#25454;&#37327;&#26356;&#23569;&#65292;&#37325;&#21551;&#36895;&#24230;&#20063;&#26356;&#24555;&#12290;&#28982;&#32780;&#65292;&#36825;&#26679;&#19968;&#26469;&#23601;&#21487;&#33021;&#20986;&#29616;&#26576;&#20010; follower &#33853;&#21518;&#22826;&#22810;&#12289;&#20197;&#33267;&#20110; leader &#24050;&#32463;&#20002;&#24323;&#20102;&#23427;&#36861;&#36214;&#25152;&#38656;&#26085;&#24535;&#26465;&#30446;&#30340;&#24773;&#20917;&#65307;&#27492;&#26102; leader &#24517;&#39035;&#21457;&#36865;&#24555;&#29031;&#65292;&#20197;&#21450;&#20174;&#24555;&#29031;&#26102;&#21051;&#24320;&#22987;&#30340;&#26085;&#24535;&#12290;Raft &#25193;&#23637;&#35770;&#25991;&#30340;&#31532; 7 &#33410;&#27010;&#36848;&#20102;&#36825;&#19968;&#26041;&#26696;&#65307;&#20855;&#20307;&#32454;&#33410;&#38656;&#35201;&#20320;&#33258;&#24049;&#35774;&#35745;&#12290;</font></font></font></p><p data-imt-p="1">
+Your Raft must provide the following function that the service
+can call with a serialized snapshot of its state:
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#20320;&#30340; Raft &#24517;&#39035;&#25552;&#20379;&#20197;&#19979;&#20989;&#25968;&#65292;&#20379;&#26381;&#21153;&#35843;&#29992;&#24182;&#20256;&#20837;&#20854;&#29366;&#24577;&#30340;&#24207;&#21015;&#21270;&#24555;&#29031;&#65306;</font></font></font></p><p><tt>Snapshot(index int, snapshot []byte)</tt>
+
+</p><p data-imt-p="1">
+In Lab 3D, the tester calls <tt>Snapshot()</tt> periodically. In Lab 4, you will
+write a key/value server that calls <tt>Snapshot()</tt>; the snapshot
+will contain the complete table of key/value pairs.
+The service layer calls <tt>Snapshot()</tt> on every peer (not
+just on the leader).
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#22312; Lab 3D &#20013;&#65292;&#27979;&#35797;&#31243;&#24207;&#20250;&#21608;&#26399;&#24615;&#22320;&#35843;&#29992; <tt>Snapshot()</tt> &#12290;&#22312; Lab 4 &#20013;&#65292;&#20320;&#23558;&#32534;&#20889;&#19968;&#20010;&#38190;/&#20540;&#26381;&#21153;&#22120;&#65292;&#23427;&#20250;&#35843;&#29992; <tt>Snapshot()</tt> &#65307;&#24555;&#29031;&#23558;&#21253;&#21547;&#23436;&#25972;&#30340;&#38190;/&#20540;&#23545;&#34920;&#12290;&#26381;&#21153;&#23618;&#20250;&#22312;&#27599;&#20010; peer&#65288;&#32780;&#19981;&#20165;&#20165;&#26159; leader&#65289;&#19978;&#35843;&#29992; <tt>Snapshot()</tt> &#12290;</font></font></font></p><p data-imt-p="1">The <tt>index</tt> argument indicates the highest log entry that's
+reflected in the snapshot. Raft should discard its log entries before
+that point. You'll need to revise your Raft code to operate while
+storing only the tail of the log.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1"> <tt>index</tt> &#21442;&#25968;&#25351;&#31034;&#24555;&#29031;&#20013;&#25152;&#21453;&#26144;&#30340;&#26368;&#39640;&#26085;&#24535;&#26465;&#30446;&#12290;Raft &#24212;&#20002;&#24323;&#35813;&#28857;&#20043;&#21069;&#30340;&#26085;&#24535;&#26465;&#30446;&#12290;&#20320;&#38656;&#35201;&#20462;&#25913;&#20320;&#30340; Raft &#20195;&#30721;&#65292;&#20351;&#20854;&#22312;&#20165;&#23384;&#20648;&#26085;&#24535;&#23614;&#37096;&#30340;&#24773;&#20917;&#19979;&#27491;&#24120;&#36816;&#34892;&#12290;</font></font></font></p><p data-imt-p="1">
+You'll need to implement the <tt>InstallSnapshot</tt> RPC discussed in
+the paper that allows a Raft leader to tell a lagging Raft peer to
+replace its state with a snapshot. You will likely need to think
+through how InstallSnapshot should interact with the state and rules
+in Figure 2.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#20320;&#38656;&#35201;&#23454;&#29616;&#35770;&#25991;&#20013;&#35752;&#35770;&#30340; <tt>InstallSnapshot</tt> RPC&#65292;&#23427;&#20801;&#35768; Raft leader &#21578;&#30693;&#33853;&#21518;&#30340; Raft peer &#29992;&#24555;&#29031;&#26367;&#25442;&#20854;&#29366;&#24577;&#12290;&#20320;&#21487;&#33021;&#38656;&#35201;&#20180;&#32454;&#24605;&#32771; InstallSnapshot &#24212;&#22914;&#20309;&#19982;&#22270; 2 &#20013;&#30340;&#29366;&#24577;&#21644;&#35268;&#21017;&#36827;&#34892;&#20132;&#20114;&#12290;</font></font></font></p><p data-imt-p="1">
+When a follower's Raft code receives an InstallSnapshot RPC, it can
+use the <tt>applyCh</tt> to send the snapshot to the service in
+an <tt>ApplyMsg</tt>. The <tt>ApplyMsg</tt> struct definition
+in <tt>raftapi/raftapi.go</tt> already
+contains the fields you will need (and which the tester expects). Take
+care that these snapshots only advance the service's state, and don't
+cause it to move backwards.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#24403; follower &#30340; Raft &#20195;&#30721;&#25910;&#21040; InstallSnapshot RPC &#26102;&#65292;&#23427;&#21487;&#20197;&#20351;&#29992; <tt>applyCh</tt> &#36890;&#36807; <tt>ApplyMsg</tt> &#23558;&#24555;&#29031;&#21457;&#36865;&#32473;&#26381;&#21153;&#12290; <tt>raftapi/raftapi.go</tt> &#20013;&#30340; <tt>ApplyMsg</tt> &#32467;&#26500;&#20307;&#23450;&#20041;&#24050;&#32463;&#21253;&#21547;&#20102;&#20320;&#25152;&#38656;&#35201;&#30340;&#23383;&#27573;&#65288;&#20063;&#26159;&#27979;&#35797;&#31243;&#24207;&#25152;&#26399;&#26395;&#30340;&#23383;&#27573;&#65289;&#12290;&#35831;&#27880;&#24847;&#65292;&#36825;&#20123;&#24555;&#29031;&#21482;&#33021;&#25512;&#36827;&#26381;&#21153;&#30340;&#29366;&#24577;&#65292;&#32780;&#19981;&#33021;&#23548;&#33268;&#29366;&#24577;&#22238;&#36864;&#12290;</font></font></font></p><p data-imt-p="1">
+If a server crashes, it must restart from persisted data. Your Raft
+should persist both Raft state and the corresponding snapshot.
+Use the second argument to
+<tt>persister.Save()</tt> to save the snapshot.
+If there's no snapshot, pass <tt>nil</tt> as the second
+argument.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#22914;&#26524;&#26381;&#21153;&#22120;&#23849;&#28291;&#65292;&#23427;&#24517;&#39035;&#20174;&#25345;&#20037;&#21270;&#30340;&#25968;&#25454;&#20013;&#37325;&#26032;&#21551;&#21160;&#12290;&#20320;&#30340; Raft &#24212;&#24403;&#21516;&#26102;&#25345;&#20037;&#21270; Raft &#29366;&#24577;&#21644;&#30456;&#24212;&#30340;&#24555;&#29031;&#12290;&#20351;&#29992; <tt>persister.Save()</tt> &#30340;&#31532;&#20108;&#20010;&#21442;&#25968;&#26469;&#20445;&#23384;&#24555;&#29031;&#12290;&#22914;&#26524;&#27809;&#26377;&#24555;&#29031;&#65292;&#21017;&#23558; <tt>nil</tt> &#20316;&#20026;&#31532;&#20108;&#20010;&#21442;&#25968;&#20256;&#20837;&#12290;</font></font></font></p><p data-imt-p="1">
+When a server restarts, the application layer reads the persisted
+snapshot and restores its saved application state. After a restart,
+the application layer expects the first message on applyCh to either
+contain a snapshot with a SnapshotIndex higher than that of the
+initial restored snapshot, or an ordinary command with CommandIndex
+immediately following the index of the initial restored snapshot.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#24403;&#26381;&#21153;&#22120;&#37325;&#21551;&#26102;&#65292;&#24212;&#29992;&#23618;&#20250;&#35835;&#21462;&#25345;&#20037;&#21270;&#30340;&#24555;&#29031;&#24182;&#24674;&#22797;&#20854;&#20445;&#23384;&#30340;&#24212;&#29992;&#29366;&#24577;&#12290;&#37325;&#21551;&#20043;&#21518;&#65292;&#24212;&#29992;&#23618;&#26399;&#26395; applyCh &#19978;&#30340;&#31532;&#19968;&#26465;&#28040;&#24687;&#35201;&#20040;&#21253;&#21547;&#19968;&#20010; SnapshotIndex &#39640;&#20110;&#21021;&#22987;&#24674;&#22797;&#24555;&#29031;&#32034;&#24341;&#30340;&#24555;&#29031;&#65292;&#35201;&#20040;&#21253;&#21547;&#19968;&#26465; CommandIndex &#32039;&#25509;&#22312;&#21021;&#22987;&#24674;&#22797;&#24555;&#29031;&#32034;&#24341;&#20043;&#21518;&#30340;&#26222;&#36890;&#21629;&#20196;&#12290;</font></font></font></p><p class="todo" data-imt-p="1">
+Implement <tt>Snapshot()</tt> and the InstallSnapshot RPC, as well as the
+changes to Raft to support these (e.g, operation with a
+trimmed log).  Your solution is complete when it passes the 3D tests
+(and all the previous Lab 3 tests).
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#23454;&#29616; <tt>Snapshot()</tt> &#21644; InstallSnapshot RPC&#65292;&#20197;&#21450;&#23545; Raft &#36827;&#34892;&#30456;&#24212;&#30340;&#20462;&#25913;&#20197;&#25903;&#25345;&#36825;&#20123;&#21151;&#33021;&#65288;&#20363;&#22914;&#65292;&#22312;&#26085;&#24535;&#34987;&#35009;&#21098;&#21518;&#30340;&#29366;&#24577;&#19979;&#36816;&#34892;&#65289;&#12290;&#24403;&#20320;&#30340;&#35299;&#20915;&#26041;&#26696;&#36890;&#36807; 3D &#27979;&#35797;&#65288;&#20197;&#21450;&#20043;&#21069;&#25152;&#26377; Lab 3 &#27979;&#35797;&#65289;&#26102;&#65292;&#21363;&#35270;&#20026;&#23436;&#25104;&#12290;</font></font></font></p>
+
+<ul class="hints">
+
+<li data-imt-p="1"> <tt>git pull</tt> to make sure you have the latest software.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1"> <tt>git pull</tt> &#65292;&#20197;&#30830;&#20445;&#20320;&#20351;&#29992;&#30340;&#26159;&#26368;&#26032;&#30340;&#36719;&#20214;&#12290;</font></font></font></li><li data-imt-p="1"> A good place to start is to modify your code to so that it is
+able to store just the part of the log
+starting at some index X. Initially you can set X to zero and
+run the 3B/3C tests.
+Then make <tt>Snapshot(index)</tt> discard the log before <tt>index</tt>,
+and set X equal to <tt>index</tt>. If all goes well you should
+now pass the first 3D test.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#19968;&#20010;&#22909;&#30340;&#20999;&#20837;&#28857;&#26159;&#20462;&#25913;&#20320;&#30340;&#20195;&#30721;&#65292;&#20351;&#20854;&#33021;&#22815;&#21482;&#23384;&#20648;&#20174;&#26576;&#20010;&#32034;&#24341; X &#24320;&#22987;&#30340;&#37027;&#37096;&#20998;&#26085;&#24535;&#12290;&#26368;&#21021;&#20320;&#21487;&#20197;&#23558; X &#35774;&#20026;&#38646;&#24182;&#36816;&#34892; 3B/3C &#27979;&#35797;&#12290;&#28982;&#21518;&#35753; <tt>Snapshot(index)</tt> &#20002;&#24323; <tt>index</tt> &#20043;&#21069;&#30340;&#26085;&#24535;&#65292;&#24182;&#23558; X &#35774;&#20026;&#31561;&#20110; <tt>index</tt> &#12290;&#22914;&#26524;&#19968;&#20999;&#39034;&#21033;&#65292;&#20320;&#29616;&#22312;&#24212;&#35813;&#33021;&#36890;&#36807;&#31532;&#19968;&#20010; 3D &#27979;&#35797;&#12290;</font></font></font></li><li data-imt-p="1">
+A common reason for failing the first 3D test is that followers take too long to
+catch up to the leader.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#26410;&#33021;&#36890;&#36807;&#31532;&#19968;&#20010; 3D &#27979;&#35797;&#30340;&#19968;&#20010;&#24120;&#35265;&#21407;&#22240;&#26159;&#36319;&#38543;&#32773;&#36861;&#36214;&#39046;&#23548;&#32773;&#25152;&#38656;&#30340;&#26102;&#38388;&#36807;&#38271;&#12290;</font></font></font></li><li data-imt-p="1">Next: have the leader send an InstallSnapshot RPC if it doesn't
+have the log entries required to bring a follower up to date.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#19979;&#19968;&#27493;&#65306;&#22914;&#26524;&#39046;&#23548;&#32773;&#32570;&#23569;&#23558;&#36319;&#38543;&#32773;&#26356;&#26032;&#21040;&#26368;&#26032;&#29366;&#24577;&#25152;&#38656;&#30340;&#26085;&#24535;&#26465;&#30446;&#65292;&#23601;&#35753;&#23427;&#21457;&#36865; InstallSnapshot RPC&#12290;</font></font></font></li><li data-imt-p="1">Send the entire snapshot in a single InstallSnapshot RPC.
+Don't implement Figure 13's <tt>offset</tt> mechanism for
+splitting up the snapshot.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#22312;&#21333;&#20010; InstallSnapshot RPC &#20013;&#21457;&#36865;&#25972;&#20010;&#24555;&#29031;&#12290;&#19981;&#35201;&#23454;&#29616;&#22270; 13 &#20013;&#29992;&#20110;&#25286;&#20998;&#24555;&#29031;&#30340; <tt>offset</tt> &#26426;&#21046;&#12290;</font></font></font></li><li data-imt-p="1"> Raft must discard old log entries in a way that allows the Go garbage collector to free and re-use the
+memory; this requires that there be no reachable references (pointers)
+to the discarded log entries.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">Raft &#24517;&#39035;&#20197;&#19968;&#31181;&#20801;&#35768; Go &#22403;&#22334;&#22238;&#25910;&#22120;&#37322;&#25918;&#24182;&#22797;&#29992;&#20869;&#23384;&#30340;&#26041;&#24335;&#20002;&#24323;&#26087;&#30340;&#26085;&#24535;&#26465;&#30446;&#65307;&#36825;&#35201;&#27714;&#19981;&#23384;&#22312;&#25351;&#21521;&#24050;&#20002;&#24323;&#26085;&#24535;&#26465;&#30446;&#30340;&#21487;&#36798;&#24341;&#29992;&#65288;&#25351;&#38024;&#65289;&#12290;</font></font></font></li><li data-imt-p="1">When a Raft peer is re-started, the persister passed to <tt>Make()</tt>
+will contain a snapshot of application state as well as Raft's saved
+state. Raft must include a non-nil snapshot with every call
+to <tt>persister.Save()</tt> (if the log has been trimmed), which
+means that it's a good idea for
+<tt>Make()</tt> to call <tt>persister.ReadSnapshot()</tt> and save the
+result.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#24403; Raft &#33410;&#28857;&#37325;&#26032;&#21551;&#21160;&#26102;&#65292;&#20256;&#36882;&#32473; <tt>Make()</tt> &#30340; persister &#20013;&#23558;&#21253;&#21547;&#24212;&#29992;&#31243;&#24207;&#29366;&#24577;&#30340;&#24555;&#29031;&#20197;&#21450; Raft &#24050;&#20445;&#23384;&#30340;&#29366;&#24577;&#12290;&#22312;&#27599;&#27425;&#35843;&#29992; <tt>persister.Save()</tt> &#26102;&#65288;&#22914;&#26524;&#26085;&#24535;&#24050;&#34987;&#35009;&#21098;&#65289;&#65292;Raft &#37117;&#24517;&#39035;&#21253;&#21547;&#19968;&#20010;&#38750; nil &#30340;&#24555;&#29031;&#65292;&#36825;&#24847;&#21619;&#30528; <tt>Make()</tt> &#26368;&#22909;&#35843;&#29992; <tt>persister.ReadSnapshot()</tt> &#24182;&#20445;&#23384;&#32467;&#26524;&#12290;</font></font></font></li><li data-imt-p="1">
+A reasonable amount of time to consume for the full set of
+Lab 3 tests (3A+3B+3C+3D) without <tt>-race</tt> is 6 minutes of real time and one
+minute of CPU time. When running with <tt>-race</tt>, it is about 10 minutes of real
+time and two minutes of CPU time.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#22312;&#27809;&#26377; <tt>-race</tt> &#30340;&#24773;&#20917;&#19979;&#65292;&#36816;&#34892;&#23436;&#25972;&#30340; Lab 3 &#27979;&#35797;&#38598;&#65288;3A+3B+3C+3D&#65289;&#25152;&#38656;&#30340;&#21512;&#29702;&#26102;&#38388;&#26159; 6 &#20998;&#38047;&#30495;&#23454;&#26102;&#38388;&#21644; 1 &#20998;&#38047; CPU &#26102;&#38388;&#12290;&#20351;&#29992; <tt>-race</tt> &#36816;&#34892;&#26102;&#65292;&#22823;&#32422;&#38656;&#35201; 10 &#20998;&#38047;&#30495;&#23454;&#26102;&#38388;&#21644; 2 &#20998;&#38047; CPU &#26102;&#38388;&#12290;</font></font></font></li></ul>
+
+<p data-imt-p="1">
+Your code should pass all the 3D tests (as shown below), as well as the 3A, 3B, and 3C tests.
+
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">&#20320;&#30340;&#20195;&#30721;&#24212;&#35813;&#36890;&#36807;&#25152;&#26377; 3D &#27979;&#35797;&#65288;&#22914;&#19979;&#25152;&#31034;&#65289;&#65292;&#20197;&#21450; 3A&#12289;3B &#21644; 3C &#30340;&#27979;&#35797;&#12290;</font></font></font></p><pre data-imt-pre="1" data-imt-p="1">$ make RUN="-run 3D" raft1
+go build -race -o main/raft1d main/raft1d.go
+cd raft1 &amp;&amp; go test -v -race -run 3D 
+=== RUN   TestSnapshotBasic3D
+Test (3D): snapshots basic (reliable network)...
+  ... Passed --  time  8.4s #peers 3 #RPCs   279 #Ops   31
+--- PASS: TestSnapshotBasic3D (8.74s)
+=== RUN   TestSnapshotInstall3D
+Test (3D): install snapshots (disconnect) (reliable network)...
+  ... Passed --  time 59.6s #peers 3 #RPCs   919 #Ops   91
+--- PASS: TestSnapshotInstall3D (59.99s)
+=== RUN   TestSnapshotInstallUnreliable3D
+Test (3D): install snapshots (disconnect) (unreliable network)...
+  ... Passed --  time 82.1s #peers 3 #RPCs  1083 #Ops   91
+--- PASS: TestSnapshotInstallUnreliable3D (82.49s)
+=== RUN   TestSnapshotInstallCrash3D
+Test (3D): install snapshots (crash) (reliable network)...
+  ... Passed --  time 53.6s #peers 3 #RPCs   685 #Ops   91
+--- PASS: TestSnapshotInstallCrash3D (53.99s)
+=== RUN   TestSnapshotInstallUnCrash3D
+Test (3D): install snapshots (crash) (unreliable network)...
+  ... Passed --  time 66.2s #peers 3 #RPCs   717 #Ops   91
+--- PASS: TestSnapshotInstallUnCrash3D (66.60s)
+=== RUN   TestSnapshotAllCrash3D
+Test (3D): crash and restart all servers (unreliable network)...
+  ... Passed --  time 20.4s #peers 3 #RPCs   244 #Ops   45
+--- PASS: TestSnapshotAllCrash3D (20.79s)
+=== RUN   TestSnapshotInit3D
+Test (3D): snapshot initialization after crash (unreliable network)...
+  ... Passed --  time  7.4s #peers 3 #RPCs    79 #Ops   14
+--- PASS: TestSnapshotInit3D (7.77s)
+PASS
+ok      6.5840/raft1    301.406s
+$ 
+<font class="notranslate immersive-translate-target-wrapper" lang="zh-CN" style=""><br><font class="notranslate immersive-translate-target-translation-pre-whitespace immersive-translate-target-translation-theme-none immersive-translate-target-translation-block-wrapper-theme-none immersive-translate-target-translation-block-wrapper" data-immersive-translate-translation-element-mark="1"><font class="notranslate immersive-translate-target-inner immersive-translate-target-translation-theme-none-inner" data-immersive-translate-translation-element-mark="1">$ make RUN="-run 3D" raft1
+go build -race -o main/raft1d main/raft1d.go
+cd raft1 &amp;&amp; go test -v -race -run 3D 
+=== RUN   TestSnapshotBasic3D
+Test (3D): snapshots basic (reliable network)...
+... Passed --  time  8.4s #peers 3 #RPCs   279 #Ops   31
+--- PASS: TestSnapshotBasic3D (8.74s)
+=== RUN   TestSnapshotInstall3D
+&#27979;&#35797;&#65288;3D&#65289;&#65306;&#23433;&#35013;&#24555;&#29031;&#65288;&#26029;&#24320;&#36830;&#25509;&#65289;&#65288;&#21487;&#38752;&#32593;&#32476;&#65289;...
+... &#36890;&#36807; --  &#32791;&#26102; 59.6s #&#33410;&#28857; 3 #RPC   919 #&#25805;&#20316;   91
+--- PASS: TestSnapshotInstall3D (59.99s)
+=== RUN   TestSnapshotInstallUnreliable3D
+&#27979;&#35797; (3D): &#23433;&#35013;&#24555;&#29031; (&#26029;&#24320;&#36830;&#25509;) (&#19981;&#21487;&#38752;&#32593;&#32476;)...
+... &#36890;&#36807; --  &#26102;&#38388; 82.1s #&#33410;&#28857; 3 #RPCs  1083 #&#25805;&#20316;   91
+--- PASS: TestSnapshotInstallUnreliable3D (82.49s)
+=== RUN   TestSnapshotInstallCrash3D
+&#27979;&#35797; (3D)&#65306;&#23433;&#35013;&#24555;&#29031;&#65288;&#23849;&#28291;&#65289;&#65288;&#21487;&#38752;&#32593;&#32476;&#65289;...
+... &#36890;&#36807; --  &#32791;&#26102; 53.6s #&#33410;&#28857;&#25968; 3 #RPC &#25968;   685 #&#25805;&#20316;&#25968;   91
+--- PASS: TestSnapshotInstallCrash3D (53.99s)
+=== RUN   TestSnapshotInstallUnCrash3D
+&#27979;&#35797;&#65288;3D&#65289;&#65306;&#23433;&#35013;&#24555;&#29031;&#65288;&#23849;&#28291;&#65289;&#65288;&#19981;&#21487;&#38752;&#32593;&#32476;&#65289;……
+…… &#36890;&#36807; --  &#32791;&#26102; 66.2s #&#33410;&#28857; 3 #RPC   717 #&#25805;&#20316;   91
+--- PASS: TestSnapshotInstallUnCrash3D (66.60s)
+=== RUN   TestSnapshotAllCrash3D
+&#27979;&#35797; (3D)&#65306;&#23849;&#28291;&#24182;&#37325;&#21551;&#25152;&#26377;&#26381;&#21153;&#22120;&#65288;&#19981;&#21487;&#38752;&#32593;&#32476;&#65289;...
+... Passed --  time 20.4s #peers 3 #RPCs   244 #Ops   45
+--- PASS: TestSnapshotAllCrash3D (20.79s)
+=== RUN   TestSnapshotInit3D
+&#27979;&#35797;&#65288;3D&#65289;&#65306;&#23849;&#28291;&#21518;&#30340;&#24555;&#29031;&#21021;&#22987;&#21270;&#65288;&#19981;&#21487;&#38752;&#32593;&#32476;&#65289;...
+... Passed --  time  7.4s #peers 3 #RPCs    79 #Ops   14
+--- PASS: TestSnapshotInit3D (7.77s)
+PASS
+ok      6.5840/raft1    301.406s
+$ 
+</font></font></font></pre>
+
+
+
+
+
+
+
+
+
+
+
+
+</body><div id="immersive-translate-popup" style="all: initial"><template shadowrootmode="open"><div id="mount" style="display: block;"><div class="imt-fb-container right imt-notranslate  " data-theme="light" style="z-index: 2147483637; pointer-events: none; right: 0px; top: 1076px; display: flex;"><div class="btn-animate" style="transform: translateX(-5px); opacity: 0.7; pointer-events: all; filter: blur(0px); transition: opacity 280ms cubic-bezier(0.16, 1, 0.3, 1), filter 280ms cubic-bezier(0.16, 1, 0.3, 1); will-change: opacity, filter;"><div class="imt-fb-btn imt-fb-more-button imt-fb-side" style="pointer-events: all;"><div class=" btn-animate" style="position: relative; pointer-events: all; display: inline-block;"><div><svg class="imt-fb-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M9.65332 13.3477C10.4097 13.4245 11 14.0632 11 14.8398V18.8398L10.9922 18.9932C10.9205 19.6992 10.3593 20.2604 9.65332 20.332L9.5 20.3398H5.5C4.72334 20.3398 4.08461 19.7496 4.00781 18.9932L4 18.8398V14.8398C4 14.0114 4.67157 13.3398 5.5 13.3398H9.5L9.65332 13.3477ZM18.6533 13.3477C19.4097 13.4245 20 14.0632 20 14.8398V18.8398L19.9922 18.9932C19.9205 19.6992 19.3593 20.2604 18.6533 20.332L18.5 20.3398H14.5C13.7233 20.3398 13.0846 19.7496 13.0078 18.9932L13 18.8398V14.8398C13 14.0114 13.6716 13.3398 14.5 13.3398H18.5L18.6533 13.3477ZM5.5 14.3398C5.22386 14.3398 5 14.5637 5 14.8398V18.8398C5 19.116 5.22386 19.3398 5.5 19.3398H9.5C9.77614 19.3398 10 19.116 10 18.8398V14.8398C10 14.5637 9.77614 14.3398 9.5 14.3398H5.5ZM14.5 14.3398C14.2239 14.3398 14 14.5637 14 14.8398V18.8398C14 19.116 14.2239 19.3398 14.5 19.3398H18.5C18.7761 19.3398 19 19.116 19 18.8398V14.8398C19 14.5637 18.7761 14.3398 18.5 14.3398H14.5ZM9.65332 4.34766C10.4097 4.42445 11 5.06318 11 5.83984V9.83984L10.9922 9.99316C10.9205 10.6992 10.3593 11.2604 9.65332 11.332L9.5 11.3398H5.5C4.72334 11.3398 4.08461 10.7496 4.00781 9.99316L4 9.83984V5.83984C4 5.01142 4.67157 4.33984 5.5 4.33984H9.5L9.65332 4.34766ZM16.1484 3.18848C16.2521 2.83834 16.7479 2.83834 16.8516 3.18848L17.3281 4.79785C17.5079 5.40507 17.9648 5.89104 18.5596 6.1084L20.0576 6.65625C20.3786 6.77361 20.3785 7.22732 20.0576 7.34473L18.5596 7.89258C17.9648 8.10991 17.5079 8.59598 17.3281 9.20312L16.8516 10.8125C16.7479 11.1626 16.2521 11.1626 16.1484 10.8125L15.6719 9.20312C15.4921 8.59598 15.0352 8.10991 14.4404 7.89258L12.9424 7.34473C12.6215 7.22732 12.6214 6.77361 12.9424 6.65625L14.4404 6.1084C15.0352 5.89104 15.4921 5.40507 15.6719 4.79785L16.1484 3.18848ZM5.5 5.33984C5.22386 5.33984 5 5.5637 5 5.83984V9.83984C5 10.116 5.22386 10.3398 5.5 10.3398H9.5C9.77614 10.3398 10 10.116 10 9.83984V5.83984C10 5.5637 9.77614 5.33984 9.5 5.33984H5.5Z" fill="#ED6D8F"></path></svg></div></div></div></div><div hidden="" class="imt-no-events " id="manga-button" style="position: relative;"><div class=" " style="position: relative; pointer-events: all; display: inline-block;"><div><div class="imt-manga-button btn-animate" style="opacity: 0.7; transform: translateX(2px);"><div style="position: relative;"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" fill="none" style="vertical-align: middle;"><path d="M14.8853 4.92364C14.8853 4.92364 16.3905 10.4362 22.6668 4C22.6668 4 20.3381 10.8907 25.3364 10.0843C25.3364 10.0843 22.0563 15.6994 29 18.0599C29 18.0599 22.9934 19.306 21.1617 28C21.1617 28 17.7679 24.54 14.8853 27.3549C14.8853 27.3549 13.3233 23.5724 7.33097 26.27C7.33097 26.27 10.1141 20.6549 4.83179 21.0507C4.83179 21.0507 7.16057 18.8955 3 15.9047C3 15.9047 7.50137 16.1833 6.33697 11.7117C6.33697 11.7117 10.0005 12.3421 8.66576 6.82957C8.65156 6.81491 12.4855 9.80574 14.8853 4.92364Z" fill="#ED6D8F"></path><path d="M20.8599 13.7022C20.885 13.1361 20.9543 12.5713 20.9959 12.0052C21.0337 11.568 20.8107 11.2794 20.3876 11.18C20.0759 11.1013 19.7508 11.0867 19.433 11.137C19.1951 11.1945 18.9542 11.2396 18.7113 11.2721C18.2403 11.3028 17.9973 11.5275 17.9796 11.988C17.977 12.0833 17.9596 12.1777 17.928 12.268C17.3034 13.9102 16.6774 15.5499 16.0503 17.1873C16.0301 17.2401 16.0062 17.2904 15.9671 17.3776C15.7291 16.8975 15.4281 16.4898 15.2745 15.9986C14.8073 14.5152 14.3186 13.033 13.8312 11.5594C13.6826 11.1112 13.3489 10.9344 12.8754 11.0216C12.7889 11.0365 12.7008 11.0398 12.6134 11.0314C12.2241 10.9938 11.8311 11.0404 11.4623 11.1677C11.0946 11.2991 10.9498 11.557 11.0152 11.9254C11.0428 12.0371 11.0643 12.1503 11.0795 12.2643C11.1223 13.1902 11.1777 14.1087 11.2054 15.0321C11.257 16.7992 11.2117 18.5651 11.0858 20.3284C11.0644 20.6354 11.0304 20.9424 11.0228 21.2494C11.0115 21.6092 11.1613 21.7811 11.5266 21.8143C11.9976 21.8573 12.4711 21.8708 12.9421 21.9088C13.0309 21.9201 13.121 21.9003 13.1962 21.8528C13.2714 21.8053 13.3268 21.7334 13.3527 21.6497C13.3996 21.5394 13.4252 21.4216 13.4282 21.3022C13.4295 20.8258 13.4207 20.3493 13.4081 19.8741C13.393 19.3264 13.3917 18.7763 13.3438 18.231C13.2857 17.5839 13.266 16.934 13.2847 16.2847C13.2847 16.2466 13.291 16.2073 13.2985 16.1312C13.3338 16.2024 13.3514 16.2356 13.3665 16.2712C13.9017 17.5228 14.3617 18.8037 14.7443 20.1074C14.7928 20.2421 14.7928 20.3889 14.7443 20.5237C14.6322 20.8196 14.7141 21.037 14.9659 21.1377C15.4445 21.3268 15.9331 21.4926 16.4155 21.6731C16.4865 21.7033 16.566 21.7091 16.6408 21.6895C16.7157 21.6698 16.7815 21.6259 16.8273 21.565C16.9085 21.4643 16.9743 21.3526 17.0225 21.2335C17.0537 21.1374 17.0798 21.0399 17.1006 20.9412C17.3185 20.2425 17.5653 19.5499 17.7517 18.8438C17.9785 17.9723 18.2624 17.1158 18.6018 16.2798C18.6201 16.2439 18.6411 16.2094 18.6647 16.1766C18.6761 16.2319 18.6761 16.254 18.6761 16.2761C18.6345 17.59 18.5955 18.8978 18.5501 20.2056C18.5363 20.5949 18.491 20.9829 18.4809 21.3722C18.4721 21.705 18.6207 21.8708 18.9557 21.9002C19.4355 21.9432 19.9191 21.9592 20.4002 21.9973C20.4888 22.0079 20.5784 21.9875 20.653 21.9399C20.7277 21.8922 20.7827 21.8203 20.8082 21.7369C20.8531 21.6305 20.8766 21.5167 20.8775 21.4017C20.88 20.7668 20.8674 20.132 20.8674 19.4971C20.8662 19.2846 20.8687 19.0722 20.8523 18.8622C20.8158 18.3968 20.7264 17.9314 20.7339 17.4685C20.7515 16.2122 20.8044 14.9572 20.8599 13.7022Z" fill="white"></path></svg></div></div></div></div></div><div style="display: flex; align-items: center; flex-direction: row; gap: 8px;"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none" style="display: block; opacity: 0;"><g clip-path="url(#clip0_38845_9816)"><path d="M7 14C5.14348 14 3.36301 13.2625 2.05025 11.9497C0.737498 10.637 0 8.85652 0 7C0 5.14348 0.737498 3.36301 2.05025 2.05025C3.36301 0.737498 5.14348 0 7 0C8.85652 0 10.637 0.737498 11.9497 2.05025C13.2625 3.36301 14 5.14348 14 7C14 8.85652 13.2625 10.637 11.9497 11.9497C10.637 13.2625 8.85652 14 7 14Z" fill="#B1B1B1" fill-opacity="0.4"></path><path d="M6.11754 7.00052L4.18254 5.06452C4.06786 4.94725 4.00406 4.78948 4.00498 4.62546C4.00589 4.46144 4.07145 4.3044 4.18744 4.18841C4.30342 4.07243 4.46046 4.00687 4.62448 4.00595C4.7885 4.00503 4.94627 4.06884 5.06354 4.18352L6.99954 6.11852L8.93554 4.18352C8.99315 4.1246 9.06188 4.07771 9.13774 4.04554C9.2136 4.01337 9.29508 3.99656 9.37748 3.9961C9.45988 3.99564 9.54155 4.01153 9.61777 4.04285C9.69398 4.07417 9.76323 4.1203 9.82149 4.17857C9.87976 4.23683 9.92589 4.30608 9.95721 4.38229C9.98853 4.45851 10.0044 4.54018 10.004 4.62258C10.0035 4.70497 9.98669 4.78646 9.95452 4.86232C9.92235 4.93818 9.87545 5.00691 9.81654 5.06452L7.88154 7.00052L9.81654 8.93652C9.93122 9.05379 9.99502 9.21155 9.99411 9.37557C9.99319 9.5396 9.92763 9.69664 9.81164 9.81262C9.69566 9.9286 9.53862 9.99417 9.3746 9.99508C9.21058 9.996 9.05281 9.9322 8.93554 9.81752L6.99954 7.88252L5.06354 9.81752C5.00593 9.87643 4.93721 9.92333 4.86135 9.9555C4.78549 9.98767 4.704 10.0045 4.6216 10.0049C4.5392 10.0054 4.45753 9.9895 4.38131 9.95818C4.3051 9.92686 4.23585 9.88073 4.17759 9.82247C4.11932 9.7642 4.0732 9.69496 4.04188 9.61874C4.01056 9.54253 3.99467 9.46086 3.99513 9.37846C3.99559 9.29606 4.01239 9.21457 4.04456 9.13871C4.07673 9.06285 4.12363 8.99413 4.18254 8.93652L6.11754 7.00052Z" fill="white"></path></g><defs><clippath id="clip0_38845_9816"><rect width="14" height="14" fill="white"></rect></clippath></defs></svg><div style="position: relative;"><div class="imt-fb-btn right btn-animate  " dir="ltr" style="opacity: 0.7;"><div class=" " style="position: relative; pointer-events: all; display: inline-block;"><div><div class="imt-fb-btn-content"><svg class="imt-fb-logo-img imt-fb-logo-img-big-bg" width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M0 14C0 6.26801 6.26801 0 14 0C21.732 0 28 6.26801 28 14C28 21.732 21.732 28 14 28C6.26801 28 0 21.732 0 14Z" fill="#ED6D8F"></path><path d="M7.30921 15.6381C7.53044 15.6381 7.70979 15.8175 7.70979 16.0387V19.0088C7.70979 19.934 8.45993 20.684 9.38526 20.684H11.7557C11.9769 20.684 12.1562 20.8634 12.1562 21.0846V22.152C12.1562 22.3732 11.9769 22.5526 11.7557 22.5526H9.38526C7.42782 22.5526 5.84099 20.966 5.84099 19.0088V16.0387C5.84099 15.8175 6.02034 15.6381 6.24157 15.6381H7.30921ZM18.9876 12.6944C19.1515 12.6944 19.2989 12.7943 19.3597 12.9466L22.9711 22.0036C23.076 22.2667 22.8822 22.5526 22.599 22.5526H21.4672C21.3016 22.5526 21.153 22.4506 21.0934 22.2961L20.2724 20.1673C20.2128 20.0128 20.0643 19.9108 19.8986 19.9108H16.7508C16.5852 19.9108 16.4366 20.0128 16.377 20.1673L15.556 22.2961C15.4964 22.4506 15.3478 22.5526 15.1822 22.5526H14.0504C13.7672 22.5526 13.5734 22.2667 13.6783 22.0036L17.2897 12.9466C17.3505 12.7943 17.4979 12.6944 17.6618 12.6944H18.9876ZM18.5116 15.6017C18.4456 15.4308 18.2038 15.4308 18.1378 15.6017L17.3016 17.7699C17.251 17.9011 17.3478 18.0423 17.4885 18.0423H19.1609C19.3016 18.0423 19.3984 17.9012 19.3478 17.7699L18.5116 15.6017ZM9.69589 5.30028C9.79943 4.8999 10.368 4.89991 10.4715 5.30028L11.1086 7.76368C11.3244 8.59845 11.9396 9.27221 12.7513 9.56299L14.9019 10.3334C15.2559 10.4602 15.2559 10.9608 14.9019 11.0876L12.7513 11.8581C11.9396 12.1489 11.3244 12.8226 11.1086 13.6574L10.4715 16.1208C10.368 16.5212 9.79943 16.5212 9.69589 16.1208L9.05884 13.6574C8.84297 12.8226 8.22786 12.1489 7.41615 11.8581L5.26548 11.0876C4.91151 10.9608 4.91151 10.4602 5.26548 10.3334L7.41615 9.56299C8.22786 9.27221 8.84297 8.59844 9.05884 7.76368L9.69589 5.30028ZM18.0064 6.20485C19.9639 6.20485 21.5507 7.79145 21.5507 9.74861V11.281C21.5507 11.5022 21.3713 11.6816 21.1501 11.6816H20.0825C19.8612 11.6816 19.6819 11.5022 19.6819 11.281V9.74861C19.6819 8.82341 18.9318 8.07338 18.0064 8.07338H14.4343C14.2131 8.07338 14.0337 7.89403 14.0337 7.6728V6.60543C14.0337 6.3842 14.2131 6.20486 14.4343 6.20485H18.0064Z" fill="white"></path></svg><svg class="imt-float-ball-translated" width="11" height="11" viewBox="0 0 11 11" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="5.5" cy="5.5" r="5.5" fill="#68CD52"></circle><path d="M1.40857 5.87858L2.24148 5.18962L4.15344 6.64214C4.15344 6.64214 6.33547 4.15566 9.00658 2.48145L9.32541 2.87514C9.32541 2.87514 6.28665 5.55844 4.71735 9.07881L1.40857 5.87858Z" fill="white"></path></svg></div></div></div></div><div title="Close Floating Button" class="imt-fb-close-button btn-animate" style="opacity: 0; pointer-events: none; filter: blur(1px); transition: opacity 110ms cubic-bezier(0.4, 0, 1, 1), filter 110ms cubic-bezier(0.4, 0, 1, 1); will-change: opacity, filter;"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none"><g clip-path="url(#clip0_38845_9816)"><path d="M7 14C5.14348 14 3.36301 13.2625 2.05025 11.9497C0.737498 10.637 0 8.85652 0 7C0 5.14348 0.737498 3.36301 2.05025 2.05025C3.36301 0.737498 5.14348 0 7 0C8.85652 0 10.637 0.737498 11.9497 2.05025C13.2625 3.36301 14 5.14348 14 7C14 8.85652 13.2625 10.637 11.9497 11.9497C10.637 13.2625 8.85652 14 7 14Z" fill="#B1B1B1" fill-opacity="0.4"></path><path d="M6.11754 7.00052L4.18254 5.06452C4.06786 4.94725 4.00406 4.78948 4.00498 4.62546C4.00589 4.46144 4.07145 4.3044 4.18744 4.18841C4.30342 4.07243 4.46046 4.00687 4.62448 4.00595C4.7885 4.00503 4.94627 4.06884 5.06354 4.18352L6.99954 6.11852L8.93554 4.18352C8.99315 4.1246 9.06188 4.07771 9.13774 4.04554C9.2136 4.01337 9.29508 3.99656 9.37748 3.9961C9.45988 3.99564 9.54155 4.01153 9.61777 4.04285C9.69398 4.07417 9.76323 4.1203 9.82149 4.17857C9.87976 4.23683 9.92589 4.30608 9.95721 4.38229C9.98853 4.45851 10.0044 4.54018 10.004 4.62258C10.0035 4.70497 9.98669 4.78646 9.95452 4.86232C9.92235 4.93818 9.87545 5.00691 9.81654 5.06452L7.88154 7.00052L9.81654 8.93652C9.93122 9.05379 9.99502 9.21155 9.99411 9.37557C9.99319 9.5396 9.92763 9.69664 9.81164 9.81262C9.69566 9.9286 9.53862 9.99417 9.3746 9.99508C9.21058 9.996 9.05281 9.9322 8.93554 9.81752L6.99954 7.88252L5.06354 9.81752C5.00593 9.87643 4.93721 9.92333 4.86135 9.9555C4.78549 9.98767 4.704 10.0045 4.6216 10.0049C4.5392 10.0054 4.45753 9.9895 4.38131 9.95818C4.3051 9.92686 4.23585 9.88073 4.17759 9.82247C4.11932 9.7642 4.0732 9.69496 4.04188 9.61874C4.01056 9.54253 3.99467 9.46086 3.99513 9.37846C3.99559 9.29606 4.01239 9.21457 4.04456 9.13871C4.07673 9.06285 4.12363 8.99413 4.18254 8.93652L6.11754 7.00052Z" fill="white"></path></g><defs><clippath id="clip0_38845_9816"><rect width="14" height="14" fill="white"></rect></clippath></defs></svg></div></div><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none" style="display: none; opacity: 0;"><g clip-path="url(#clip0_38845_9816)"><path d="M7 14C5.14348 14 3.36301 13.2625 2.05025 11.9497C0.737498 10.637 0 8.85652 0 7C0 5.14348 0.737498 3.36301 2.05025 2.05025C3.36301 0.737498 5.14348 0 7 0C8.85652 0 10.637 0.737498 11.9497 2.05025C13.2625 3.36301 14 5.14348 14 7C14 8.85652 13.2625 10.637 11.9497 11.9497C10.637 13.2625 8.85652 14 7 14Z" fill="#B1B1B1" fill-opacity="0.4"></path><path d="M6.11754 7.00052L4.18254 5.06452C4.06786 4.94725 4.00406 4.78948 4.00498 4.62546C4.00589 4.46144 4.07145 4.3044 4.18744 4.18841C4.30342 4.07243 4.46046 4.00687 4.62448 4.00595C4.7885 4.00503 4.94627 4.06884 5.06354 4.18352L6.99954 6.11852L8.93554 4.18352C8.99315 4.1246 9.06188 4.07771 9.13774 4.04554C9.2136 4.01337 9.29508 3.99656 9.37748 3.9961C9.45988 3.99564 9.54155 4.01153 9.61777 4.04285C9.69398 4.07417 9.76323 4.1203 9.82149 4.17857C9.87976 4.23683 9.92589 4.30608 9.95721 4.38229C9.98853 4.45851 10.0044 4.54018 10.004 4.62258C10.0035 4.70497 9.98669 4.78646 9.95452 4.86232C9.92235 4.93818 9.87545 5.00691 9.81654 5.06452L7.88154 7.00052L9.81654 8.93652C9.93122 9.05379 9.99502 9.21155 9.99411 9.37557C9.99319 9.5396 9.92763 9.69664 9.81164 9.81262C9.69566 9.9286 9.53862 9.99417 9.3746 9.99508C9.21058 9.996 9.05281 9.9322 8.93554 9.81752L6.99954 7.88252L5.06354 9.81752C5.00593 9.87643 4.93721 9.92333 4.86135 9.9555C4.78549 9.98767 4.704 10.0045 4.6216 10.0049C4.5392 10.0054 4.45753 9.9895 4.38131 9.95818C4.3051 9.92686 4.23585 9.88073 4.17759 9.82247C4.11932 9.7642 4.0732 9.69496 4.04188 9.61874C4.01056 9.54253 3.99467 9.46086 3.99513 9.37846C3.99559 9.29606 4.01239 9.21457 4.04456 9.13871C4.07673 9.06285 4.12363 8.99413 4.18254 8.93652L6.11754 7.00052Z" fill="white"></path></g><defs><clippath id="clip0_38845_9816"><rect width="14" height="14" fill="white"></rect></clippath></defs></svg></div><div class="btn-animate" style="margin-top: 10px; transform: translateX(-5px); opacity: 0; pointer-events: none; filter: blur(1px); transition: opacity 110ms cubic-bezier(0.4, 0, 1, 1), filter 110ms cubic-bezier(0.4, 0, 1, 1); will-change: opacity, filter;"><div class=" btn-animate" style="position: relative; pointer-events: none; display: inline-block;"><div><div class="imt-fb-round-button"><svg class="imt-fb-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" style="width: 24px; height: 24px;"><path d="M17 8.66797H11.375" stroke="#ED6D8F" stroke-linecap="round" stroke-linejoin="round"></path><path d="M12.625 15.332L7 15.332" stroke="#ED6D8F" stroke-linecap="round" stroke-linejoin="round"></path><path d="M15.125 17C16.1605 17 17 16.1605 17 15.125C17 14.0895 16.1605 13.25 15.125 13.25C14.0895 13.25 13.25 14.0895 13.25 15.125C13.25 16.1605 14.0895 17 15.125 17Z" stroke="#ED6D8F" stroke-linecap="round" stroke-linejoin="round"></path><path d="M8.875 10.75C9.91053 10.75 10.75 9.91053 10.75 8.875C10.75 7.83947 9.91053 7 8.875 7C7.83947 7 7 7.83947 7 8.875C7 9.91053 7.83947 10.75 8.875 10.75Z" stroke="#ED6D8F" stroke-linecap="round" stroke-linejoin="round"></path><rect x="3" y="4" width="18" height="16" rx="1.66667" stroke="#ED6D8F"></rect></svg></div></div></div></div><div class="btn-animate" style="margin-top: 10px; transform: translateX(-5px); opacity: 0; pointer-events: none; filter: blur(1px); transition: opacity 110ms cubic-bezier(0.4, 0, 1, 1), filter 110ms cubic-bezier(0.4, 0, 1, 1); will-change: opacity, filter;"><div class=" btn-animate" style="position: relative; pointer-events: none; display: inline-block;"><div><div class="imt-fb-round-button"><svg class="imt-fb-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none"><mask id="mask0_43829_2633" maskUnits="userSpaceOnUse" x="0" y="0" width="20" height="20" style="mask-type: alpha;"><rect width="20" height="20" fill="#D9D9D9"></rect></mask><g mask="url(#mask0_43829_2633)"><path d="M9.99546 12.2609C10.1639 12.2609 10.305 12.2055 10.4188 12.0946C10.5327 11.9838 10.5896 11.8441 10.5896 11.6755C10.5896 11.507 10.5342 11.3659 10.4234 11.2521C10.3124 11.1384 10.1727 11.0815 10.0042 11.0815C9.83574 11.0815 9.69463 11.1369 9.58088 11.2478C9.46699 11.3586 9.41005 11.4982 9.41005 11.6667C9.41005 11.8353 9.46546 11.9765 9.5763 12.0903C9.68727 12.204 9.82699 12.2609 9.99546 12.2609ZM9.99546 10.1936C10.148 10.1936 10.2771 10.1418 10.3828 10.0382C10.4886 9.93443 10.5415 9.80568 10.5415 9.65193V5.20318C10.5415 5.04943 10.49 4.92075 10.3871 4.81713C10.2844 4.71338 10.1567 4.66151 10.0042 4.66151C9.85171 4.66151 9.72261 4.71338 9.61692 4.81713C9.51109 4.92075 9.45817 5.04943 9.45817 5.20318V9.65193C9.45817 9.80568 9.50963 9.93443 9.61255 10.0382C9.71532 10.1418 9.84296 10.1936 9.99546 10.1936ZM5.03192 14.5846L3.55359 16.063C3.34262 16.2739 3.10032 16.3221 2.82671 16.2076C2.55324 16.093 2.4165 15.8864 2.4165 15.5878V3.75776C2.4165 3.38262 2.54602 3.06554 2.80505 2.80651C3.06407 2.54748 3.38116 2.41797 3.7563 2.41797H16.2434C16.6185 2.41797 16.9356 2.54748 17.1946 2.80651C17.4537 3.06554 17.5832 3.38262 17.5832 3.75776V13.2448C17.5832 13.62 17.4537 13.9371 17.1946 14.1961C16.9356 14.4551 16.6185 14.5846 16.2434 14.5846H5.03192ZM4.58317 13.5013H16.2434C16.3075 13.5013 16.3663 13.4746 16.4196 13.4211C16.4731 13.3678 16.4998 13.309 16.4998 13.2448V3.75776C16.4998 3.69359 16.4731 3.63484 16.4196 3.58151C16.3663 3.52804 16.3075 3.5013 16.2434 3.5013H3.7563C3.69213 3.5013 3.63338 3.52804 3.58005 3.58151C3.52657 3.63484 3.49984 3.69359 3.49984 3.75776V14.5928L4.58317 13.5013Z" fill="#ED6D8F"></path></g></svg></div></div></div></div><div hidden="" id="immersive-translate-popup-overlay" class="immersive-translate-popup-overlay"><div class="immersive-translate-popup-wrapper" style="position: fixed; bottom: 30px; right: 65px;"></div></div></div></div></template></div></html>
