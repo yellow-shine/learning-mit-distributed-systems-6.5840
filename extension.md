@@ -1,0 +1,3 @@
+# Lab 5D: Configuration history
+
+The shard controller now keeps an immutable history of completed configurations and exposes `QueryNum(num)` to retrieve one by configuration number. Before publishing a configuration as current, the controller stores it under `config/<Num>` with a version-0 conditional put; `QueryNum` first checks the current configuration number, so an archived but not-yet-published configuration remains invisible after an interrupted update. The test `TestConfigHistory5D` creates a second shard group and verifies that both the original and current configurations remain queryable without changing the behavior of `Query()`.

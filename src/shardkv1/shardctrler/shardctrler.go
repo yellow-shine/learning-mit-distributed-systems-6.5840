@@ -1,6 +1,7 @@
 package shardctrler
 
 import (
+	"fmt"
 	"time"
 
 	"6.5840/kvsrv1"
@@ -49,13 +50,36 @@ func (sck *ShardCtrler) get(key string) *shardcfg.ShardConfig {
 	return shardcfg.FromString(value)
 }
 
+func historyKey(num shardcfg.Tnum) string {
+	return fmt.Sprintf("config/%d", num)
+}
+
+func (sck *ShardCtrler) archive(cfg *shardcfg.ShardConfig) {
+	key, encoded := historyKey(cfg.Num), cfg.String()
+	for {
+		_, _, err := sck.Get(key)
+		if err == rpc.OK {
+			return
+		}
+		if err == rpc.ErrNoKey {
+			if sck.Put(key, encoded, 0) == rpc.OK {
+				return
+			}
+			continue
+		}
+		time.Sleep(50 * time.Millisecond)
+	}
+}
+
 // publish advances the visible configuration without allowing a stale
 // controller to overwrite a newer one.
 func (sck *ShardCtrler) publish(cfg *shardcfg.ShardConfig) {
+	encoded := cfg.String()
 	for {
 		value, version, err := sck.Get(configKey)
 		if err == rpc.ErrNoKey {
-			if sck.Put(configKey, cfg.String(), 0) == rpc.OK {
+			sck.archive(cfg)
+			if sck.Put(configKey, encoded, 0) == rpc.OK {
 				return
 			}
 			continue
@@ -67,7 +91,8 @@ func (sck *ShardCtrler) publish(cfg *shardcfg.ShardConfig) {
 		if shardcfg.FromString(value).Num >= cfg.Num {
 			return
 		}
-		if sck.Put(configKey, cfg.String(), version) == rpc.OK {
+		sck.archive(cfg)
+		if sck.Put(configKey, encoded, version) == rpc.OK {
 			return
 		}
 	}
@@ -145,4 +170,13 @@ func (sck *ShardCtrler) ChangeConfigTo(next *shardcfg.ShardConfig) {
 
 func (sck *ShardCtrler) Query() *shardcfg.ShardConfig {
 	return sck.get(configKey)
+}
+
+// QueryNum returns a completed historical configuration.
+func (sck *ShardCtrler) QueryNum(num shardcfg.Tnum) *shardcfg.ShardConfig {
+	current := sck.Query()
+	if current == nil || num > current.Num {
+		return nil
+	}
+	return sck.get(historyKey(num))
 }
