@@ -8,12 +8,12 @@ package raft
 // raft interface.
 
 import (
-	//	"bytes"
+	"bytes"
 	"math/rand"
 	"sync"
 	"time"
 
-	//	"6.5840/labgob"
+	"6.5840/labgob"
 	"6.5840/labrpc"
 	"6.5840/raftapi"
 	"6.5840/tester1"
@@ -68,20 +68,39 @@ func (rf *Raft) resetElectionLocked() {
 }
 
 func (rf *Raft) becomeFollowerLocked(term int) {
+	if term > rf.currentTerm {
+		rf.currentTerm = term
+		rf.votedFor = -1
+		rf.persist()
+	}
 	rf.role = follower
-	rf.currentTerm = term
-	rf.votedFor = -1
 	rf.resetElectionLocked()
 }
 
 func (rf *Raft) persist() {
-	// Your code here (3C).
+	w := new(bytes.Buffer)
+	e := labgob.NewEncoder(w)
+	e.Encode(rf.currentTerm)
+	e.Encode(rf.votedFor)
+	e.Encode(rf.log)
+	rf.persister.Save(w.Bytes(), nil)
 }
 
 func (rf *Raft) readPersist(data []byte) {
 	if data == nil || len(data) < 1 {
 		return
 	}
+	r := bytes.NewBuffer(data)
+	d := labgob.NewDecoder(r)
+	var term int
+	var votedFor int
+	var log []LogEntry
+	if d.Decode(&term) != nil || d.Decode(&votedFor) != nil || d.Decode(&log) != nil {
+		return
+	}
+	rf.currentTerm = term
+	rf.votedFor = votedFor
+	rf.log = log
 }
 
 func (rf *Raft) PersistBytes() int {
@@ -134,6 +153,7 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 	if (rf.votedFor == -1 || rf.votedFor == args.CandidateId) &&
 		moreUpToDate(args.LastLogIndex, args.LastLogTerm, lastIdx, lastTerm) {
 		rf.votedFor = args.CandidateId
+		rf.persist()
 		rf.resetElectionLocked()
 		reply.VoteGranted = true
 	}
@@ -205,6 +225,9 @@ func (rf *Raft) AppendEntries(args *AppendEntriesArgs, reply *AppendEntriesReply
 			rf.log = append(rf.log, args.Entries[i:]...)
 			break
 		}
+	}
+	if len(args.Entries) > 0 {
+		rf.persist()
 	}
 
 	if args.LeaderCommit > rf.commitIndex {
@@ -334,6 +357,7 @@ func (rf *Raft) startElection() {
 	rf.role = candidate
 	rf.currentTerm++
 	rf.votedFor = rf.me
+	rf.persist()
 	term := rf.currentTerm
 	lastIdx, lastTerm := rf.lastLogLocked()
 	rf.resetElectionLocked()
@@ -390,6 +414,7 @@ func (rf *Raft) Start(command interface{}) (int, int, bool) {
 		return -1, term, false
 	}
 	rf.log = append(rf.log, LogEntry{Term: rf.currentTerm, Command: command})
+	rf.persist()
 	index := len(rf.log) - 1
 	term := rf.currentTerm
 	rf.mu.Unlock()
