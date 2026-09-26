@@ -25,39 +25,37 @@ type ShardCtrler struct {
 
 func MakeShardCtrler(clnt *tester.Clnt) *ShardCtrler {
 	sck := &ShardCtrler{clnt: clnt}
-	srv := tester.ServerName(tester.GRP0, 0)
-	sck.IKVClerk = kvsrv.MakeClerk(clnt, srv)
+	sck.IKVClerk = kvsrv.MakeClerk(clnt, tester.ServerName(tester.GRP0, 0))
 	return sck
 }
 
 func (sck *ShardCtrler) InitController() {
 	next := sck.get(nextKey)
-	if next == nil {
-		return
-	}
-	curr := sck.Query()
-	if curr == nil || next.Num > curr.Num {
+	current := sck.Query()
+	if next != nil && (current == nil || next.Num > current.Num) {
 		sck.apply(next)
 	}
 }
 
 func (sck *ShardCtrler) InitConfig(cfg *shardcfg.ShardConfig) {
-	sck.Put(configKey, cfg.String(), 0)
+	sck.publish(cfg)
 }
 
 func (sck *ShardCtrler) get(key string) *shardcfg.ShardConfig {
-	v, _, err := sck.Get(key)
-	if err != rpc.OK || v == "" {
+	value, _, err := sck.Get(key)
+	if err != rpc.OK || value == "" {
 		return nil
 	}
-	return shardcfg.FromString(v)
+	return shardcfg.FromString(value)
 }
 
-func (sck *ShardCtrler) put(key string, cfg *shardcfg.ShardConfig) {
+// publish advances the visible configuration without allowing a stale
+// controller to overwrite a newer one.
+func (sck *ShardCtrler) publish(cfg *shardcfg.ShardConfig) {
 	for {
-		_, ver, err := sck.Get(key)
+		value, version, err := sck.Get(configKey)
 		if err == rpc.ErrNoKey {
-			if sck.Put(key, cfg.String(), 0) == rpc.OK {
+			if sck.Put(configKey, cfg.String(), 0) == rpc.OK {
 				return
 			}
 			continue
@@ -66,46 +64,83 @@ func (sck *ShardCtrler) put(key string, cfg *shardcfg.ShardConfig) {
 			time.Sleep(50 * time.Millisecond)
 			continue
 		}
-		if sck.Put(key, cfg.String(), ver) == rpc.OK {
+		if shardcfg.FromString(value).Num >= cfg.Num {
+			return
+		}
+		if sck.Put(configKey, cfg.String(), version) == rpc.OK {
 			return
 		}
 	}
 }
 
-func (sck *ShardCtrler) apply(new *shardcfg.ShardConfig) {
-	old := sck.Query()
-	if old == nil {
-		sck.put(configKey, new)
+func (sck *ShardCtrler) superseded(num shardcfg.Tnum) bool {
+	current := sck.Query()
+	return current != nil && current.Num >= num
+}
+
+func (sck *ShardCtrler) apply(next *shardcfg.ShardConfig) {
+	current := sck.Query()
+	if current == nil {
+		sck.publish(next)
 		return
 	}
-	if old.Num >= new.Num {
+	if current.Num >= next.Num {
 		return
 	}
+
 	for sh := shardcfg.Tshid(0); sh < shardcfg.NShards; sh++ {
-		og, osrv, ook := old.GidServers(sh)
-		ng, nsrv, nok := new.GidServers(sh)
-		if !ook || !nok || og == ng {
+		oldGID, oldServers, oldOK := current.GidServers(sh)
+		newGID, newServers, newOK := next.GidServers(sh)
+		if !oldOK || !newOK || oldGID == newGID {
 			continue
 		}
-		ock := shardgrp.MakeClerk(sck.clnt, osrv)
-		nck := shardgrp.MakeClerk(sck.clnt, nsrv)
-		for {
-			state, err := ock.FreezeShard(sh, new.Num)
-			if err == rpc.OK {
-				if nck.InstallShard(sh, state, new.Num) == rpc.OK {
-					ock.DeleteShard(sh, new.Num)
-					break
-				}
+
+		oldClerk := shardgrp.MakeClerk(sck.clnt, oldServers)
+		newClerk := shardgrp.MakeClerk(sck.clnt, newServers)
+		for !sck.superseded(next.Num) {
+			state, err := oldClerk.FreezeShard(sh, next.Num)
+			if err == rpc.OK && newClerk.InstallShard(sh, state, next.Num) == rpc.OK {
+				_ = oldClerk.DeleteShard(sh, next.Num)
+				break
 			}
 			time.Sleep(50 * time.Millisecond)
 		}
+		if sck.superseded(next.Num) {
+			return
+		}
 	}
-	sck.put(configKey, new)
+	sck.publish(next)
 }
 
-func (sck *ShardCtrler) ChangeConfigTo(new *shardcfg.ShardConfig) {
-	sck.put(nextKey, new)
-	sck.apply(new)
+func (sck *ShardCtrler) ChangeConfigTo(next *shardcfg.ShardConfig) {
+	encoded := next.String()
+	for {
+		value, version, err := sck.Get(nextKey)
+		if err == rpc.ErrNoKey {
+			if sck.Put(nextKey, encoded, 0) == rpc.OK {
+				sck.apply(next)
+				return
+			}
+			continue
+		}
+		if err != rpc.OK {
+			time.Sleep(50 * time.Millisecond)
+			continue
+		}
+
+		chosen := shardcfg.FromString(value)
+		if chosen.Num > next.Num || chosen.Num == next.Num && value != encoded {
+			return
+		}
+		if chosen.Num == next.Num {
+			sck.apply(chosen)
+			return
+		}
+		if sck.Put(nextKey, encoded, version) == rpc.OK {
+			sck.apply(next)
+			return
+		}
+	}
 }
 
 func (sck *ShardCtrler) Query() *shardcfg.ShardConfig {
