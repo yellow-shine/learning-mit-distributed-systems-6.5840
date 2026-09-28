@@ -913,7 +913,7 @@ partially synchronous / practical timed system
 
 先只考虑读。
 
-## Case 1：A 第一次读 X
+# Case 1：A 第一次读 X
 
 ```
 Client
